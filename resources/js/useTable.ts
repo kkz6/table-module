@@ -198,7 +198,7 @@ export const useTable = (resource: TableResource): UseTableReturn => {
                 return;
             }
 
-            if (['is_set', 'is_not_set'].includes(filter.clause || '')) {
+            if (['is_set', 'is_not_set', 'with_trashed', 'only_trashed', 'without_trashed'].includes(filter.clause || '')) {
                 if (filter.value) {
                     setValueOfFilter(key, null);
                     valueReset = true;

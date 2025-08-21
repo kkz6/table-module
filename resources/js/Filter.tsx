@@ -61,7 +61,7 @@ const Filter = ({ filter, value, onChange, onRemove }: FilterProps): React.React
     const focusValueInput = (): void => {
         const focusOptions = { preventScroll: true };
 
-        if (filter.type === 'boolean') {
+        if (filter.type === 'boolean' || filter.type === 'trashed') {
             clauseSelectRef.current?.focus(focusOptions);
         } else {
             const element = inputRef.current?.querySelector('input,select') as HTMLElement;
@@ -142,9 +142,14 @@ const Filter = ({ filter, value, onChange, onRemove }: FilterProps): React.React
                         className="h-auto space-x-1 py-1 ps-2 text-sm font-medium hover:bg-transparent rtl:space-x-reverse"
                     >
                         <span>{filter.label}</span>
-                        {(value.value || filter.type === 'boolean' || value.clause === 'is_set' || value.clause === 'is_not_set') && (
-                            <span className="font-mono">{getSymbolForClause(value.clause)}</span>
-                        )}
+                        {(value.value ||
+                            filter.type === 'boolean' ||
+                            filter.type === 'trashed' ||
+                            value.clause === 'is_set' ||
+                            value.clause === 'is_not_set' ||
+                            value.clause === 'with_trashed' ||
+                            value.clause === 'only_trashed' ||
+                            value.clause === 'without_trashed') && <span className="font-mono">{getSymbolForClause(value.clause)}</span>}
                         {value.value && <span className="italic">{presentableValue()}</span>}
                     </Button>
                     <Button
@@ -178,107 +183,114 @@ const Filter = ({ filter, value, onChange, onRemove }: FilterProps): React.React
                             </Select>
                         </div>
                     )}
-                    {filter.type !== 'boolean' && value.clause !== 'is_set' && value.clause !== 'is_not_set' && (
-                        <div className="flex items-center px-2">
-                            <div className="me-2 w-5">
-                                <Search className="size-5" />
-                            </div>
-                            <div ref={inputRef} className="grow">
-                                {filter.type === 'numeric' && (value.clause === 'between' || value.clause === 'not_between') ? (
-                                    <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                    {filter.type !== 'boolean' &&
+                        filter.type !== 'trashed' &&
+                        value.clause !== 'is_set' &&
+                        value.clause !== 'is_not_set' &&
+                        value.clause !== 'with_trashed' &&
+                        value.clause !== 'only_trashed' &&
+                        value.clause !== 'without_trashed' && (
+                            <div className="flex items-center px-2">
+                                <div className="me-2 w-5">
+                                    <Search className="size-5" />
+                                </div>
+                                <div ref={inputRef} className="grow">
+                                    {filter.type === 'numeric' && (value.clause === 'between' || value.clause === 'not_between') ? (
+                                        <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                                            <Input
+                                                value={value.value?.[0] ?? ''}
+                                                onChange={(e) => setFilterValue([e.target.value, value.value?.[1]])}
+                                                type="number"
+                                                className="h-8 w-28"
+                                            />
+                                            <span className="text-sm text-gray-500 dark:text-zinc-500">{t('table::table.between_values_and')}</span>
+                                            <Input
+                                                value={value.value?.[1] ?? ''}
+                                                onChange={(e) => setFilterValue([value.value?.[0], e.target.value])}
+                                                type="number"
+                                                className="h-8 w-28"
+                                            />
+                                        </div>
+                                    ) : filter.type === 'text' || filter.type === 'numeric' ? (
                                         <Input
-                                            value={value.value?.[0] ?? ''}
-                                            onChange={(e) => setFilterValue([e.target.value, value.value?.[1]])}
-                                            type="number"
-                                            className="h-8 w-28"
+                                            value={value.value ?? ''}
+                                            onChange={(e) => setFilterValue(e.target.value)}
+                                            type={filter.type === 'text' ? 'text' : 'number'}
+                                            className="h-8 w-full"
                                         />
-                                        <span className="text-sm text-gray-500 dark:text-zinc-500">{t('table::table.between_values_and')}</span>
-                                        <Input
-                                            value={value.value?.[1] ?? ''}
-                                            onChange={(e) => setFilterValue([value.value?.[0], e.target.value])}
-                                            type="number"
-                                            className="h-8 w-28"
-                                        />
-                                    </div>
-                                ) : filter.type === 'text' || filter.type === 'numeric' ? (
-                                    <Input
-                                        value={value.value ?? ''}
-                                        onChange={(e) => setFilterValue(e.target.value)}
-                                        type={filter.type === 'text' ? 'text' : 'number'}
-                                        className="h-8 w-full"
-                                    />
-                                ) : filter.type === 'set' ? (
-                                    value.clause === 'in' || value.clause === 'not_in' || filter.multiple ? (
-                                        // Multiple selection - use custom Shadcn multi-select
-                                        <MultiSelectFilter options={filter.options || []} />
-                                    ) : (
-                                        // Single selection - use Shadcn Select
-                                        <Select value={value.value || ''} onValueChange={(newValue) => setFilterValue(newValue)}>
-                                            <SelectTrigger className="h-8 w-full">
-                                                <SelectValue placeholder="Select an option..." />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {filter.options?.map((option) => (
-                                                    <SelectItem key={option.value} value={option.value.toString()}>
-                                                        {option.label}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    )
-                                ) : filter.type === 'date' ? (
-                                    <Popover>
-                                        <PopoverTrigger asChild>
-                                            <Button
-                                                variant="outline"
-                                                className={cn(
-                                                    'h-8 w-full justify-start text-left font-normal',
-                                                    !value.value && 'text-muted-foreground',
-                                                )}
-                                            >
-                                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                                {value.value
-                                                    ? (value.clause === 'between' || value.clause === 'not_between') && Array.isArray(value.value)
-                                                        ? value.value.length === 2
-                                                            ? `${format(parseISO(value.value[0]), 'PPP')} - ${format(parseISO(value.value[1]), 'PPP')}`
-                                                            : 'Pick dates'
-                                                        : format(parseISO(value.value), 'PPP')
-                                                    : 'Pick a date'}
-                                            </Button>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-auto p-0" align="start">
-                                            <Calendar
-                                                {...({
-                                                    mode: value.clause === 'between' || value.clause === 'not_between' ? 'range' : 'single',
-                                                    selected: value.value
+                                    ) : filter.type === 'set' ? (
+                                        value.clause === 'in' || value.clause === 'not_in' || filter.multiple ? (
+                                            // Multiple selection - use custom Shadcn multi-select
+                                            <MultiSelectFilter options={filter.options || []} />
+                                        ) : (
+                                            // Single selection - use Shadcn Select
+                                            <Select value={value.value || ''} onValueChange={(newValue) => setFilterValue(newValue)}>
+                                                <SelectTrigger className="h-8 w-full">
+                                                    <SelectValue placeholder="Select an option..." />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {filter.options?.map((option) => (
+                                                        <SelectItem key={option.value} value={option.value.toString()}>
+                                                            {option.label}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        )
+                                    ) : filter.type === 'date' ? (
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <Button
+                                                    variant="outline"
+                                                    className={cn(
+                                                        'h-8 w-full justify-start text-left font-normal',
+                                                        !value.value && 'text-muted-foreground',
+                                                    )}
+                                                >
+                                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                                    {value.value
                                                         ? (value.clause === 'between' || value.clause === 'not_between') && Array.isArray(value.value)
                                                             ? value.value.length === 2
-                                                                ? {
-                                                                      from: parseISO(value.value[0]),
-                                                                      to: parseISO(value.value[1]),
-                                                                  }
-                                                                : undefined
-                                                            : parseISO(value.value)
-                                                        : undefined,
-                                                    onSelect: (date: any) => {
-                                                        if (value.clause === 'between' || value.clause === 'not_between') {
-                                                            if (date?.from && date?.to) {
-                                                                setFilterValue([format(date.from, 'yyyy-MM-dd'), format(date.to, 'yyyy-MM-dd')]);
+                                                                ? `${format(parseISO(value.value[0]), 'PPP')} - ${format(parseISO(value.value[1]), 'PPP')}`
+                                                                : 'Pick dates'
+                                                            : format(parseISO(value.value), 'PPP')
+                                                        : 'Pick a date'}
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-0" align="start">
+                                                <Calendar
+                                                    {...({
+                                                        mode: value.clause === 'between' || value.clause === 'not_between' ? 'range' : 'single',
+                                                        selected: value.value
+                                                            ? (value.clause === 'between' || value.clause === 'not_between') &&
+                                                              Array.isArray(value.value)
+                                                                ? value.value.length === 2
+                                                                    ? {
+                                                                          from: parseISO(value.value[0]),
+                                                                          to: parseISO(value.value[1]),
+                                                                      }
+                                                                    : undefined
+                                                                : parseISO(value.value)
+                                                            : undefined,
+                                                        onSelect: (date: any) => {
+                                                            if (value.clause === 'between' || value.clause === 'not_between') {
+                                                                if (date?.from && date?.to) {
+                                                                    setFilterValue([format(date.from, 'yyyy-MM-dd'), format(date.to, 'yyyy-MM-dd')]);
+                                                                }
+                                                            } else if (date) {
+                                                                setFilterValue(format(date, 'yyyy-MM-dd'));
                                                             }
-                                                        } else if (date) {
-                                                            setFilterValue(format(date, 'yyyy-MM-dd'));
-                                                        }
-                                                    },
-                                                    disabled: (date: Date) => date > new Date() || date < new Date('1900-01-01'),
-                                                    initialFocus: true,
-                                                } as any)}
-                                            />
-                                        </PopoverContent>
-                                    </Popover>
-                                ) : null}
+                                                        },
+                                                        disabled: (date: Date) => date > new Date() || date < new Date('1900-01-01'),
+                                                        initialFocus: true,
+                                                    } as any)}
+                                                />
+                                            </PopoverContent>
+                                        </Popover>
+                                    ) : null}
+                                </div>
                             </div>
-                        </div>
-                    )}
+                        )}
                 </div>
             </PopoverContent>
         </Popover>

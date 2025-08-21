@@ -87,6 +87,9 @@ return [
     'clause_equal_or_before'       => 'equal or before',
     'clause_after'                 => 'after',
     'clause_equal_or_after'        => 'equal or after',
+    'clause_with_trashed'          => 'with trashed',
+    'clause_only_trashed'          => 'only trashed',
+    'clause_without_trashed'       => 'without trashed',
 
     // Legacy keys (for backward compatibility during transition)
     'All'              => 'All',

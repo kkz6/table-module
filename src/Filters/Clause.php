@@ -35,6 +35,10 @@ enum Clause: string
     case In    = 'in';
     case NotIn = 'not_in';
 
+    case WithTrashed = 'with_trashed';
+    case OnlyTrashed = 'only_trashed';
+    case WithoutTrashed = 'without_trashed';
+
     /**
      * Determine if the clause is negated.
      */
@@ -84,6 +88,9 @@ enum Clause: string
             self::IsFalse,
             self::IsSet,
             self::IsNotSet,
+            self::WithTrashed,
+            self::OnlyTrashed,
+            self::WithoutTrashed,
         ]);
     }
 }

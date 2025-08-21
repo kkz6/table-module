@@ -172,6 +172,10 @@ export type ClauseType =
     // Boolean
     | 'is_true'
     | 'is_false'
+    // Trashed (soft deletes)
+    | 'with_trashed'
+    | 'only_trashed'
+    | 'without_trashed'
     // Date operations
     | 'before'
     | 'equal_or_before'
@@ -247,7 +251,7 @@ export interface FilterValue {
 export interface FilterDefinitionExtended {
     attribute: string;
     label: string;
-    type: 'text' | 'numeric' | 'date' | 'boolean' | 'set';
+    type: 'text' | 'numeric' | 'date' | 'boolean' | 'set' | 'trashed';
     clauses: string[];
     options?: FilterOptionExtended[];
     multiple?: boolean;
