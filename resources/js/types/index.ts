@@ -133,6 +133,7 @@ export interface FilterDefinition {
     label: string;
     type?: string;
     options?: FilterOption[];
+    hidden?: boolean;
     [key: string]: any;
 }
 

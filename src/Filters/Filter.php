@@ -38,6 +38,7 @@ abstract class Filter implements Arrayable
         protected ?Closure $validateUsing = null,
         protected ?array $meta = null,
         protected bool $applyUnwrapped = false,
+        protected mixed $hidden = false,
     ) {
         if (blank($label)) {
             $this->label = Str::headline($this->attribute);
@@ -66,6 +67,7 @@ abstract class Filter implements Arrayable
         Closure|callable|null $validateUsing = null,
         ?array $meta = null,
         bool $applyUnwrapped = false,
+        mixed $hidden = false,
     ): static {
         return new static(
             attribute: $attribute,
@@ -76,6 +78,7 @@ abstract class Filter implements Arrayable
             validateUsing: Helpers::asClosure($validateUsing),
             meta: $meta,
             applyUnwrapped: $applyUnwrapped,
+            hidden: $hidden,
         );
     }
 
@@ -86,7 +89,7 @@ abstract class Filter implements Arrayable
     {
         foreach ($clauses as $clause) {
             if (! $clause instanceof Clause) {
-                throw new TypeError('Each clause must be an instance of '.Clause::class);
+                throw new TypeError('Each clause must be an instance of ' . Clause::class);
             }
         }
 
@@ -122,6 +125,16 @@ abstract class Filter implements Arrayable
     public function applyUnwrapped(bool $value = true): static
     {
         $this->applyUnwrapped = $value;
+
+        return $this;
+    }
+
+    /**
+     * Set the filter as hidden based on a condition.
+     */
+    public function hidden(mixed $condition = true): static
+    {
+        $this->hidden = $condition;
 
         return $this;
     }
@@ -197,6 +210,14 @@ abstract class Filter implements Arrayable
     }
 
     /**
+     * Determine if the filter should be hidden.
+     */
+    public function isHidden(): bool
+    {
+        return (bool) value($this->hidden);
+    }
+
+    /**
      * The default clauses for the filter.
      */
     abstract public static function defaultClauses(): array;
@@ -240,7 +261,7 @@ abstract class Filter implements Arrayable
      */
     public function normalizeValue(mixed $value, Clause $clause, Builder $resource): mixed
     {
-        $validator = $this->validateUsing ?? fn (mixed $value, Clause $clause, Builder $resource): mixed => $clause->isWithoutComparison() ? null : $this->validate($value, $clause, $resource);
+        $validator = $this->validateUsing ?? fn(mixed $value, Clause $clause, Builder $resource): mixed => $clause->isWithoutComparison() ? null : $this->validate($value, $clause, $resource);
 
         return $validator($value, $clause, $resource);
     }
@@ -289,7 +310,7 @@ abstract class Filter implements Arrayable
         if (! $clause->isNegated()) {
             $resource->whereHas(
                 $this->relationshipName(),
-                fn (Builder $query) => $applier($query, $this->relationshipColumn(), $clause, $value)
+                fn(Builder $query) => $applier($query, $this->relationshipColumn(), $clause, $value)
             );
 
             return;
@@ -298,7 +319,7 @@ abstract class Filter implements Arrayable
         $resource->where(function (Builder $resource) use ($applier, $clause, $value): void {
             $resource->doesntHave($this->relationshipName())->orWhereHas(
                 $this->relationshipName(),
-                fn (Builder $query) => $applier($query, $this->relationshipColumn(), $clause, $value)
+                fn(Builder $query) => $applier($query, $this->relationshipColumn(), $clause, $value)
             );
         });
     }
@@ -333,6 +354,7 @@ abstract class Filter implements Arrayable
             'clauses'         => $this->clauses,
             'meta'            => $this->meta,
             'hasDefaultValue' => $this->hasDefaultValue(),
+            'hidden'          => $this->isHidden(),
         ];
     }
 }

@@ -6,7 +6,6 @@ namespace Modules\Table\Filters;
 
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Modules\Table\Exception\UnsupportedClauseException;
 
 class TrashedFilter extends Filter
@@ -19,7 +18,8 @@ class TrashedFilter extends Filter
         ?\Closure $applyUsing = null,
         ?\Closure $validateUsing = null,
         ?array $meta = null,
-        bool $applyUnwrapped = true, // Trashed filters need to be applied unwrapped
+        bool $applyUnwrapped = true,
+        \Closure|bool|null $hidden = null
     ) {
         parent::__construct(
             attribute: $attribute,
@@ -30,23 +30,25 @@ class TrashedFilter extends Filter
             validateUsing: $validateUsing,
             meta: $meta,
             applyUnwrapped: $applyUnwrapped,
+            hidden: $hidden,
         );
     }
+
     /**
      * {@inheritDoc}
      */
     public function apply(Builder $resource, string $attribute, Clause $clause, mixed $value): void
     {
         // Check if the model uses SoftDeletes trait
-        if (!$this->modelUsesSoftDeletes($resource)) {
+        if (! $this->modelUsesSoftDeletes($resource)) {
             return; // Silently ignore if model doesn't support soft deletes
         }
 
         match ($clause) {
-            Clause::WithTrashed => $this->applyWithTrashed($resource),
-            Clause::OnlyTrashed => $this->applyOnlyTrashed($resource),
+            Clause::WithTrashed    => $this->applyWithTrashed($resource),
+            Clause::OnlyTrashed    => $this->applyOnlyTrashed($resource),
             Clause::WithoutTrashed => $this->applyWithoutTrashed($resource),
-            default => throw UnsupportedClauseException::for($clause),
+            default                => throw UnsupportedClauseException::for($clause),
         };
     }
 

@@ -15,7 +15,6 @@ import type { AddFilterDropdownProps } from './types';
 
 export default function AddFilterDropdown({ filters, state, onAdd }: AddFilterDropdownProps): React.ReactElement {
     const { t } = useLang();
-
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
