@@ -6,6 +6,7 @@ namespace Modules\Table\Filters;
 
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Database\Eloquent\Builder;
+use Modules\Table\Exception\UnsupportedClauseException;
 use Throwable;
 
 class DateFilter extends Filter

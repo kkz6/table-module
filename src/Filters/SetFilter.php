@@ -8,6 +8,7 @@ use Closure;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Arr;
+use Modules\Table\Exception\UnsupportedClauseException;
 
 class SetFilter extends Filter
 {

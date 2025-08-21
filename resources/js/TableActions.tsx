@@ -1,8 +1,7 @@
 import { useLang } from '@shared/hooks/use-lang';
 import { MoreHorizontal } from 'lucide-react';
 import { useState } from 'react';
-import ConfirmActionDialog from './ConfirmActionDialog';
-import ConfirmDialog from './ConfirmDialog';
+import ConfirmDialog, { ConfirmActionDialog } from './ConfirmDialog';
 import FailedActionDialog from './FailedActionDialog';
 import type { ActionsProps, ActionSuccessResult, CustomActionResult, ExportSuccessResult, TableAction, TableExport } from './types/actions';
 import { visitUrl } from './urlHelpers';
@@ -38,9 +37,8 @@ export default function Actions({
 
     const handle = (action: TableAction): void => {
         // Check if confirmation is actually needed (has confirmation content)
-        const needsConfirmation = action.confirmationRequired && 
-            (action.confirmationTitle || action.confirmationMessage);
-        
+        const needsConfirmation = action.confirmationRequired && (action.confirmationTitle || action.confirmationMessage);
+
         if (!needsConfirmation) {
             return perform(action);
         }

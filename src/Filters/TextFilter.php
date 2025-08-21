@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Modules\Table\Filters;
 
 use Illuminate\Contracts\Database\Eloquent\Builder;
+use Modules\Table\Exception\UnsupportedClauseException;
 use Modules\Table\QueryBuilder;
 
 class TextFilter extends Filter
