@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Modules\Table\Columns\Column;
+use Modules\Table\Enums\SortDirection;
 use Modules\Table\Filters\Filter;
 use Modules\Table\Filters\FilterRequest;
 
