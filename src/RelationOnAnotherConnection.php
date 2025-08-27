@@ -12,8 +12,8 @@ use Illuminate\Database\Eloquent\Relations\HasOneOrMany;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Str;
 use Modules\Table\Filters\Clause;
-use Modules\Table\Filters\UnsupportedNestedRelationException;
-use Modules\Table\Filters\UnsupportedRelationTypeException;
+use Modules\Table\Exceptions\UnsupportedNestedRelationException;
+use Modules\Table\Exceptions\UnsupportedRelationTypeException;
 
 class RelationOnAnotherConnection
 {

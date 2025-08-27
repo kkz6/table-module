@@ -7,7 +7,7 @@ namespace Modules\Table\Traits;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Queue\SerializesAndRestoresModelIdentifiers;
 use Illuminate\Support\Collection;
-use Modules\Table\InvalidStateException;
+use Modules\Table\Exceptions\InvalidStateException;
 use Modules\Table\Remember;
 use ReflectionClass;
 use ReflectionParameter;

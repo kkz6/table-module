@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Modules\Table\Exception;
+namespace Modules\Table\Exceptions;
 
 use Modules\Table\Filters\Clause;
 use RuntimeException;

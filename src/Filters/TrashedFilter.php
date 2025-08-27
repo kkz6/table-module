@@ -6,7 +6,7 @@ namespace Modules\Table\Filters;
 
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Table\Exception\UnsupportedClauseException;
+use Modules\Table\Exceptions\UnsupportedClauseException;
 
 class TrashedFilter extends Filter
 {

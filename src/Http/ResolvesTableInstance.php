@@ -6,8 +6,8 @@ namespace Modules\Table\Http;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Modules\Table\AnonymousTable;
-use Modules\Table\AnonymousTablesException;
-use Modules\Table\InvalidTableClassException;
+use Modules\Table\Exceptions\AnonymousTablesException;
+use Modules\Table\Exceptions\InvalidTableClassException;
 use Modules\Table\Table;
 
 /** @mixin FormRequest */

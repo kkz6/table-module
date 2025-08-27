@@ -10,7 +10,7 @@ use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Str;
 use Illuminate\Support\Traits\Conditionable;
 use Illuminate\Support\Traits\Tappable;
-use Modules\Table\Exception\UnsupportedClauseException;
+use Modules\Table\Exceptions\UnsupportedClauseException;
 use Modules\Table\Helpers;
 use Modules\Table\QueryBuilder;
 use Modules\Table\RelationOnAnotherConnection;
