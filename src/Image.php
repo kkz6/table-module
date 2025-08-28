@@ -7,6 +7,8 @@ namespace Modules\Table;
 use Closure;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Traits\Conditionable;
+use Modules\Table\Enums\ImagePosition;
+use Modules\Table\Enums\ImageSize;
 use Modules\Table\Traits\HasUrl;
 
 class Image implements Arrayable
@@ -270,6 +272,6 @@ class Image implements Arrayable
             'alt'       => $this->alt,
             'title'     => $this->title,
             'remaining' => $remaining,
-        ], fn ($value): bool => ! is_null($value));
+        ], fn($value): bool => ! is_null($value));
     }
 }

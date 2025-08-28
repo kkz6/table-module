@@ -11,6 +11,7 @@ class UnsupportedClauseException extends RuntimeException
 {
     public static function for(Clause $clause): static
     {
+        // @phpstan-ignore-next-line
         return new static(sprintf('Unsupported clause [%s]', $clause->value));
     }
 }

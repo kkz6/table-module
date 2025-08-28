@@ -22,6 +22,7 @@ class FilterRequest implements Arrayable
     public static function make(Filter $filter, ?array $data = null): static
     {
         if ($data === null || $data === []) {
+            // @phpstan-ignore-next-line
             return new static(
                 filter: $filter,
                 enabled: $filter->hasDefaultValue(),
@@ -32,6 +33,7 @@ class FilterRequest implements Arrayable
 
         $data['enabled'] = filter_var($data['enabled'] ?? true, FILTER_VALIDATE_BOOLEAN);
 
+        // @phpstan-ignore-next-line
         return new static(
             filter: $filter,
             enabled: $data['enabled'],
@@ -45,7 +47,7 @@ class FilterRequest implements Arrayable
      */
     public function apply(Builder $builder): void
     {
-        $handler = fn (Builder $builder) => $this->filter->handle($builder, $this->clause, $this->value);
+        $handler = fn(Builder $builder) => $this->filter->handle($builder, $this->clause, $this->value);
 
         $this->filter->shouldBeAppliedUnwrapped()
             ? $handler($builder)

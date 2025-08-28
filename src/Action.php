@@ -15,6 +15,7 @@ use Illuminate\Support\Traits\Tappable;
 use Modules\Table\Enums\ActionStyle;
 use Modules\Table\Enums\ActionType;
 use Modules\Table\Enums\Variant;
+use Modules\Table\Exceptions\NoBulkActionException;
 use Modules\Table\Traits\BelongsToTable;
 use Modules\Table\Traits\GeneratesSignedTableUrls;
 use Modules\Table\Traits\HandlesAuthorization;
@@ -509,6 +510,7 @@ class Action implements Arrayable
             $disabledAndHidden = Helpers::asClosure($disabledAndHidden);
         }
 
+        // @phpstan-ignore-next-line
         return new static(
             label: $label,
             asRowAction: $asRowAction,

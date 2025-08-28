@@ -10,6 +10,7 @@ class UnsupportedNestedRelationException extends RuntimeException
 {
     public static function new(): static
     {
+        // @phpstan-ignore-next-line
         return new static(
             'Nested relationships with more than one level are not supported when related through another database connection.'
         );

@@ -10,6 +10,7 @@ class NoBulkActionException extends RuntimeException
 {
     public static function new(): self
     {
+        // @phpstan-ignore-next-line
         return new static('This Action does not support Bulk Actions.');
     }
 }

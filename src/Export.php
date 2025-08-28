@@ -320,12 +320,13 @@ class Export implements Arrayable
         callable|Closure|null $withQueuedJob = null,
     ): static {
         $redirect = is_string($redirect)
-            ? fn () => redirect()->to($redirect)
+            ? fn() => redirect()->to($redirect)
             : Helpers::asClosure($redirect);
 
         $using         = Helpers::asClosure($using);
         $withQueuedJob = Helpers::asClosure($withQueuedJob);
 
+        // @phpstan-ignore-next-line
         return new static(
             label: $label,
             filename: $filename,
@@ -366,9 +367,9 @@ class Export implements Arrayable
     public function redirect(Closure|RedirectResponse|callable|string $redirect): self
     {
         if (is_string($redirect)) {
-            $redirect = fn () => redirect()->to($redirect);
+            $redirect = fn() => redirect()->to($redirect);
         } elseif ($redirect instanceof RedirectResponse) {
-            $redirect = fn (): RedirectResponse => $redirect;
+            $redirect = fn(): RedirectResponse => $redirect;
         }
 
         $this->redirect = Helpers::asClosure($redirect);

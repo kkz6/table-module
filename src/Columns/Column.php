@@ -90,6 +90,7 @@ abstract class Column implements Arrayable
         Closure|callable|null $image = null,
         ?bool $stickable = null,
     ): static {
+        // @phpstan-ignore-next-line
         return new static(
             attribute: $attribute,
             header: $header ?? Str::headline($attribute),
@@ -352,7 +353,7 @@ abstract class Column implements Arrayable
     public function image(Closure|callable|string $image, Closure|callable|null $additionalCallback = null): self
     {
         $image = is_string($image)
-            ? fn (mixed $item, Image $instance): Image => $instance->url(data_get($item, $image))
+            ? fn(mixed $item, Image $instance): Image => $instance->url(data_get($item, $image))
             : Helpers::asClosure($image);
 
         $additionalCallback = Helpers::asClosure($additionalCallback);

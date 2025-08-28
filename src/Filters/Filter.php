@@ -69,6 +69,7 @@ abstract class Filter implements Arrayable
         bool $applyUnwrapped = false,
         mixed $hidden = false,
     ): static {
+        // @phpstan-ignore-next-line
         return new static(
             attribute: $attribute,
             label: $label,

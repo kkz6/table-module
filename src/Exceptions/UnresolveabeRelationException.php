@@ -10,6 +10,7 @@ class UnresolveabeRelationException extends RuntimeException
 {
     public static function new(): static
     {
+        // @phpstan-ignore-next-line
         return new static(
             'The relation could not be resolved.'
         );
