@@ -68,7 +68,7 @@ class Views implements Arrayable
         protected ?Closure $userResolver = null,
     ) {
         if (is_array($attributes)) {
-            $attributes = fn (): array => $attributes;
+            $attributes = fn(): array => $attributes;
         }
 
         Helpers::ensureClassIsModelClass($modelClass);
@@ -86,7 +86,7 @@ class Views implements Arrayable
         Closure|callable|null $userResolver = null,
     ): self {
         if (is_array($attributes)) {
-            $attributes = fn (): array => $attributes;
+            $attributes = fn(): array => $attributes;
         }
 
         return new self(
@@ -164,7 +164,7 @@ class Views implements Arrayable
     {
         $userResolver = $this->userResolver
             ?? static::$defaultUserResolver
-            ?? fn (): mixed => Auth::id();
+            ?? fn(): mixed => Auth::id();
 
         return App::call($userResolver);
     }
@@ -175,7 +175,7 @@ class Views implements Arrayable
     public function attributes(Closure|callable|array $attributes): self
     {
         if (is_array($attributes)) {
-            $attributes = fn (): array => $attributes;
+            $attributes = fn(): array => $attributes;
         }
 
         $this->attributes = Helpers::asClosure($attributes);
@@ -189,7 +189,7 @@ class Views implements Arrayable
     public static function defaultAttributes(Closure|callable|array $attributes): void
     {
         if (is_array($attributes)) {
-            $attributes = fn (): array => $attributes;
+            $attributes = fn(): array => $attributes;
         }
 
         static::$defaultAttributes = Helpers::asClosure($attributes);
@@ -202,7 +202,7 @@ class Views implements Arrayable
     {
         $resolver = $this->attributes
             ?? static::$defaultAttributes
-            ?? fn (): array => [];
+            ?? fn(): array => [];
 
         return App::call($resolver);
     }
@@ -296,10 +296,10 @@ class Views implements Arrayable
         $attributes = $this->getAttributes();
 
         return $this->query()
-            ->when($attributes !== [], fn (Builder $query) => $query->where($attributes))
-            ->when($this->shouldScopeUser(), fn (Builder $query) => $query->user($this->getUserKey()))
-            ->when($this->shouldScopeTableName(), fn (Builder $query) => $query->tableName($table->getName()))
-            ->when($this->shouldScopeStatefulResources(), fn (Builder $query) => $query->statePayload($table->getSerializedConstructorParamsState()))
+            ->when($attributes !== [], fn(Builder $query) => $query->where($attributes))
+            ->when($this->shouldScopeUser(), fn(Builder $query) => $query->user($this->getUserKey()))
+            ->when($this->shouldScopeTableName(), fn(Builder $query) => $query->tableName($table->getName()))
+            ->when($this->shouldScopeStatefulResources(), fn(Builder $query) => $query->statePayload($table->getSerializedConstructorParamsState()))
             ->table($table);
     }
 
@@ -368,7 +368,7 @@ class Views implements Arrayable
         return $this->scopedQuery()
             ->orderByTitle()
             ->get()
-            ->map(fn (Model $view): array => [
+            ->map(fn(Model $view): array => [
                 'id'        => $key = $view->getKey(),
                 'title'     => $view->title,
                 'state'     => TableRequest::forQueryParams($this->getTable(), $view->request_payload)->toArray(),

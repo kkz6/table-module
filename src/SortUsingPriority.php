@@ -74,7 +74,7 @@ class SortUsingPriority
         $count = count($this->priority);
 
         $cases = array_map(
-            fn ($index): string => sprintf('when %s = ? then %s', $this->column, $index),
+            fn($index): string => sprintf('when %s = ? then %s', $this->column, $index),
             range(0, $count - 1)
         );
 
