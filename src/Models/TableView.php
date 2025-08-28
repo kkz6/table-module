@@ -6,6 +6,7 @@ namespace Modules\Table\Models;
 
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Modules\Table\Table;
 
 /**
  * @property string $table_class

@@ -7,6 +7,7 @@ namespace Modules\Table;
 use Illuminate\Contracts\Database\Query\Builder;
 use Illuminate\Database\Connection;
 use InvalidArgumentException;
+use Modules\Table\Enums\SortDirection;
 
 /**
  * @see https://github.com/laravel/framework/pull/52483

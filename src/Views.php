@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Traits\Conditionable;
+use Modules\Table\Models\TableView;
 use Illuminate\Support\Traits\Tappable;
 use Modules\Table\Traits\BelongsToTable;
 use Modules\Table\Traits\GeneratesSignedTableUrls;
