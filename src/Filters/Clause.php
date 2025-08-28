@@ -35,8 +35,8 @@ enum Clause: string
     case In    = 'in';
     case NotIn = 'not_in';
 
-    case WithTrashed = 'with_trashed';
-    case OnlyTrashed = 'only_trashed';
+    case WithTrashed    = 'with_trashed';
+    case OnlyTrashed    = 'only_trashed';
     case WithoutTrashed = 'without_trashed';
 
     /**

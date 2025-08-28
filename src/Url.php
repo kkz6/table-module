@@ -8,7 +8,6 @@ use Closure;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Traits\Conditionable;
 use Modules\Table\Traits\HasUrl;
-use RuntimeException;
 
 class Url implements Arrayable
 {

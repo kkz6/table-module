@@ -78,7 +78,7 @@ class TableRequest implements Arrayable
         $state = $this->query('columns', []);
 
         return collect($this->table->buildColumns())
-            ->keyBy(static fn(Column $column): string => $column->getAttribute())
+            ->keyBy(static fn (Column $column): string => $column->getAttribute())
             ->map(static function (Column $column) use ($state): bool {
                 if (! $column->isToggleable()) {
                     return true;
@@ -99,7 +99,7 @@ class TableRequest implements Arrayable
         $state = $this->query('sticky', []);
 
         return collect($this->table->buildColumns())
-            ->keyBy(static fn(Column $column): string => $column->getAttribute())
+            ->keyBy(static fn (Column $column): string => $column->getAttribute())
             ->filter(static function (Column $column) use ($state): bool {
                 if (! $column->isStickable()) {
                     return false;
@@ -222,7 +222,7 @@ class TableRequest implements Arrayable
     {
         $tableName = $this->table->getName();
 
-        return $tableName === 'default' ? 'cursor' : $tableName . '[cursor]';
+        return $tableName === 'default' ? 'cursor' : $tableName.'[cursor]';
     }
 
     /**
@@ -232,7 +232,7 @@ class TableRequest implements Arrayable
     {
         $tableName = $this->table->getName();
 
-        return $tableName === 'default' ? 'page' : $tableName . '[page]';
+        return $tableName === 'default' ? 'page' : $tableName.'[page]';
     }
 
     /**
@@ -254,7 +254,7 @@ class TableRequest implements Arrayable
         }
 
         return collect($this->filters())
-            ->first(fn(FilterRequest $filterRequest): bool => $filterRequest->value !== $filterRequest->filter->getDefaultValue()) === null;
+            ->first(fn (FilterRequest $filterRequest): bool => $filterRequest->value !== $filterRequest->filter->getDefaultValue()) === null;
     }
 
     /**
@@ -282,7 +282,7 @@ class TableRequest implements Arrayable
             'cursor'  => $this->cursor(),
             'filters' => collect($this->filters())
                 ->filter->enabled
-                ->map(fn(FilterRequest $filterRequest): array => [
+                ->map(fn (FilterRequest $filterRequest): array => [
                     'clause' => $filterRequest->clause->value,
                     'value'  => $filterRequest->value,
                 ])
@@ -292,7 +292,7 @@ class TableRequest implements Arrayable
             'sort'    => $this->sort(),
             'sticky'  => $this->stickyColumns(),
         ])
-            ->reject(fn($value) => blank($value))
+            ->reject(fn ($value) => blank($value))
             ->toArray();
     }
 

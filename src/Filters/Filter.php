@@ -90,7 +90,7 @@ abstract class Filter implements Arrayable
     {
         foreach ($clauses as $clause) {
             if (! $clause instanceof Clause) {
-                throw new TypeError('Each clause must be an instance of ' . Clause::class);
+                throw new TypeError('Each clause must be an instance of '.Clause::class);
             }
         }
 
@@ -262,7 +262,7 @@ abstract class Filter implements Arrayable
      */
     public function normalizeValue(mixed $value, Clause $clause, Builder $resource): mixed
     {
-        $validator = $this->validateUsing ?? fn(mixed $value, Clause $clause, Builder $resource): mixed => $clause->isWithoutComparison() ? null : $this->validate($value, $clause, $resource);
+        $validator = $this->validateUsing ?? fn (mixed $value, Clause $clause, Builder $resource): mixed => $clause->isWithoutComparison() ? null : $this->validate($value, $clause, $resource);
 
         return $validator($value, $clause, $resource);
     }
@@ -311,7 +311,7 @@ abstract class Filter implements Arrayable
         if (! $clause->isNegated()) {
             $resource->whereHas(
                 $this->relationshipName(),
-                fn(Builder $query) => $applier($query, $this->relationshipColumn(), $clause, $value)
+                fn (Builder $query) => $applier($query, $this->relationshipColumn(), $clause, $value)
             );
 
             return;
@@ -320,7 +320,7 @@ abstract class Filter implements Arrayable
         $resource->where(function (Builder $resource) use ($applier, $clause, $value): void {
             $resource->doesntHave($this->relationshipName())->orWhereHas(
                 $this->relationshipName(),
-                fn(Builder $query) => $applier($query, $this->relationshipColumn(), $clause, $value)
+                fn (Builder $query) => $applier($query, $this->relationshipColumn(), $clause, $value)
             );
         });
     }

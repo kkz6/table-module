@@ -47,7 +47,7 @@ class FilterRequest implements Arrayable
      */
     public function apply(Builder $builder): void
     {
-        $handler = fn(Builder $builder) => $this->filter->handle($builder, $this->clause, $this->value);
+        $handler = fn (Builder $builder) => $this->filter->handle($builder, $this->clause, $this->value);
 
         $this->filter->shouldBeAppliedUnwrapped()
             ? $handler($builder)

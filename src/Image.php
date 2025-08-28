@@ -272,6 +272,6 @@ class Image implements Arrayable
             'alt'       => $this->alt,
             'title'     => $this->title,
             'remaining' => $remaining,
-        ], fn($value): bool => ! is_null($value));
+        ], fn ($value): bool => ! is_null($value));
     }
 }

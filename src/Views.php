@@ -12,8 +12,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Traits\Conditionable;
-use Modules\Table\Models\TableView;
 use Illuminate\Support\Traits\Tappable;
+use Modules\Table\Models\TableView;
 use Modules\Table\Traits\BelongsToTable;
 use Modules\Table\Traits\GeneratesSignedTableUrls;
 
@@ -312,7 +312,8 @@ class Views implements Arrayable
 
         // Simulate a request with the given query parameters to generate the view's request payload.
         $params = TableRequest::for(
-            $table, Request::create('/', parameters: $requestQueryParams)
+            $table,
+            Request::create('/', parameters: $requestQueryParams)
         )->getQueryParamsForView();
 
         return $this->query()->updateOrCreate([
