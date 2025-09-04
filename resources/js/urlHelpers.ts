@@ -84,8 +84,14 @@ export const getActionForItem: GetActionForItemFunction = (actionData, action) =
         } as ActionItem;
     }
 
-    // If actionData is already an ActionItem, return it
     if (typeof actionData === 'object' && actionData !== null) {
+        if ('hidden' in actionData) {
+            return {
+                ...actionData,
+                isVisible: !actionData.hidden,
+            } as ActionItem;
+        }
+
         return actionData as ActionItem;
     }
 
