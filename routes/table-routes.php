@@ -6,7 +6,7 @@ use Modules\Table\Http\ActionController;
 use Modules\Table\Http\ExportController;
 use Modules\Table\Http\ViewController;
 
-Route::name('inertia-tables.')->prefix('/_inertia-tables/{table}/{name}')->group(function () {
+Route::name('inertia-tables.')->middleware(['auth', 'web'])->prefix('/_inertia-tables/{table}/{name}')->group(function () {
     Route::post('/action/{action}/{state?}', ActionController::class)
         ->middleware(ValidateSignature::absolute())
         ->name('action');

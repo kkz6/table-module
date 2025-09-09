@@ -33,6 +33,7 @@ export default function ToggleColumnDropdown({ columns, state, onToggle }: Toggl
                             checked={state[column.attribute]}
                             disabled={!column.toggleable}
                             onCheckedChange={() => onToggle(column)}
+                            onSelect={(e) => e.preventDefault()}
                             className="it-dropdown-item"
                         >
                             <span>{column.header}</span>
