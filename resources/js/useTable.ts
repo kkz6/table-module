@@ -74,7 +74,7 @@ export const useTable = (resource: TableResource): UseTableReturn => {
             newState.perPage = state.perPage;
         }
 
-        const clausesWithoutValue = ['is_true', 'is_false', 'is_set', 'is_not_set'];
+        const clausesWithoutValue = ['is_true', 'is_false', 'is_set', 'is_not_set', 'with_trashed', 'only_trashed', 'without_trashed'];
 
         Object.entries(state.filters).forEach(([key, filter]: [string, FilterState]) => {
             // Only add filters to the query string if they're enabled

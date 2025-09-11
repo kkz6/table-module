@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Modules\Table\Filters;
 
 use Illuminate\Contracts\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Table\Exceptions\UnsupportedClauseException;
 
 class TrashedFilter extends Filter
@@ -35,6 +34,33 @@ class TrashedFilter extends Filter
     }
 
     /**
+     * Create a new TrashedFilter instance with applyUnwrapped defaulting to true.
+     */
+    public static function make(
+        string $attribute,
+        ?string $label = null,
+        bool $nullable = false,
+        ?array $clauses = null,
+        \Closure|callable|null $applyUsing = null,
+        \Closure|callable|null $validateUsing = null,
+        ?array $meta = null,
+        bool $applyUnwrapped = true,
+        mixed $hidden = false,
+    ): static {
+        return new static(
+            attribute: $attribute,
+            label: $label,
+            nullable: $nullable,
+            clauses: $clauses,
+            applyUsing: $applyUsing ? \Modules\Table\Helpers::asClosure($applyUsing) : null,
+            validateUsing: $validateUsing ? \Modules\Table\Helpers::asClosure($validateUsing) : null,
+            meta: $meta,
+            applyUnwrapped: $applyUnwrapped,
+            hidden: $hidden,
+        );
+    }
+
+    /**
      * {@inheritDoc}
      */
     public function apply(Builder $resource, string $attribute, Clause $clause, mixed $value): void
@@ -57,10 +83,11 @@ class TrashedFilter extends Filter
      */
     protected function modelUsesSoftDeletes(Builder $resource): bool
     {
-        // Use method_exists to check if the soft delete methods are available
-        return method_exists($resource, 'withTrashed') &&
-            method_exists($resource, 'onlyTrashed') &&
-            method_exists($resource, 'withoutTrashed');
+        // Use is_callable to check if the soft delete methods are available
+        // This works with magic methods that aren't directly on the builder
+        return is_callable([$resource, 'withTrashed']) &&
+            is_callable([$resource, 'onlyTrashed']) &&
+            is_callable([$resource, 'withoutTrashed']);
     }
 
     /**
@@ -68,10 +95,7 @@ class TrashedFilter extends Filter
      */
     protected function applyWithTrashed(Builder $resource): void
     {
-        // Use dynamic method call to avoid static analysis issues
-        if (method_exists($resource, 'withTrashed')) {
-            call_user_func([$resource, 'withTrashed']);
-        }
+        $resource->withTrashed();
     }
 
     /**
@@ -79,10 +103,7 @@ class TrashedFilter extends Filter
      */
     protected function applyOnlyTrashed(Builder $resource): void
     {
-        // Use dynamic method call to avoid static analysis issues
-        if (method_exists($resource, 'onlyTrashed')) {
-            call_user_func([$resource, 'onlyTrashed']);
-        }
+        $resource->onlyTrashed();
     }
 
     /**
@@ -90,10 +111,7 @@ class TrashedFilter extends Filter
      */
     protected function applyWithoutTrashed(Builder $resource): void
     {
-        // Use dynamic method call to avoid static analysis issues
-        if (method_exists($resource, 'withoutTrashed')) {
-            call_user_func([$resource, 'withoutTrashed']);
-        }
+        $resource->withoutTrashed();
     }
 
     /**
