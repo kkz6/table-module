@@ -53,10 +53,12 @@ class ActionRequest extends FormRequest
     {
         $table = $this->getTable();
 
-        $action = $table->actions()[$this->route('action')] ?? null;
+        // Use buildActions() to include automatically added soft delete actions
+        $actions = $table->buildActions();
+        $action = $actions[$this->route('action')] ?? null;
 
         abort_if(is_null($action), 404);
 
-        return $action->setTable($table);
+        return $action;
     }
 }

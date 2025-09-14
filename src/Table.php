@@ -22,7 +22,9 @@ use Modules\Table\Enums\PaginationType;
 use Modules\Table\Enums\ScrollPosition;
 use Modules\Table\Enums\TableComponent;
 use Modules\Table\Filters\Filter;
+use Modules\Table\Contracts\SoftDeletableTable;
 use Modules\Table\Traits\EncryptsAndDecryptsState;
+use Modules\Table\Traits\HasSoftDeleteActions;
 use RuntimeException;
 use TypeError;
 
@@ -30,6 +32,7 @@ abstract class Table implements Arrayable
 {
     use Conditionable;
     use EncryptsAndDecryptsState;
+    use HasSoftDeleteActions;
     use Tappable;
 
     /**
@@ -503,7 +506,22 @@ abstract class Table implements Arrayable
      */
     public function buildFilters(): array
     {
-        return $this->cachedFilters ??= collect($this->filters())
+        if ($this->cachedFilters !== null) {
+            return $this->cachedFilters;
+        }
+
+        $filters = collect($this->filters());
+
+        // Automatically add soft delete filter if the table implements SoftDeletableTable
+        // and the model uses soft deletes
+        if ($this instanceof SoftDeletableTable && $this->modelUsesSoftDeletes()) {
+            $softDeleteFilter = $this->getSoftDeleteFilter();
+            if ($softDeleteFilter) {
+                $filters->push($softDeleteFilter);
+            }
+        }
+
+        return $this->cachedFilters = $filters
             ->values()
             ->each(fn (Filter $filter): Filter => $filter->setTable($this))
             ->all();
@@ -551,6 +569,11 @@ abstract class Table implements Arrayable
      */
     public function scopePrimaryKey(Builder $builder, array $keys): void
     {
+        // If this table implements SoftDeletableTable, include trashed records for actions
+        if ($this instanceof SoftDeletableTable) {
+            $builder->withTrashed();
+        }
+
         $keys = array_values($keys);
 
         if ($keys === [] || $keys === ['*']) {
@@ -622,12 +645,23 @@ abstract class Table implements Arrayable
     /**
      * Collect all Actions and set the ID and Table instance on each.
      */
-    protected function buildActions()
+    public function buildActions()
     {
-        return collect($this->actions())
+        $actions = collect($this->actions());
+
+        // Automatically add soft delete actions if the table implements SoftDeletableTable
+        // and the model uses soft deletes
+        if ($this instanceof SoftDeletableTable && $this->modelUsesSoftDeletes()) {
+            $softDeleteActions = $this->getSoftDeleteActions();
+            foreach ($softDeleteActions as $action) {
+                $actions->push($action);
+            }
+        }
+
+        return $actions
             ->values()
-            ->each(fn (Action $action, $id): Action => $action->setIndex($id)->setTable($this))
-            ->toArray();
+            ->map(fn (Action $action, $id): Action => $action->setIndex($id)->setTable($this))
+            ->all();
     }
 
     /**
@@ -825,7 +859,7 @@ abstract class Table implements Arrayable
             'search'                             => $search   = $this->search(),
             'columns'                            => $columns  = collect($this->buildColumns())->toArray(),
             'filters'                            => $filters  = collect($this->buildFilters())->reject(fn (Filter $filter): bool => $filter->isHidden())->values()->toArray(),
-            'actions'                            => $actions  = $this->buildActions(),
+            'actions'                            => $actions  = collect($this->buildActions())->map(fn (Action $action) => $action->toArray())->toArray(),
             'exports'                            => $exports  = $this->buildExports(),
             'state'                              => $tableRequest->toArray(),
             'pagination'                         => $this->shouldPaginate(),
