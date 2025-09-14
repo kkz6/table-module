@@ -55,7 +55,7 @@ class ActionRequest extends FormRequest
 
         // Use buildActions() to include automatically added soft delete actions
         $actions = $table->buildActions();
-        $action = $actions[$this->route('action')] ?? null;
+        $action  = $actions[$this->route('action')] ?? null;
 
         abort_if(is_null($action), 404);
 
