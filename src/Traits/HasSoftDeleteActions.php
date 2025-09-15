@@ -75,7 +75,7 @@ trait HasSoftDeleteActions
 
         $canManage = $this->canManageSoftDeletes();
 
-        return TrashedFilter::make('trashed', 'Trashed')
+        return TrashedFilter::make('trashed', 'Deleted records')
             ->hidden(! $canManage);
     }
 

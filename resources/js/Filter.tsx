@@ -61,7 +61,7 @@ const Filter = ({ filter, value, onChange, onRemove }: FilterProps): React.React
     const focusValueInput = (): void => {
         const focusOptions = { preventScroll: true };
 
-        if (filter.type === 'boolean' || filter.type === 'trashed') {
+        if (filter.type === 'boolean') {
             clauseSelectRef.current?.focus(focusOptions);
         } else {
             const element = inputRef.current?.querySelector('input,select') as HTMLElement;
@@ -144,12 +144,8 @@ const Filter = ({ filter, value, onChange, onRemove }: FilterProps): React.React
                         <span>{filter.label}</span>
                         {(value.value ||
                             filter.type === 'boolean' ||
-                            filter.type === 'trashed' ||
                             value.clause === 'is_set' ||
-                            value.clause === 'is_not_set' ||
-                            value.clause === 'with_trashed' ||
-                            value.clause === 'only_trashed' ||
-                            value.clause === 'without_trashed') && <span className="font-mono">{getSymbolForClause(value.clause)}</span>}
+                            value.clause === 'is_not_set') && <span className="font-mono">{getSymbolForClause(value.clause)}</span>}
                         {value.value && <span className="italic">{presentableValue()}</span>}
                     </Button>
                     <Button
@@ -184,12 +180,8 @@ const Filter = ({ filter, value, onChange, onRemove }: FilterProps): React.React
                         </div>
                     )}
                     {filter.type !== 'boolean' &&
-                        filter.type !== 'trashed' &&
                         value.clause !== 'is_set' &&
-                        value.clause !== 'is_not_set' &&
-                        value.clause !== 'with_trashed' &&
-                        value.clause !== 'only_trashed' &&
-                        value.clause !== 'without_trashed' && (
+                        value.clause !== 'is_not_set' && (
                             <div className="flex items-center px-2">
                                 <div className="me-2 w-5">
                                     <Search className="size-5" />
@@ -218,7 +210,7 @@ const Filter = ({ filter, value, onChange, onRemove }: FilterProps): React.React
                                             type={filter.type === 'text' ? 'text' : 'number'}
                                             className="h-8 w-full"
                                         />
-                                    ) : filter.type === 'set' ? (
+                                    ) : filter.type === 'set' || filter.type === 'trashed' ? (
                                         value.clause === 'in' || value.clause === 'not_in' || filter.multiple ? (
                                             // Multiple selection - use custom Shadcn multi-select
                                             <MultiSelectFilter options={filter.options || []} />
