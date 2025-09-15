@@ -39,9 +39,9 @@ trait HasSoftDeleteActions
         return [
             Action::make(
                 label: 'Force Delete',
-                handle: fn (Model $model) => $model->forceDelete(),
+                handle: fn(Model $model) => $model->forceDelete(),
                 icon: 'Trash2',
-                hidden: fn (Model $model) => ! $model->trashed() || ! $canManage,
+                hidden: fn(Model $model) => ! $model->trashed() || ! $canManage,
             )->asButton()->variant(\Modules\Table\Enums\Variant::Destructive)->confirm(
                 title: 'Permanently Delete Record',
                 message: 'Are you sure you want to permanently delete this record? This action cannot be undone.',
@@ -51,9 +51,9 @@ trait HasSoftDeleteActions
 
             Action::make(
                 label: 'Restore',
-                handle: fn (Model $model) => $model->restore(),
+                handle: fn(Model $model) => $model->restore(),
                 icon: 'RotateCcw',
-                hidden: fn (Model $model) => ! $model->trashed() || ! $canManage,
+                hidden: fn(Model $model) => ! $model->trashed() || ! $canManage,
             )->asButton()->variant(\Modules\Table\Enums\Variant::Success)->confirm(
                 title: 'Restore Record',
                 message: 'Are you sure you want to restore this record?',
