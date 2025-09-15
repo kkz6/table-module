@@ -33,6 +33,6 @@ class TrashedFilter extends SetFilter
                     'without_trashed' => $query->withoutTrashed(),
                     default           => null,
                 };
-            })->default('without_trashed');
+            });
     }
 }
