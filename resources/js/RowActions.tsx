@@ -99,6 +99,12 @@ export default function RowActions({
                 delete mutableActionItem.bindings.class;
             }
 
+            // Handle openInNewTab for link actions
+            if (actionData && typeof actionData === 'object' && 'openInNewTab' in actionData && actionData.openInNewTab) {
+                mutableActionItem.bindings.target = '_blank';
+                mutableActionItem.bindings.rel = 'noopener noreferrer';
+            }
+
             if (!mutableActionItem.asDownload) {
                 mutableActionItem.bindings.onClick = () => handle(action);
             }

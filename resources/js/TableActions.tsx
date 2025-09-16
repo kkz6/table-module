@@ -73,18 +73,24 @@ export default function Actions({
             const actionKey = actions.findIndex((a) => a === action);
             const actionData = item?._actions?.[actionKey];
 
-            // Extract the URL string from the action data
+            // Extract the URL and options from the action data
             let url: string | null = null;
+            let openInNewTab = false;
+
             if (typeof actionData === 'string') {
                 url = actionData;
-            } else if (actionData && typeof actionData === 'object' && actionData.url) {
-                url = actionData.url;
+            } else if (actionData && typeof actionData === 'object') {
+                url = actionData.url || null;
+                openInNewTab = actionData.openInNewTab || false;
             }
 
-            // For modal URLs, we'll treat them as regular navigation for now
-            // In the future, this could open a shadcn dialog instead
+            // Handle navigation based on openInNewTab flag
             if (url) {
-                visitUrl(url);
+                if (openInNewTab) {
+                    window.open(url, '_blank', 'noopener,noreferrer');
+                } else {
+                    visitUrl(url);
+                }
             }
             return;
         }
