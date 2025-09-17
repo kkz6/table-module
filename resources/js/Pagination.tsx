@@ -44,11 +44,11 @@ export default function TablePagination({ meta, options, perPage, type = 'full',
         let params: Record<string, any> = {
             current_page: meta.current_page,
             current: meta.current_page,
-            from: meta.from,
+            from: meta.from.toLocaleString(),
             on_first_page: meta.on_first_page,
             on_last_page: meta.on_last_page,
             per_page: meta.per_page,
-            to: meta.to,
+            to: meta.to.toLocaleString(),
             type: type,
         };
 
@@ -57,7 +57,7 @@ export default function TablePagination({ meta, options, perPage, type = 'full',
                 ...params,
                 last: meta.last_page,
                 last_page: meta.last_page,
-                total: meta.total,
+                total: meta.total.toLocaleString(),
             };
         }
 

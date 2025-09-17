@@ -38,7 +38,7 @@ return [
     'hide_column' => 'Hide Column',
 
     // Pagination
-    'current_page_of_last' => 'Page :current of :last',
+    'current_page_of_last' => 'Showing :from to :to of :total results',
     'current_page'         => 'Page :current',
     'rows_per_page'        => 'Rows per page',
 
