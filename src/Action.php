@@ -519,7 +519,7 @@ class Action implements Arrayable
             url: $url,
             before: $before,
             handle: $handle,
-            after: is_string($after) ? fn() => redirect()->to($after) : $after,
+            after: is_string($after) ? fn () => redirect()->to($after) : $after,
             authorize: $authorize,
             chunkSize: $chunkSize,
             eachById: $eachById,
@@ -622,7 +622,7 @@ class Action implements Arrayable
             /** @var Builder $query */
             $query = $allItemsAreSelected
                 ? $queryBuilder->getResourceWithRequestApplied(applySort: false)
-                : $queryBuilder->getResource()->tap(fn(Builder $query) => $this->table->scopePrimaryKey($query, $keys));
+                : $queryBuilder->getResource()->tap(fn (Builder $query) => $this->table->scopePrimaryKey($query, $keys));
 
             $result = null;
 

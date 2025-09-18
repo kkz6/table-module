@@ -76,7 +76,7 @@ class QueryBuilder
     public function parseTermsIntoCollection(string $terms): Collection
     {
         return Collection::make(str_getcsv($terms, ' ', '"'))
-            ->reject(static fn($term = null): bool => is_null($term) || trim($term) === '')
+            ->reject(static fn ($term = null): bool => is_null($term) || trim($term) === '')
             ->values();
     }
 
@@ -89,13 +89,13 @@ class QueryBuilder
         $sortDirection = $this->tableRequest->sortDirection()?->value ?? 'asc';
 
         collect($this->table->buildColumns())
-            ->filter(static fn(Column $column): bool => $column->isNested())
+            ->filter(static fn (Column $column): bool => $column->isNested())
             ->each(function (Column $column) use ($query, $sortedColumn, $sortDirection): void {
                 $isSorted = $column->is($sortedColumn);
 
                 $query->with(
                     $column->relationshipName(),
-                    fn(Relation $relation) => $isSorted ? $relation->orderBy(
+                    fn (Relation $relation) => $isSorted ? $relation->orderBy(
                         $column->relationshipColumn(),
                         $sortDirection
                     ) : null
@@ -147,7 +147,7 @@ class QueryBuilder
                     $relationColumn = Str::afterLast($column, '.');
 
                     if (! static::isRelatedThroughAnotherConnection($nestedWhere->getModel(), $relationName)) {
-                        $nestedWhere->orWhereHas($relationName, fn(Builder $query) => $query->where(
+                        $nestedWhere->orWhereHas($relationName, fn (Builder $query) => $query->where(
                             $query->qualifyColumn($relationColumn),
                             static::getWhereLikeOperator($query),
                             $term
@@ -157,10 +157,10 @@ class QueryBuilder
                     }
 
                     $nestedWhere->orWhere(
-                        fn(Builder $query) => RelationOnAnotherConnection::make(
+                        fn (Builder $query) => RelationOnAnotherConnection::make(
                             $nestedWhere,
                             $column,
-                            fn(Builder $builder) => $builder->where(
+                            fn (Builder $builder) => $builder->where(
                                 $builder->qualifyColumn($relationColumn),
                                 static::getWhereLikeOperator($nestedWhere->getModel()->{$relationName}()->getQuery()),
                                 $term
@@ -180,16 +180,16 @@ class QueryBuilder
     public function applyFilter(Builder $query): void
     {
         collect($this->tableRequest->filters())
-            ->filter(static fn(FilterRequest $filterRequest): bool => $filterRequest->enabled)
+            ->filter(static fn (FilterRequest $filterRequest): bool => $filterRequest->enabled)
             ->whenNotEmpty(static function (Collection $filters) use ($query): void {
                 [$unwrapped, $wrapped] = $filters->partition(
-                    static fn(FilterRequest $filterRequest): bool => $filterRequest->filter->shouldBeAppliedUnwrapped()
+                    static fn (FilterRequest $filterRequest): bool => $filterRequest->filter->shouldBeAppliedUnwrapped()
                 );
 
-                $unwrapped->each(static fn(FilterRequest $filterRequest) => $filterRequest->apply($query));
+                $unwrapped->each(static fn (FilterRequest $filterRequest) => $filterRequest->apply($query));
 
                 $query->where(static function (Builder $builder) use ($wrapped): void {
-                    $wrapped->each(static fn(FilterRequest $filterRequest) => $filterRequest->apply($builder));
+                    $wrapped->each(static fn (FilterRequest $filterRequest) => $filterRequest->apply($builder));
                 });
             });
     }
@@ -263,13 +263,13 @@ class QueryBuilder
         $columns = collect($this->table->buildColumns());
 
         $columnImages = $columns
-            ->filter(static fn(Column $column): bool => $column->hasImage())
-            ->mapWithKeys(static fn(Column $column): array => [$column->getAttribute() => $column->resolveImage($model)])
+            ->filter(static fn (Column $column): bool => $column->hasImage())
+            ->mapWithKeys(static fn (Column $column): array => [$column->getAttribute() => $column->resolveImage($model)])
             ->filter();
 
         $columnUrls = $columns
-            ->filter(static fn(Column $column): bool => $column->hasUrl())
-            ->mapWithKeys(static fn(Column $column): array => [$column->getAttribute() => $column->resolveUrl($model)])
+            ->filter(static fn (Column $column): bool => $column->hasUrl())
+            ->mapWithKeys(static fn (Column $column): array => [$column->getAttribute() => $column->resolveUrl($model)])
             ->filter();
 
         $hasActions                         = $this->table->hasActions();
@@ -302,19 +302,19 @@ class QueryBuilder
             })
             ->when(
                 $hasActions || $hasExportsThatLimitsToSelectedRows,
-                fn(Collection $attributes) => $attributes->prepend($this->table->getPrimaryKey($model), '_primary_key')
+                fn (Collection $attributes) => $attributes->prepend($this->table->getPrimaryKey($model), '_primary_key')
             )
             ->when(
                 $hasBulkActions || $hasExportsThatLimitsToSelectedRows,
-                fn(Collection $attributes) => $attributes->prepend($this->table->isSelectable($model), '_is_selectable')
+                fn (Collection $attributes) => $attributes->prepend($this->table->isSelectable($model), '_is_selectable')
             )
             ->when(
                 $columnUrls->isNotEmpty(),
-                fn(Collection $attributes) => $attributes->prepend($columnUrls, '_column_urls')
+                fn (Collection $attributes) => $attributes->prepend($columnUrls, '_column_urls')
             )
             ->when(
                 $columnImages->isNotEmpty(),
-                fn(Collection $attributes) => $attributes->prepend($columnImages, '_column_images')
+                fn (Collection $attributes) => $attributes->prepend($columnImages, '_column_images')
             );
 
         $transformed = $this->table->transformModel($model, $data->all());
@@ -338,7 +338,7 @@ class QueryBuilder
     {
         return $this->resolvePaginator()
             ->withQueryString()
-            ->through(fn(Model $model): array => $this->transformModel($model));
+            ->through(fn (Model $model): array => $this->transformModel($model));
     }
 
     /**
