@@ -2,6 +2,7 @@ import { EmptyState } from '@shared/components/ui/empty-state';
 import { LucideIcon } from 'lucide-react';
 import Table from '../../TableComponent';
 import type { Action, FilterState, TableConfig } from '../../types';
+import React from 'react';
 
 interface InertiaTableWrapperProps<T = any> {
     resource: TableConfig<T>;
@@ -19,6 +20,7 @@ interface InertiaTableWrapperProps<T = any> {
     onActionSuccess?: (action: Action, keys: (string | number)[]) => void;
     onActionError?: (action: Action, keys: (string | number)[], error: unknown) => void;
     onRowClick?: (item: T, column: any) => void;
+    cell?: Record<string, (props: any) => React.ReactNode>;
 }
 
 export function InertiaTableWrapper<T = any>({
@@ -28,6 +30,7 @@ export function InertiaTableWrapper<T = any>({
     onActionSuccess,
     onActionError,
     onRowClick,
+    cell,
 }: InertiaTableWrapperProps<T>) {
     // Check if we should show the empty state
     // Show empty state only when:
@@ -52,6 +55,7 @@ export function InertiaTableWrapper<T = any>({
             onActionSuccess={onActionSuccess as any}
             onActionError={onActionError as any}
             onRowClick={onRowClick as any}
+            cell={cell}
         />
     );
 }

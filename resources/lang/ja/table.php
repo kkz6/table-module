@@ -38,7 +38,7 @@ return [
     'hide_column' => '列を非表示',
 
     // Pagination
-    'current_page_of_last' => ':last ページ中 :current ページ',
+    'current_page_of_last' => ':total 件中 :from から :to を表示',
     'current_page'         => ':current ページ',
     'rows_per_page'        => 'ページあたりの行数',
 
