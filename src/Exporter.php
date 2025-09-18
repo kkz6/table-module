@@ -16,8 +16,10 @@ use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
+use Maatwebsite\Excel\Events\AfterSheet;
 use Modules\Table\Columns\Column;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class Exporter implements FromQuery, Responsable, ShouldAutoSize, WithColumnFormatting, WithEvents, WithHeadings, WithMapping, WithStyles
@@ -193,7 +195,28 @@ class Exporter implements FromQuery, Responsable, ShouldAutoSize, WithColumnForm
      */
     public function registerEvents(): array
     {
-        return $this->events;
+        // Add default center alignment event
+        $defaultAlignmentEvent = [
+            AfterSheet::class => function (AfterSheet $event) {
+                $sheet         = $event->sheet->getDelegate();
+                $highestColumn = $sheet->getHighestColumn();
+                $highestRow    = $sheet->getHighestRow();
+
+                // Set center alignment and bold for headers (row 1)
+                $headerRange = 'A1:'.$highestColumn.'1';
+                $sheet->getStyle($headerRange)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle($headerRange)->getFont()->setBold(true);
+
+                // Set center alignment for all data cells
+                if ($highestRow > 1) {
+                    $dataRange = 'A2:'.$highestColumn.$highestRow;
+                    $sheet->getStyle($dataRange)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                }
+            },
+        ];
+
+        // Merge with any custom events passed from the table
+        return array_merge($defaultAlignmentEvent, $this->events);
     }
 
     /**
