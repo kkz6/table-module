@@ -184,9 +184,28 @@ class Exporter implements FromQuery, Responsable, ShouldAutoSize, WithColumnForm
      */
     public function map(mixed $item): array
     {
-        return $this->columns()->map(
-            fn (Column $column): mixed => $column->mapForExport($column->getDataFromItem($item), $this->table, $item)
-        )->all();
+        return $this->columns()->map(function (Column $column) use ($item): mixed {
+            $value = $column->mapForExport($column->getDataFromItem($item), $this->table, $item);
+
+            // Apply default formatting for null/zero values and booleans
+            // Handle boolean values
+            if (is_bool($value)) {
+                return $value ? 'True' : 'False';
+            }
+
+            // Handle null or empty string values - show as '-'
+            if ($value === null || $value === '') {
+                return '-';
+            }
+
+            // Handle numeric zero values (including 0.00) - show as '0'
+            if (is_numeric($value) && $value == 0) {
+                return '0';
+            }
+
+            // Return the value as is for all other cases
+            return $value;
+        })->all();
     }
 
     /**
