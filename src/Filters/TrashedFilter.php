@@ -15,10 +15,11 @@ class TrashedFilter extends SetFilter
         ?array $clauses = null,
         \Closure|callable|null $applyUsing = null,
         \Closure|callable|null $validateUsing = null,
-        ?array $meta = null, bool $applyUnwrapped = false,
+        ?array $meta = null,
+        bool $applyUnwrapped = false,
         mixed $hidden = false
     ): static {
-        return parent::make($attribute, $label ?? 'Trashed', true, $clauses, $applyUsing, $validateUsing, $meta, $applyUnwrapped)
+        return parent::make($attribute, $label ?? 'Trashed', true, $clauses, $applyUsing, $validateUsing, $meta, true) // Changed to true for applyUnwrapped
             ->options([
                 'all'             => 'All Records',
                 'without_trashed' => 'Without Trashed',
@@ -28,11 +29,12 @@ class TrashedFilter extends SetFilter
             ->withoutClause()
             ->applyUsing(function (Builder $query, string $attribute, $clause, mixed $value) {
                 match ($value) {
+                    'all'             => $query->withTrashed(),
                     'withTrashed'     => $query->withTrashed(),
                     'only_trashed'    => $query->onlyTrashed(),
                     'without_trashed' => $query->withoutTrashed(),
-                    default           => null,
+                    default           => $query->withoutTrashed(), // Default behavior
                 };
-            });
+            }, true); // Apply unwrapped
     }
 }
