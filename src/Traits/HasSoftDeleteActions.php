@@ -63,7 +63,10 @@ trait HasSoftDeleteActions
             label: 'Force Delete',
             handle: fn(Model $model) => $this->handleForceDelete($model),
             icon: 'Trash2',
-            hidden: fn(Model $model) => ! $model->trashed() || ! $canManage,
+            hidden: function (Model $model) use ($canManage) {
+                // @phpstan-ignore-next-line - SoftDeletes methods are available on models using the trait
+                return ! $model->trashed() || ! $canManage;
+            },
         )->asButton()->variant(\Modules\Table\Enums\Variant::Destructive)->confirm(
             title: $this->getForceDeleteConfirmTitle(),
             message: $this->getForceDeleteConfirmMessage(),
@@ -82,7 +85,10 @@ trait HasSoftDeleteActions
             label: 'Restore',
             handle: fn(Model $model) => $this->handleRestore($model),
             icon: 'RotateCcw',
-            hidden: fn(Model $model) => ! $model->trashed() || ! $canManage,
+            hidden: function (Model $model) use ($canManage) {
+                // @phpstan-ignore-next-line - SoftDeletes methods are available on models using the trait
+                return ! $model->trashed() || ! $canManage;
+            },
         )->asButton()->variant(\Modules\Table\Enums\Variant::Success)->confirm(
             title: $this->getRestoreConfirmTitle(),
             message: $this->getRestoreConfirmMessage(),
@@ -97,6 +103,7 @@ trait HasSoftDeleteActions
      */
     protected function handleForceDelete(Model $model): mixed
     {
+        // @phpstan-ignore-next-line - SoftDeletes methods are available on models using the trait
         return $model->forceDelete();
     }
 
@@ -106,6 +113,7 @@ trait HasSoftDeleteActions
      */
     protected function handleRestore(Model $model): mixed
     {
+        // @phpstan-ignore-next-line - SoftDeletes methods are available on models using the trait
         return $model->restore();
     }
 

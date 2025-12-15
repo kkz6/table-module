@@ -571,6 +571,7 @@ abstract class Table implements Arrayable
     {
         // If this table implements SoftDeletableTable, include trashed records for actions
         if ($this instanceof SoftDeletableTable) {
+            // @phpstan-ignore-next-line - SoftDeletes methods are available on models using the trait
             $builder->withTrashed();
         }
 
