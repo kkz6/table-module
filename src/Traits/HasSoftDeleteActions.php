@@ -62,7 +62,7 @@ trait HasSoftDeleteActions
     {
         return Action::make(
             label: 'Force Delete',
-            handle: fn(Model $model) => $this->handleForceDelete($model),
+            handle: fn (Model $model) => $this->handleForceDelete($model),
             icon: 'Trash2',
             hidden: function (Model $model) use ($canManage) {
                 // @phpstan-ignore-next-line - SoftDeletes methods are available on models using the trait
@@ -84,7 +84,7 @@ trait HasSoftDeleteActions
     {
         return Action::make(
             label: 'Restore',
-            handle: fn(Model $model) => $this->handleRestore($model),
+            handle: fn (Model $model) => $this->handleRestore($model),
             icon: 'RotateCcw',
             hidden: function (Model $model) use ($canManage) {
                 // @phpstan-ignore-next-line - SoftDeletes methods are available on models using the trait
@@ -104,7 +104,7 @@ trait HasSoftDeleteActions
      */
     protected function handleForceDelete(Model $model): mixed
     {
-      // @phpstan-ignore-next-line - SoftDeletes methods are available on models using the trait
+        // @phpstan-ignore-next-line - SoftDeletes methods are available on models using the trait
         $result = $model->forceDelete();
 
         if ($result && app()->bound('toast')) {
@@ -120,7 +120,7 @@ trait HasSoftDeleteActions
      */
     protected function handleRestore(Model $model): mixed
     {
-      // @phpstan-ignore-next-line - SoftDeletes methods are available on models using the trait
+        // @phpstan-ignore-next-line - SoftDeletes methods are available on models using the trait
         $result = $model->restore();
 
         if ($result && app()->bound('toast')) {
