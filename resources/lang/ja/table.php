@@ -60,6 +60,10 @@ return [
     'yes'     => 'はい',
     'no'      => 'いいえ',
 
+    // Soft delete messages
+    'force_deleted' => 'レコードが完全に削除されました',
+    'restored'      => 'レコードが正常に復元されました',
+
     // Filter clauses
     'clause_equals'                => '等しい',
     'clause_not_equals'            => '等しくない',

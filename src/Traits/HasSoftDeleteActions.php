@@ -6,6 +6,7 @@ namespace Modules\Table\Traits;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Shared\Facades\Toast;
 use Modules\Table\Action;
 use Modules\Table\Contracts\SoftDeletableTable;
 use Modules\Table\Filters\TrashedFilter;
@@ -97,7 +98,13 @@ trait HasSoftDeleteActions
      */
     protected function handleForceDelete(Model $model): mixed
     {
-        return $model->forceDelete();
+        $result = $model->forceDelete();
+
+        if ($result && app()->bound('toast')) {
+            Toast::success(trans('table::table.force_deleted'));
+        }
+
+        return $result;
     }
 
     /**
@@ -106,7 +113,13 @@ trait HasSoftDeleteActions
      */
     protected function handleRestore(Model $model): mixed
     {
-        return $model->restore();
+        $result = $model->restore();
+
+        if ($result && app()->bound('toast')) {
+            Toast::success(trans('table::table.restored'));
+        }
+
+        return $result;
     }
 
     /**

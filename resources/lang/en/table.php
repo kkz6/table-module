@@ -60,6 +60,10 @@ return [
     'yes'     => 'Yes',
     'no'      => 'No',
 
+    // Soft delete messages
+    'force_deleted' => 'Record permanently deleted',
+    'restored'      => 'Record restored successfully',
+
     // Filter clauses
     'clause_equals'                => 'equals',
     'clause_not_equals'            => 'not equals',
