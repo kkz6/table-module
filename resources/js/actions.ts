@@ -14,10 +14,10 @@ import type {
 
 export const useActions = (
     resource?: any,
-    tableInstance?: any,
-    onActionSuccess?: ((action: any, keys: any[]) => void) | null,
-    onActionError?: ((action: any, keys: any[], error: any) => void) | null,
-    onCustomAction?: ((action: any, keys: any[], onFinish?: () => void) => void) | null,
+    _tableInstance?: any,
+    _onActionSuccess?: ((action: any, keys: any[]) => void) | null,
+    _onActionError?: ((action: any, keys: any[], error: any) => void) | null,
+    _onCustomAction?: ((action: any, keys: any[], onFinish?: () => void) => void) | null,
 ): UseActionsReturn => {
     const [isPerformingAction, setIsPerformingAction] = useState<boolean>(false);
     const [selectedItems, setSelectedItems] = useState<(string | number)[]>([]);

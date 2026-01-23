@@ -48,7 +48,7 @@ export default function TablePagination({ meta, options, perPage, type = 'full',
             on_first_page: meta.on_first_page,
             on_last_page: meta.on_last_page,
             per_page: meta.per_page,
-            to: meta.to  || 0,
+            to: meta.to || 0,
             type: type,
         };
 
@@ -57,7 +57,7 @@ export default function TablePagination({ meta, options, perPage, type = 'full',
                 ...params,
                 last: meta.last_page,
                 last_page: meta.last_page,
-                total: meta.total  || 0,
+                total: meta.total || 0,
             };
         }
 

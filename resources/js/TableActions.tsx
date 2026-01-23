@@ -120,11 +120,19 @@ export default function Actions({
                     // Make sure we have the expected error structure
                     if (errorData && typeof errorData === 'object' && 'keys' in errorData) {
                         const { keys, error } = errorData as { keys: (string | number)[]; error: any };
-                        onError ? onError(action, keys, error) : setActionFailed(true);
+                        if (onError) {
+                            onError(action, keys, error);
+                        } else {
+                            setActionFailed(true);
+                        }
                     } else {
                         // If error structure is unexpected, still handle it
                         console.error('Unexpected error structure in table action:', errorData);
-                        onError ? onError(action, keys, errorData) : setActionFailed(true);
+                        if (onError) {
+                            onError(action, keys, errorData);
+                        } else {
+                            setActionFailed(true);
+                        }
                     }
                 });
         }
