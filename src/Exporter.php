@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Modules\Table;
 
-use Illuminate\Contracts\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Contracts\Support\Responsable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
@@ -107,6 +107,7 @@ class Exporter implements FromQuery, Responsable, ShouldAutoSize, WithColumnForm
             $callback($query);
         }
 
+        /** @var Builder */
         return $query;
     }
 
