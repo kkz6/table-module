@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Modules\Table;
 
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Contracts\Support\Responsable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 use Maatwebsite\Excel\Concerns\Exportable;
