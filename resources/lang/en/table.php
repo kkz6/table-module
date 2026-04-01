@@ -60,6 +60,24 @@ return [
     'yes'     => 'Yes',
     'no'      => 'No',
 
+    // Common action labels
+    'action_view'              => 'View',
+    'action_edit'              => 'Edit',
+    'action_delete'            => 'Delete',
+    'action_approve'           => 'Approve',
+    'action_reject'            => 'Reject',
+    'action_cancel'            => 'Cancel',
+    'action_view_pdf'          => 'View PDF',
+    'action_send_email'        => 'Send Email',
+    'action_duplicate'         => 'Duplicate',
+    'action_send_for_approval' => 'Send for Approval',
+    'action_toggle_status'     => 'Toggle Status',
+    'action_upload_to_dropbox' => 'Upload to Dropbox',
+    'action_create_meet'       => 'Create Meet',
+    'action_create_employee'   => 'Create Employee',
+    'action_create_invoice'    => 'Create Invoice',
+    'action_manage'            => 'Manage',
+
     // Filter clauses
     'clause_equals'                => 'equals',
     'clause_not_equals'            => 'not equals',

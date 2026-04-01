@@ -60,6 +60,24 @@ return [
     'yes'     => 'はい',
     'no'      => 'いいえ',
 
+    // Common action labels
+    'action_view'              => '表示',
+    'action_edit'              => '編集',
+    'action_delete'            => '削除',
+    'action_approve'           => '承認',
+    'action_reject'            => '却下',
+    'action_cancel'            => 'キャンセル',
+    'action_view_pdf'          => 'PDF表示',
+    'action_send_email'        => 'メール送信',
+    'action_duplicate'         => '複製',
+    'action_send_for_approval' => '承認依頼',
+    'action_toggle_status'     => 'ステータス切替',
+    'action_upload_to_dropbox' => 'Dropboxにアップロード',
+    'action_create_meet'       => 'ミーティング作成',
+    'action_create_employee'   => '従業員作成',
+    'action_create_invoice'    => '請求書作成',
+    'action_manage'            => '管理',
+
     // Filter clauses
     'clause_equals'                => '等しい',
     'clause_not_equals'            => '等しくない',
