@@ -353,16 +353,16 @@ class Action implements Arrayable
      * Confirm the action before performing it.
      */
     public function confirm(
-        string $title = 'Confirm action',
-        string $message = 'Are you sure you want to perform this action?',
-        string $confirmButton = 'Yes',
-        string $cancelButton = 'Cancel',
+        ?string $title = null,
+        ?string $message = null,
+        ?string $confirmButton = null,
+        ?string $cancelButton = null,
     ): self {
         $this->confirmationRequired      = true;
-        $this->confirmationTitle         = $title;
-        $this->confirmationMessage       = $message;
-        $this->confirmationConfirmButton = $confirmButton;
-        $this->confirmationCancelButton  = $cancelButton;
+        $this->confirmationTitle         = $title ?? __('table::table.confirm_action_title');
+        $this->confirmationMessage       = $message ?? __('table::table.confirm_action_message');
+        $this->confirmationConfirmButton = $confirmButton ?? __('table::table.confirm_action_yes');
+        $this->confirmationCancelButton  = $cancelButton ?? __('table::table.confirm_action_cancel');
 
         return $this;
     }
@@ -477,10 +477,10 @@ class Action implements Arrayable
         int $chunkSize = 1000,
         bool $eachById = true,
         bool $confirmationRequired = false,
-        string $confirmationTitle = 'Confirm action',
-        string $confirmationMessage = 'Are you sure you want to perform this action?',
-        string $confirmationConfirmButton = 'Yes',
-        string $confirmationCancelButton = 'Cancel',
+        ?string $confirmationTitle = null,
+        ?string $confirmationMessage = null,
+        ?string $confirmationConfirmButton = null,
+        ?string $confirmationCancelButton = null,
         bool $showLabel = true,
         ?string $icon = null,
         ?array $dataAttributes = null,
@@ -524,10 +524,10 @@ class Action implements Arrayable
             chunkSize: $chunkSize,
             eachById: $eachById,
             confirmationRequired: $confirmationRequired,
-            confirmationTitle: $confirmationTitle,
-            confirmationMessage: $confirmationMessage,
-            confirmationConfirmButton: $confirmationConfirmButton,
-            confirmationCancelButton: $confirmationCancelButton,
+            confirmationTitle: $confirmationTitle ?? __('table::table.confirm_action_title'),
+            confirmationMessage: $confirmationMessage ?? __('table::table.confirm_action_message'),
+            confirmationConfirmButton: $confirmationConfirmButton ?? __('table::table.confirm_action_yes'),
+            confirmationCancelButton: $confirmationCancelButton ?? __('table::table.confirm_action_cancel'),
             showLabel: $showLabel,
             icon: $icon,
             dataAttributes: $dataAttributes,

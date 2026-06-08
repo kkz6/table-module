@@ -12,8 +12,15 @@ return [
     'add_filter_header'     => 'Add Filter',
     'toggle_columns_header' => 'Toggle Columns',
 
+    // Confirmation dialog
+    'confirm_action_title'   => 'Confirm action',
+    'confirm_action_message' => 'Are you sure you want to perform this action?',
+    'confirm_action_yes'     => 'Yes',
+    'confirm_action_cancel'  => 'Cancel',
+
     // Search and filters
     'search_placeholder' => 'Search...',
+    'select_placeholder' => 'Select an option...',
     'active_filters'     => 'Active Filters',
     'no_results_found'   => 'No results found',
     'between_values_and' => 'and',
@@ -77,6 +84,7 @@ return [
     'action_create_employee'   => 'Create Employee',
     'action_create_invoice'    => 'Create Invoice',
     'action_manage'            => 'Manage',
+    'action_export'            => 'Export',
 
     // Filter clauses
     'clause_equals'                => 'equals',
