@@ -215,7 +215,7 @@ const Filter = ({ filter, value, onChange, onRemove }: FilterProps): React.React
                                         // Single selection - use Shadcn Select
                                         <Select value={value.value || ''} onValueChange={(newValue) => setFilterValue(newValue)}>
                                             <SelectTrigger className="h-8 w-full">
-                                                <SelectValue placeholder="Select an option..." />
+                                                <SelectValue placeholder={t('table::table.select_placeholder')} />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {filter.options?.map((option) => (
