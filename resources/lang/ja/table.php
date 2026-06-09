@@ -19,11 +19,16 @@ return [
     'confirm_action_yes'     => 'はい',
     'confirm_action_cancel'  => 'キャンセル',
 
-    'search_placeholder' => '検索...',
-    'select_placeholder' => 'オプションを選択...',
-    'active_filters'     => '有効なフィルター',
-    'no_results_found'   => '結果が見つかりません',
-    'between_values_and' => 'と',
+    'search_placeholder'         => '検索...',
+    'select_placeholder'         => 'オプションを選択...',
+    'select_options_placeholder' => 'オプションを選択...',
+    'search_options_placeholder' => 'オプションを検索...',
+    'no_option_found'            => 'オプションが見つかりません',
+    'pick_a_date'                => '日付を選択',
+    'pick_dates'                 => '期間を選択',
+    'active_filters'             => '有効なフィルター',
+    'no_results_found'           => '結果が見つかりません',
+    'between_values_and'         => 'と',
 
     // Row selection
     'select_all'        => 'すべて選択',

@@ -19,11 +19,16 @@ return [
     'confirm_action_cancel'  => 'Cancel',
 
     // Search and filters
-    'search_placeholder' => 'Search...',
-    'select_placeholder' => 'Select an option...',
-    'active_filters'     => 'Active Filters',
-    'no_results_found'   => 'No results found',
-    'between_values_and' => 'and',
+    'search_placeholder'         => 'Search...',
+    'select_placeholder'         => 'Select an option...',
+    'select_options_placeholder' => 'Select options...',
+    'search_options_placeholder' => 'Search options...',
+    'no_option_found'            => 'No option found.',
+    'pick_a_date'                => 'Pick a date',
+    'pick_dates'                 => 'Pick dates',
+    'active_filters'             => 'Active Filters',
+    'no_results_found'           => 'No results found',
+    'between_values_and'         => 'and',
 
     // Row selection
     'select_all'        => 'Select All',
