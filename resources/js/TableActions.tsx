@@ -1,9 +1,11 @@
 import { useLang } from '@shared/hooks/use-lang';
 import { MoreHorizontal } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import ConfirmDialog, { ConfirmActionDialog } from './ConfirmDialog';
+import ExportModal from './ExportModal';
 import FailedActionDialog from './FailedActionDialog';
-import type { ActionsProps, ActionSuccessResult, CustomActionResult, ExportSuccessResult, TableAction, TableExport } from './types/actions';
+import type { ActionsProps, ActionSuccessResult, CustomActionResult, ExportModalPayload, ExportSuccessResult, TableAction, TableExport } from './types/actions';
 import { visitUrl } from './urlHelpers';
 
 interface AsyncExportContext {
@@ -26,6 +28,7 @@ export default function Actions({
     onSuccess = null,
     onError = null,
     onHandle = null,
+    visibleColumns,
     children,
 }: ActionsProps) {
     const { t } = useLang();
@@ -34,6 +37,8 @@ export default function Actions({
 
     const [confirmDialogIsOpen, setConfirmDialogIsOpen] = useState<boolean>(false);
     const [confirmContext, setConfirmContext] = useState<ConfirmContext | null>(null);
+
+    const [exportModalContext, setExportModalContext] = useState<TableExport | null>(null);
 
     const handle = (action: TableAction): void => {
         // Check if confirmation is actually needed (has confirmation content)
@@ -48,6 +53,15 @@ export default function Actions({
     };
 
     function asyncExport(tableExport: TableExport): void {
+        if (tableExport.hasExporter) {
+            // Defer opening until after the dropdown has fully closed. Opening a
+            // controlled Radix dialog within the same interaction that closes the
+            // dropdown makes the dialog's outside-interaction guard swallow the
+            // open. A macrotask reliably lands after the menu's close handlers.
+            setTimeout(() => setExportModalContext(tableExport), 0);
+            return;
+        }
+
         if (!performAsyncExport) {
             return;
         }
@@ -63,6 +77,28 @@ export default function Actions({
             })
             .catch(() => {
                 setActionFailed(true);
+            });
+    }
+
+    function submitExport(tableExport: TableExport, payload: ExportModalPayload): void {
+        if (!performAsyncExport) {
+            return;
+        }
+
+        performAsyncExport(tableExport, payload)
+            .then(({ response }: ExportSuccessResult) => {
+                if (response.data.started) {
+                    toast.info(response.data.toastTitle, { description: response.data.toastBody });
+                }
+            })
+            .catch((errorData: unknown) => {
+                const message = (errorData as { error?: { response?: { data?: { message?: string } } } } | null)?.error?.response?.data?.message;
+
+                if (message) {
+                    toast.error(message);
+                } else {
+                    setActionFailed(true);
+                }
             });
     }
 
@@ -153,6 +189,14 @@ export default function Actions({
                 confirmButton={t('table::table.export_processing_dialog_button')}
                 onConfirm={(() => setAsyncExportDialogIsOpen(false)) as any}
                 onCancel={() => setAsyncExportDialogIsOpen(false)}
+            />
+
+            <ExportModal
+                show={!!exportModalContext}
+                tableExport={exportModalContext}
+                visibleColumns={visibleColumns}
+                onClose={() => setExportModalContext(null)}
+                onSubmit={(payload) => submitExport(exportModalContext!, payload)}
             />
         </>
     );

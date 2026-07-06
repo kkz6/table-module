@@ -22,6 +22,7 @@ use Modules\Table\Contracts\SoftDeletableTable;
 use Modules\Table\Enums\PaginationType;
 use Modules\Table\Enums\ScrollPosition;
 use Modules\Table\Enums\TableComponent;
+use Modules\Table\Exports\ExportColumn;
 use Modules\Table\Filters\Filter;
 use Modules\Table\Traits\EncryptsAndDecryptsState;
 use Modules\Table\Traits\HasSoftDeleteActions;
@@ -548,6 +549,17 @@ abstract class Table implements Arrayable
     }
 
     /**
+     * Export-only columns appended after the table's exportable columns.
+     * Override to expose data in the export that is not shown in the table.
+     *
+     * @return array<int, ExportColumn>
+     */
+    public function additionalExportColumns(): array
+    {
+        return [];
+    }
+
+    /**
      * Get the Column by attribute.
      */
     public function getColumnByAttribute(string $attribute): ?Column
@@ -897,6 +909,8 @@ abstract class Table implements Arrayable
             $this->sleepingRequest = [
                 'class'         => $this->request::class,
                 'query'         => $this->request->query->all(),
+                'request'       => $this->request->request->all(),
+                'server'        => ['CONTENT_TYPE' => $this->request->server->get('CONTENT_TYPE', '')],
                 'content'       => $this->request->getContent(),
                 'locale'        => $this->request->getLocale(),
                 'defaultLocale' => $this->request->getDefaultLocale(),
@@ -921,6 +935,8 @@ abstract class Table implements Arrayable
         $this->request = new $this->sleepingRequest['class'];
         $this->request->initialize(
             query: $this->sleepingRequest['query'],
+            request: $this->sleepingRequest['request'] ?? [],
+            server: $this->sleepingRequest['server'] ?? [],
             content: $this->sleepingRequest['content']
         );
 

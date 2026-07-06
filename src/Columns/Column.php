@@ -51,6 +51,7 @@ abstract class Column implements Arrayable
         protected Closure|bool|null $exportAs = null,
         protected Closure|string|null $exportFormat = null,
         protected Closure|array|null $exportStyle = null,
+        protected bool $exportEnabledByDefault = true,
         protected bool $visible = true,
         protected ?Closure $sortUsing = null,
         protected ?array $meta = null,
@@ -235,6 +236,24 @@ abstract class Column implements Arrayable
         $this->exportAs = false;
 
         return $this;
+    }
+
+    /**
+     * Set whether the column is enabled by default in the export column mapping.
+     */
+    public function exportEnabledByDefault(bool $condition = true): self
+    {
+        $this->exportEnabledByDefault = $condition;
+
+        return $this;
+    }
+
+    /**
+     * Returns whether the column is enabled by default in the export column mapping.
+     */
+    public function isExportEnabledByDefault(): bool
+    {
+        return $this->exportEnabledByDefault;
     }
 
     /**
@@ -532,7 +551,7 @@ abstract class Column implements Arrayable
      */
     public function mapForExport(mixed $value, Table $table, mixed $source = null): mixed
     {
-        return $this->exportAs
+        return $this->exportAs instanceof Closure
             ? call_user_func($this->exportAs, $value, $source, $table)
             : $this->mapForTable($value, $table, $source);
     }

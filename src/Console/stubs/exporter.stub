@@ -1,0 +1,24 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use Modules\Table\Exports\ExportColumn;
+use Modules\Table\Exports\Exporter;
+
+class {{ class }} extends Exporter
+{
+    /** @var class-string<\Illuminate\Database\Eloquent\Model>|null */
+    protected static ?string $model = {{ modelDefinition }};
+
+    /**
+     * @return array<int, ExportColumn>
+     */
+    public static function getColumns(): array
+    {
+        return [
+            ExportColumn::make('id'),
+        ];
+    }
+}

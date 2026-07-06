@@ -48,6 +48,36 @@ return [
     'action_failed_dialog_button'     => 'OK',
     'export_processing_dialog_button' => '処理中...',
 
+    // Export modal and actions
+    'action_export'                 => 'エクスポート',
+    'export_modal_title'            => 'エクスポート',
+    'export_modal_subtitle'         => 'エクスポートする列とファイル形式を選択してください。',
+    'export_modal_columns_header'   => '列',
+    'export_select_all'             => 'すべて選択',
+    'export_deselect_all'           => 'すべて解除',
+    'export_formats_header'         => 'ファイル形式',
+    'export_format_csv'             => 'CSV',
+    'export_format_xlsx'            => 'Excel (XLSX)',
+    'export_cancel_button'          => 'キャンセル',
+    'export_submit_button'          => 'エクスポート',
+    'export_started_toast_title'    => ':model のエクスポートを開始しました',
+    'export_started_toast_body'     => '{1} :count 件の行をバックグラウンドで処理します。完了時に通知します。|[2,*] :count 件の行をバックグラウンドで処理します。完了時に通知します。',
+    'export_completed_toast_title'  => ':model のエクスポートが完了しました',
+    'export_completed_toast_body'   => '{1} :count 件の行をエクスポートしました。|[2,*] :count 件の行をエクスポートしました。',
+    'export_failed_rows_toast_body' => '{1} :count 件の行のエクスポートに失敗しました。|[2,*] :count 件の行のエクスポートに失敗しました。',
+    'export_download_csv'           => 'CSV をダウンロード',
+    'export_download_xlsx'          => 'Excel をダウンロード',
+    'export_max_rows_message'       => 'このエクスポートは最大 :max 行までです（:count 行が要求されました）。',
+    'export_no_columns_message'     => 'エクスポートする列を 1 つ以上選択してください。',
+    'export_file_name'              => 'export-:export_id-:model',
+
+    // Row action labels
+    'action_view'              => '表示',
+    'action_edit'              => '編集',
+    'action_delete'            => '削除',
+    'action_send_for_approval' => '承認申請',
+
+
     // Loading states
     'loading_placeholder' => '読み込み中...',
 

@@ -61,9 +61,9 @@ trait HasSoftDeleteActions
     {
         return Action::make(
             label: 'Force Delete',
-            handle: fn(Model $model) => $this->handleForceDelete($model),
+            handle: fn (Model $model) => $this->handleForceDelete($model),
             icon: 'Trash2',
-            hidden: fn(Model $model) => ! $model->trashed() || ! $canManage,
+            hidden: fn (Model $model) => ! $model->trashed() || ! $canManage,
         )->asButton()->variant(\Modules\Table\Enums\Variant::Destructive)->confirm(
             title: $this->getForceDeleteConfirmTitle(),
             message: $this->getForceDeleteConfirmMessage(),
@@ -80,9 +80,9 @@ trait HasSoftDeleteActions
     {
         return Action::make(
             label: 'Restore',
-            handle: fn(Model $model) => $this->handleRestore($model),
+            handle: fn (Model $model) => $this->handleRestore($model),
             icon: 'RotateCcw',
-            hidden: fn(Model $model) => ! $model->trashed() || ! $canManage,
+            hidden: fn (Model $model) => ! $model->trashed() || ! $canManage,
         )->asButton()->variant(\Modules\Table\Enums\Variant::Success)->confirm(
             title: $this->getRestoreConfirmTitle(),
             message: $this->getRestoreConfirmMessage(),

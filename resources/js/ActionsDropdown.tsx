@@ -25,6 +25,7 @@ export default function ActionsDropdown({
     onSuccess = null,
     onError = null,
     onHandle = null,
+    visibleColumns,
 }: ActionsDropdownProps) {
     const { t } = useLang();
     const hasBulkActions = useMemo(() => actions.filter((action) => action.asBulkAction).length > 0, [actions]);
@@ -49,6 +50,7 @@ export default function ActionsDropdown({
             performAsyncExport={performAsyncExport}
             onHandle={onHandle}
             onSuccess={onSuccess}
+            visibleColumns={visibleColumns}
         >
             {({ handle, asyncExport }) => (
                 <DropdownMenu>

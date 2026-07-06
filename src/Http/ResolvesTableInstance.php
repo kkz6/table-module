@@ -13,11 +13,17 @@ use Modules\Table\Table;
 /** @mixin FormRequest */
 trait ResolvesTableInstance
 {
+    private ?Table $resolvedTable = null;
+
     /**
      * Resolve the table instance from the route parameters.
      */
     public function getTable(): Table
     {
+        if ($this->resolvedTable !== null) {
+            return $this->resolvedTable;
+        }
+
         /** @var class-string<Table> $tableClass */
         $tableClass = base64_decode($this->route('table'));
 
@@ -34,7 +40,7 @@ trait ResolvesTableInstance
             ? $tableClass::fromEncryptedState($this->route('state'))
             : $tableClass::make();
 
-        return $table->as($this->route('name'))->setRequest($this);
+        return $this->resolvedTable = $table->as($this->route('name'))->setRequest($this);
     }
 
     /**

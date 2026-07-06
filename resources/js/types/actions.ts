@@ -28,13 +28,41 @@ export interface TableAction {
     id?: string | number | null;
 }
 
+// Export column / option / payload types for pipeline exports
+export interface ExportColumnDef {
+    name: string;
+    label: string;
+    enabledByDefault: boolean;
+}
+
+export interface ExportOptionField {
+    type: 'text' | 'select' | 'checkbox';
+    name: string;
+    label: string;
+    default?: unknown;
+    options?: Record<string, string>;
+}
+
+export interface ExportModalPayload {
+    columnMap?: Record<string, { isEnabled: boolean; label: string }>;
+    formats: string[];
+    options: Record<string, unknown>;
+}
+
 // Export-specific interface
 export interface TableExport {
     url: string;
     label: string;
+    resourceLabel?: string;
     limitToSelectedRows?: boolean;
     asDownload?: boolean;
     dataAttributes?: Record<string, any>;
+    hasExporter?: boolean;
+    hasColumnMapping?: boolean;
+    enableVisibleTableColumnsByDefault?: boolean;
+    columns?: ExportColumnDef[];
+    formats?: string[];
+    optionsForm?: ExportOptionField[];
     [key: string]: any;
 }
 
@@ -74,7 +102,7 @@ export interface UseActionsReturn {
     isPerformingAction: boolean;
     isSelected: (item: any) => boolean;
     performAction: (action: TableAction, keys?: (string | number)[] | null) => Promise<ActionSuccessResult | CustomActionResult>;
-    performAsyncExport: (tableExport: TableExport) => Promise<ExportSuccessResult>;
+    performAsyncExport: (tableExport: TableExport, payload?: object) => Promise<ExportSuccessResult>;
     removeSelection: () => void;
     selectAll: (checked: boolean) => void;
     selectedItems: (string | number)[];
@@ -88,12 +116,13 @@ export interface ActionsProps {
     actions: TableAction[];
     keys: (string | number)[];
     performAction: (action: TableAction, keys?: (string | number)[] | null) => Promise<ActionSuccessResult | CustomActionResult>;
-    performAsyncExport?: ((tableExport: TableExport) => Promise<ExportSuccessResult>) | null;
+    performAsyncExport?: ((tableExport: TableExport, payload?: object) => Promise<ExportSuccessResult>) | null;
     item?: any;
     iconResolver: (icon: string) => React.ComponentType<any>;
     onSuccess?: ((action: TableAction, keys: (string | number)[]) => void) | null;
     onError?: ((action: TableAction, keys: (string | number)[], error: any) => void) | null;
     onHandle?: ((action: TableAction, keys: (string | number)[], onFinish: () => void) => void) | null;
+    visibleColumns?: Record<string, boolean>;
     children: (context: { handle: (action: TableAction) => void; asyncExport: (tableExport: TableExport) => void }) => React.ReactNode;
 }
 
@@ -103,11 +132,12 @@ export interface ActionsDropdownProps {
     exports: TableExport[];
     selectedItems: (string | number)[];
     performAction: (action: TableAction, keys?: (string | number)[] | null) => Promise<ActionSuccessResult | CustomActionResult>;
-    performAsyncExport: (tableExport: TableExport) => Promise<ExportSuccessResult>;
+    performAsyncExport: (tableExport: TableExport, payload?: object) => Promise<ExportSuccessResult>;
     iconResolver: (icon: string) => React.ComponentType<any>;
     onSuccess?: ((action: TableAction, keys: (string | number)[]) => void) | null;
     onError?: ((action: TableAction, keys: (string | number)[], error: any) => void) | null;
     onHandle?: ((action: TableAction, keys: (string | number)[], onFinish: () => void) => void) | null;
+    visibleColumns?: Record<string, boolean>;
 }
 
 // Action types for different operations

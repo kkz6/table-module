@@ -12,6 +12,13 @@ use Illuminate\Foundation\Bus\PendingDispatch;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\URL;
 use Maatwebsite\Excel\Excel;
+use Modules\Table\Exports\ExportColumn;
+use Modules\Table\Exports\ExportFormat;
+use Modules\Table\Exports\Exporter as PipelineExporter;
+use Modules\Table\Exports\Options\OptionField;
+use Modules\Table\Exports\TableExportColumnResolver;
+use Modules\Table\Exports\TableExporter;
+use Modules\Table\Models\TableExport;
 use Modules\Table\Traits\BelongsToTable;
 use Modules\Table\Traits\GeneratesSignedTableUrls;
 use Modules\Table\Traits\HandlesAuthorization;
@@ -52,6 +59,80 @@ class Export implements Arrayable
      * The default queue disk.
      */
     protected static ?string $defaultQueueDisk = null;
+
+    /**
+     * The pipeline exporter class.
+     *
+     * @var class-string<PipelineExporter>|null
+     */
+    protected ?string $exporterClass = null;
+
+    /**
+     * An explicit, translatable label for the exported resource (modal title/toasts).
+     *
+     * @var string|Closure|null
+     */
+    protected string|Closure|null $resourceLabel = null;
+
+    /**
+     * Whether the export should expose a column mapping UI.
+     */
+    protected bool $columnMapping = true;
+
+    /**
+     * The allowed export formats, or a Closure that returns them.
+     *
+     * @var array<int, ExportFormat>|Closure|null
+     */
+    protected array|Closure|null $formats = null;
+
+    /**
+     * The maximum number of rows to export.
+     */
+    protected ?int $maxRows = null;
+
+    /**
+     * The number of rows per export chunk (or a Closure that returns it).
+     *
+     * @var int|Closure
+     */
+    protected int|Closure $chunkSize = 100;
+
+    /**
+     * The file disk name for pipeline exports.
+     */
+    protected ?string $fileDiskName = null;
+
+    /**
+     * The pipeline file name (string or Closure receiving TableExport).
+     *
+     * @var string|Closure|null
+     */
+    protected string|Closure|null $pipelineFileName = null;
+
+    /**
+     * Options to pass through to the pipeline export run.
+     *
+     * @var array<string, mixed>
+     */
+    protected array $exportOptions = [];
+
+    /**
+     * Additional query modifier applied after the exporter's modifyQuery.
+     */
+    protected ?Closure $modifyQueryUsing = null;
+
+    /**
+     * Whether visible table columns should be enabled by default in the column mapping.
+     */
+    protected bool $enableVisibleTableColumnsByDefault = false;
+
+    /**
+     * Cached pipeline metadata (columns/formats/optionsForm) — reused across multiple toArray() calls.
+     *
+     * @var array<string, mixed>|null
+     */
+    private ?array $cachedPipelineMeta = null;
 
     /**
      * @param (Closure(Table, Export, Request, Builder): mixed)|null $using
@@ -411,13 +492,300 @@ class Export implements Arrayable
     }
 
     /**
+     * Set the pipeline exporter class.
+     *
+     * When set, this takes precedence over queue()/using() for route and payload generation.
+     *
+     * @param  class-string<PipelineExporter>  $exporterClass
+     */
+    public function exporter(string $exporterClass): self
+    {
+        $this->exporterClass = $exporterClass;
+
+        return $this;
+    }
+
+    /**
+     * Use the built-in table-backed exporter: columns are resolved from the
+     * Table's own columns and additionalExportColumns(), so no exporter class
+     * is needed.
+     */
+    public function tableExporter(): self
+    {
+        $this->exporterClass = TableExporter::class;
+
+        return $this;
+    }
+
+    /**
+     * Determine whether this export resolves its columns from the Table.
+     */
+    public function isTableBacked(): bool
+    {
+        return $this->exporterClass === TableExporter::class;
+    }
+
+    /**
+     * Get the pipeline exporter class, or null when no exporter has been attached.
+     * Always guard calls with {@see hasExporter()} before use.
+     *
+     * @return class-string<PipelineExporter>|null
+     */
+    public function getExporterClass(): ?string
+    {
+        return $this->exporterClass;
+    }
+
+    /**
+     * Determine whether a pipeline exporter has been attached.
+     */
+    public function hasExporter(): bool
+    {
+        return $this->exporterClass !== null;
+    }
+
+    /**
+     * Resolve the ExportColumns for this export — from the Table when
+     * table-backed, otherwise from the dedicated exporter class.
+     *
+     * @return array<int, ExportColumn>
+     */
+    public function getExportColumns(): array
+    {
+        return $this->isTableBacked()
+            ? TableExportColumnResolver::resolve($this->getTable())
+            : $this->getExporterClass()::getColumns();
+    }
+
+    /**
+     * Set the human-friendly, pluralized label for the exported resource used in
+     * modal titles and toasts. Pass a translated string (or Closure) to localize it.
+     */
+    public function resourceLabel(string|Closure $label): self
+    {
+        $this->resourceLabel = $label;
+
+        return $this;
+    }
+
+    /**
+     * Resolve the human-friendly, pluralized label for the exported resource.
+     * Falls back to the model's class name when no explicit label is set.
+     */
+    public function getResourceLabel(): string
+    {
+        if ($this->resourceLabel !== null) {
+            return (string) ($this->resourceLabel instanceof Closure ? ($this->resourceLabel)() : $this->resourceLabel);
+        }
+
+        return $this->isTableBacked()
+            ? (string) str(class_basename($this->getTable()->resourceBuilder()->getModel()))->headline()->plural()
+            : $this->getExporterClass()::getModelLabel();
+    }
+
+    /**
+     * Set whether the export should expose a column mapping UI.
+     */
+    public function columnMapping(bool $columnMapping = true): self
+    {
+        $this->columnMapping = $columnMapping;
+
+        return $this;
+    }
+
+    /**
+     * Determine whether column mapping is enabled.
+     */
+    public function hasColumnMapping(): bool
+    {
+        return $this->columnMapping;
+    }
+
+    /**
+     * Set the allowed export formats.
+     *
+     * @param  array<int, ExportFormat>|Closure  $formats
+     */
+    public function formats(array|Closure $formats): self
+    {
+        $this->formats = $formats;
+
+        return $this;
+    }
+
+    /**
+     * Get the allowed export formats, falling back to the exporter's defaults.
+     *
+     * @return array<int, ExportFormat>
+     */
+    public function getFormats(): array
+    {
+        $formats = $this->formats instanceof Closure ? ($this->formats)() : $this->formats;
+
+        return $formats ?? ($this->hasExporter() ? $this->getExporterClass()::getFormats() : []);
+    }
+
+    /**
+     * Set the maximum number of rows to export.
+     */
+    public function maxRows(int $maxRows): self
+    {
+        $this->maxRows = $maxRows;
+
+        return $this;
+    }
+
+    /**
+     * Get the maximum number of rows to export.
+     */
+    public function getMaxRows(): ?int
+    {
+        return $this->maxRows;
+    }
+
+    /**
+     * Set the number of rows per export chunk.
+     *
+     * @param  int|Closure():int  $chunkSize
+     */
+    public function chunkSize(int|Closure $chunkSize): self
+    {
+        $this->chunkSize = $chunkSize;
+
+        return $this;
+    }
+
+    /**
+     * Get the number of rows per export chunk.
+     */
+    public function getChunkSize(): int
+    {
+        return $this->chunkSize instanceof Closure
+            ? ($this->chunkSize)()
+            : $this->chunkSize;
+    }
+
+    /**
+     * Set the file disk name for pipeline exports.
+     */
+    public function fileDisk(string $disk): self
+    {
+        $this->fileDiskName = $disk;
+
+        return $this;
+    }
+
+    /**
+     * Get the file disk name for pipeline exports.
+     */
+    public function getFileDiskName(): ?string
+    {
+        return $this->fileDiskName;
+    }
+
+    /**
+     * Set the pipeline file name (string passthrough, or Closure receiving TableExport).
+     *
+     * @param  string|Closure(TableExport): string  $fileName
+     */
+    public function fileName(string|Closure $fileName): self
+    {
+        $this->pipelineFileName = $fileName;
+
+        return $this;
+    }
+
+    /**
+     * Resolve the pipeline file name for the given export record.
+     */
+    public function getPipelineFileName(TableExport $export): ?string
+    {
+        if ($this->pipelineFileName instanceof Closure) {
+            return ($this->pipelineFileName)($export);
+        }
+
+        return $this->pipelineFileName;
+    }
+
+    /**
+     * Set additional options to pass through to the pipeline export run.
+     *
+     * @param  array<string, mixed>  $options
+     */
+    public function options(array $options): self
+    {
+        $this->exportOptions = $options;
+
+        return $this;
+    }
+
+    /**
+     * Get the additional options for the pipeline export run.
+     *
+     * @return array<string, mixed>
+     */
+    public function getExportOptions(): array
+    {
+        return $this->exportOptions;
+    }
+
+    /**
+     * Set a Closure that further modifies the exporter query.
+     *
+     * @param  callable|Closure  $closure
+     */
+    public function modifyQueryUsing(callable|Closure $closure): self
+    {
+        $this->modifyQueryUsing = Helpers::asClosure($closure);
+
+        return $this;
+    }
+
+    /**
+     * Indicate that visible table columns should be enabled by default in the column mapping.
+     */
+    public function enableVisibleTableColumnsByDefault(bool $value = true): self
+    {
+        $this->enableVisibleTableColumnsByDefault = $value;
+
+        return $this;
+    }
+
+    /**
+     * Determine whether visible table columns should be enabled by default.
+     */
+    public function shouldEnableVisibleTableColumnsByDefault(): bool
+    {
+        return $this->enableVisibleTableColumnsByDefault;
+    }
+
+    /**
+     * Build the Eloquent query for the pipeline exporter.
+     * Applies the exporter's static modifyQuery hook followed by the optional modifyQueryUsing closure.
+     *
+     * @param  array<string, mixed>  $options
+     */
+    public function buildExporterQuery(array $options = []): Builder
+    {
+        $query = $this->makeExporter()->query();
+
+        $query = $this->getExporterClass()::modifyQuery($query);
+
+        if ($this->modifyQueryUsing instanceof Closure) {
+            $query = ($this->modifyQueryUsing)($query, $options) ?? $query;
+        }
+
+        return $query;
+    }
+
+    /**
      * Get the export URL.
      */
     public function getExportUrl(): string
     {
-        $routeName = ! $this->queue && $this->asDownload
-            ? 'inertia-tables.export'
-            : 'inertia-tables.async-export';
+        $routeName = $this->hasExporter() || $this->queue || ! $this->asDownload
+            ? 'inertia-tables.async-export'
+            : 'inertia-tables.export';
 
         return $this->generateSignedTableUrl($this->table, $routeName, [
             'export' => $this->index,
@@ -432,19 +800,38 @@ class Export implements Arrayable
      */
     public function toArray(): array
     {
-        if ($this->queue && ! $this->using instanceof Closure && blank($this->getQueueDisk())) {
+        if (! $this->hasExporter() && $this->queue && ! $this->using instanceof Closure && blank($this->getQueueDisk())) {
             throw new RuntimeException('The export is queued, but no (default) disk is set.');
         }
 
-        return [
+        $array = [
             'label'               => $this->getLabel(),
             'authorized'          => $this->isAuthorized(),
             'dataAttributes'      => $this->buildDataAttributes(),
             'meta'                => $this->meta,
             'limitToSelectedRows' => $this->shouldLimitToSelectedRows(),
-            'asDownload'          => $this->queue ? false : $this->asDownload,
+            'asDownload'          => ! $this->hasExporter() && ! $this->queue && $this->asDownload,
             'url'                 => $this->getExportUrl(),
         ];
+
+        if ($this->hasExporter()) {
+            $array = array_merge($array, $this->cachedPipelineMeta ??= [
+                'hasExporter'                        => true,
+                'resourceLabel'                      => $this->getResourceLabel(),
+                'hasColumnMapping'                   => $this->hasColumnMapping(),
+                'enableVisibleTableColumnsByDefault' => $this->shouldEnableVisibleTableColumnsByDefault(),
+                'columns'                            => collect($this->getExportColumns())
+                    ->map(fn (ExportColumn $column): array => [
+                        'name'             => $column->getName(),
+                        'label'            => $column->getLabel(),
+                        'enabledByDefault' => $column->isEnabledByDefault(),
+                    ])->values()->all(),
+                'formats'     => array_map(fn (ExportFormat $format): string => $format->value, $this->getFormats()),
+                'optionsForm' => array_map(fn (OptionField $field): array => $field->toArray(), $this->getExporterClass()::getOptionsFormComponents()),
+            ]);
+        }
+
+        return $array;
     }
 
     /**

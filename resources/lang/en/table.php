@@ -48,6 +48,36 @@ return [
     'action_failed_dialog_button'     => 'OK',
     'export_processing_dialog_button' => 'Processing...',
 
+    // Export modal and actions
+    'action_export'                 => 'Export',
+    'export_modal_title'            => 'Export',
+    'export_modal_subtitle'         => 'Choose the columns and file format to export.',
+    'export_modal_columns_header'   => 'Columns',
+    'export_select_all'             => 'Select all',
+    'export_deselect_all'           => 'Deselect all',
+    'export_formats_header'         => 'File format',
+    'export_format_csv'             => 'CSV',
+    'export_format_xlsx'            => 'Excel (XLSX)',
+    'export_cancel_button'          => 'Cancel',
+    'export_submit_button'          => 'Export',
+    'export_started_toast_title'    => ':model export started',
+    'export_started_toast_body'     => '{1} :count row will be processed in the background. You will be notified when it is ready.|[2,*] :count rows will be processed in the background. You will be notified when it is ready.',
+    'export_completed_toast_title'  => 'Your :model export is ready',
+    'export_completed_toast_body'   => '{1} :count row exported.|[2,*] :count rows exported.',
+    'export_failed_rows_toast_body' => '{1} :count row failed to export.|[2,*] :count rows failed to export.',
+    'export_download_csv'           => 'Download .csv',
+    'export_download_xlsx'          => 'Download .xlsx',
+    'export_max_rows_message'       => 'This export is limited to :max rows (:count rows requested).',
+    'export_no_columns_message'     => 'Select at least one column to export.',
+    'export_file_name'              => 'export-:export_id-:model',
+
+    // Row action labels
+    'action_view'              => 'View',
+    'action_edit'              => 'Edit',
+    'action_delete'            => 'Delete',
+    'action_send_for_approval' => 'Send for Approval',
+
+
     // Loading states
     'loading_placeholder' => 'Loading...',
 

@@ -48,13 +48,13 @@ export const useActions = (
         return `${tableExport.url}&keys=${selectedItems.join(',')}`;
     };
 
-    const performAsyncExport = (tableExport: TableExport): Promise<ExportSuccessResult> => {
+    const performAsyncExport = (tableExport: TableExport, payload?: object): Promise<ExportSuccessResult> => {
         return new Promise((resolve, reject) => {
             const keys = selectedItems;
 
             setIsPerformingAction(true);
 
-            Axios.post(makeExportUrl(tableExport))
+            Axios.post(makeExportUrl(tableExport), payload ?? {})
                 .then((response) => {
                     const result: ExportSuccessResult = { keys, response };
                     resolve(result);
