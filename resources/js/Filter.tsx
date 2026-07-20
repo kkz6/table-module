@@ -99,17 +99,17 @@ const Filter = ({ filter, value, onChange, onRemove }: FilterProps): React.React
                 <PopoverTrigger asChild>
                     <Button variant="outline" role="combobox" aria-expanded={isMultiSelectOpen} className="h-8 w-full justify-between">
                         {selectedValues.length === 0
-                            ? 'Select options...'
+                            ? t('table::table.select_options_placeholder')
                             : selectedValues.length === 1
                               ? selectedLabels[0]
-                              : `${selectedValues.length} selected`}
+                              : t('table::table.selected_count', { count: String(selectedValues.length) })}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-full p-0">
                     <Command>
-                        <CommandInput placeholder="Search options..." />
-                        <CommandEmpty>No option found.</CommandEmpty>
+                        <CommandInput placeholder={t('table::table.search_options_placeholder')} />
+                        <CommandEmpty>{t('table::table.no_option_found')}</CommandEmpty>
                         <CommandGroup className="max-h-64 overflow-auto">
                             {options.map((option) => (
                                 <CommandItem key={option.value} onSelect={() => toggleValue(option.value)}>
@@ -241,9 +241,9 @@ const Filter = ({ filter, value, onChange, onRemove }: FilterProps): React.React
                                                     ? (value.clause === 'between' || value.clause === 'not_between') && Array.isArray(value.value)
                                                         ? value.value.length === 2
                                                             ? `${format(parseISO(value.value[0]), 'PPP')} - ${format(parseISO(value.value[1]), 'PPP')}`
-                                                            : 'Pick dates'
+                                                            : t('table::table.pick_dates')
                                                         : format(parseISO(value.value), 'PPP')
-                                                    : 'Pick a date'}
+                                                    : t('table::table.pick_a_date')}
                                             </Button>
                                         </PopoverTrigger>
                                         <PopoverContent className="w-auto p-0" align="start">
