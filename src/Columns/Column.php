@@ -40,6 +40,8 @@ abstract class Column implements Arrayable
      */
     protected static ?bool $defaultStickable = null;
 
+    protected bool $isExportable = true;
+
     public function __construct(
         protected string $attribute,
         protected string $header,
@@ -229,19 +231,27 @@ abstract class Column implements Arrayable
     }
 
     /**
-     * Do not export the column.
+     * Set whether the column can be included in exports.
      */
-    public function dontExport(): self
+    public function exportable(bool $condition = true): self
     {
-        $this->exportAs = false;
+        $this->isExportable = $condition;
 
         return $this;
     }
 
     /**
-     * Set whether the column is enabled by default in the export column mapping.
+     * @deprecated Use exportable(false).
      */
-    public function exportEnabledByDefault(bool $condition = true): self
+    public function dontExport(): self
+    {
+        return $this->exportable(false);
+    }
+
+    /**
+     * Set whether the column is included by default in the export column mapping.
+     */
+    public function includeInExportByDefault(bool $condition = true): self
     {
         $this->exportEnabledByDefault = $condition;
 
@@ -249,11 +259,27 @@ abstract class Column implements Arrayable
     }
 
     /**
-     * Returns whether the column is enabled by default in the export column mapping.
+     * @deprecated Use includeInExportByDefault().
+     */
+    public function exportEnabledByDefault(bool $condition = true): self
+    {
+        return $this->includeInExportByDefault($condition);
+    }
+
+    /**
+     * Returns whether the column is included by default in the export column mapping.
+     */
+    public function isIncludedInExportByDefault(): bool
+    {
+        return $this->exportEnabledByDefault;
+    }
+
+    /**
+     * @deprecated Use isIncludedInExportByDefault().
      */
     public function isExportEnabledByDefault(): bool
     {
-        return $this->exportEnabledByDefault;
+        return $this->isIncludedInExportByDefault();
     }
 
     /**
@@ -515,7 +541,7 @@ abstract class Column implements Arrayable
      */
     public function shouldBeExported(): bool
     {
-        return $this->exportAs !== false;
+        return $this->isExportable && $this->exportAs !== false;
     }
 
     /**
@@ -534,8 +560,8 @@ abstract class Column implements Arrayable
         if (is_array($this->mapAs)) {
             $key = match (true) {
                 $value instanceof BackedEnum => $value->value,
-                $value instanceof UnitEnum   => $value->name,
-                default                      => $value,
+                $value instanceof UnitEnum => $value->name,
+                default => $value,
             };
 
             return $key === null ? null : Arr::get($this->mapAs, $key);
@@ -685,18 +711,18 @@ abstract class Column implements Arrayable
                 ->snake()
                 ->replace('_', '-')
                 ->value(),
-            'header'           => $this->getHeader(),
-            'attribute'        => $this->getAttribute(),
-            'sortable'         => $this->isSortable(),
-            'toggleable'       => $this->isToggleable(),
-            'alignment'        => $this->alignment->value,
+            'header' => $this->getHeader(),
+            'attribute' => $this->getAttribute(),
+            'sortable' => $this->isSortable(),
+            'toggleable' => $this->isToggleable(),
+            'alignment' => $this->alignment->value,
             'visibleByDefault' => $this->isVisible(),
-            'meta'             => $this->meta,
-            'wrap'             => $this->wrap,
-            'truncate'         => $this->truncate,
-            'headerClass'      => $this->headerClass,
-            'cellClass'        => $this->cellClass,
-            'stickable'        => $this->isStickable(),
+            'meta' => $this->meta,
+            'wrap' => $this->wrap,
+            'truncate' => $this->truncate,
+            'headerClass' => $this->headerClass,
+            'cellClass' => $this->cellClass,
+            'stickable' => $this->isStickable(),
         ];
     }
 }

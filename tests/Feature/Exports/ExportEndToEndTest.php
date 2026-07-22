@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
-use Modules\Table\Models\TableExport;
 use Modules\Table\Events\ExportReady;
+use Modules\Table\Models\TableExport;
 use Modules\Table\Tests\Support\TestUsersTable;
 use Modules\User\Models\User;
 
@@ -15,11 +15,11 @@ it('runs the full pipeline inline on the sync queue', function (): void {
     $this->actingAs(User::factory()->create(['name' => 'Me']));
     User::factory()->count(4)->sequence(fn ($s) => ['name' => 'User '.$s->index])->create();
 
-    $url = TestUsersTable::exportUrl('Pipeline Export');
+    $url = TestUsersTable::asyncExportUrl('Pipeline Export');
 
     $this->postJson($url, [
         'columnMap' => [
-            'name'  => ['isEnabled' => true, 'label' => 'Full name'],
+            'name' => ['isEnabled' => true, 'label' => 'Full name'],
             'email' => ['isEnabled' => true, 'label' => ''],
         ],
         'formats' => ['csv', 'xlsx'],
@@ -53,12 +53,12 @@ it('respects selected rows via the keys parameter', function (): void {
     $this->actingAs(User::factory()->create(['name' => 'Owner']));
     $users = User::factory()->count(4)->create();
 
-    $url  = TestUsersTable::exportUrl('Pipeline Selected');
+    $url = TestUsersTable::asyncExportUrl('Pipeline Selected');
     $keys = $users->take(2)->pluck('id')->join(',');
 
     $this->postJson($url.'&keys='.$keys, [
         'columnMap' => ['name' => ['isEnabled' => true, 'label' => '']],
-        'formats'   => ['csv'],
+        'formats' => ['csv'],
     ])->assertSuccessful();
 
     $export = TableExport::query()->sole();

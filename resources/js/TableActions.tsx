@@ -3,9 +3,18 @@ import { MoreHorizontal } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import ConfirmDialog, { ConfirmActionDialog } from './ConfirmDialog';
+import { getExportErrorMessage } from './download';
 import ExportModal from './ExportModal';
 import FailedActionDialog from './FailedActionDialog';
-import type { ActionsProps, ActionSuccessResult, CustomActionResult, ExportModalPayload, ExportSuccessResult, TableAction, TableExport } from './types/actions';
+import type {
+    ActionsProps,
+    ActionSuccessResult,
+    CustomActionResult,
+    ExportModalPayload,
+    ExportSuccessResult,
+    TableAction,
+    TableExport,
+} from './types/actions';
 import { visitUrl } from './urlHelpers';
 
 interface AsyncExportContext {
@@ -80,25 +89,27 @@ export default function Actions({
             });
     }
 
-    function submitExport(tableExport: TableExport, payload: ExportModalPayload): void {
+    function submitExport(tableExport: TableExport, payload: ExportModalPayload): Promise<void> {
         if (!performAsyncExport) {
-            return;
+            return Promise.resolve();
         }
 
-        performAsyncExport(tableExport, payload)
+        return performAsyncExport(tableExport, payload)
             .then(({ response }: ExportSuccessResult) => {
-                if (response.data.started) {
+                if (!tableExport.hasExporter && response.data.started) {
                     toast.info(response.data.toastTitle, { description: response.data.toastBody });
                 }
             })
-            .catch((errorData: unknown) => {
-                const message = (errorData as { error?: { response?: { data?: { message?: string } } } } | null)?.error?.response?.data?.message;
+            .catch(async (errorData: unknown) => {
+                const message = await getExportErrorMessage(errorData);
 
                 if (message) {
                     toast.error(message);
                 } else {
                     setActionFailed(true);
                 }
+
+                throw errorData;
             });
     }
 
@@ -156,11 +167,19 @@ export default function Actions({
                     // Make sure we have the expected error structure
                     if (errorData && typeof errorData === 'object' && 'keys' in errorData) {
                         const { keys, error } = errorData as { keys: (string | number)[]; error: any };
-                        onError ? onError(action, keys, error) : setActionFailed(true);
+                        if (onError) {
+                            onError(action, keys, error);
+                        } else {
+                            setActionFailed(true);
+                        }
                     } else {
                         // If error structure is unexpected, still handle it
                         console.error('Unexpected error structure in table action:', errorData);
-                        onError ? onError(action, keys, errorData) : setActionFailed(true);
+                        if (onError) {
+                            onError(action, keys, errorData);
+                        } else {
+                            setActionFailed(true);
+                        }
                     }
                 });
         }

@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use Modules\Table\Http\ActionController;
 use Modules\Table\Http\DownloadExportController;
 use Modules\Table\Http\ExportController;
+use Modules\Table\Http\StreamingExportController;
 use Modules\Table\Http\ViewController;
 
 Route::name('inertia-tables.')->middleware(['auth', 'web'])->prefix('/_inertia-tables/{table}/{name}')->group(function () {
@@ -19,6 +20,10 @@ Route::name('inertia-tables.')->middleware(['auth', 'web'])->prefix('/_inertia-t
     Route::post('/async-export/{export}/{state?}', ExportController::class)
         ->middleware(ValidateSignature::absolute('keys'))
         ->name('async-export');
+
+    Route::post('/stream-export/{export}/{state?}', StreamingExportController::class)
+        ->middleware(ValidateSignature::absolute('keys'))
+        ->name('stream-export');
 
     Route::post('/view/{state?}', [ViewController::class, 'store'])
         ->middleware(ValidateSignature::absolute())

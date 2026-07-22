@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Modules\Table\Tests\Support;
 
 use Illuminate\Contracts\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\URL;
 use Modules\Table\Columns\TextColumn;
 use Modules\Table\Export;
 use Modules\Table\Table;
@@ -37,8 +38,27 @@ class TestUsersTable extends Table
         ];
     }
 
-    public static function exportUrl(string $label): string
+    public static function exportUrl(string $label, bool $queued = false): string
     {
-        return collect(static::make()->toArray()['exports'])->firstWhere('label', $label)['url'];
+        $table = static::make();
+        $exports = $table->toArray()['exports'];
+        $url = collect($exports)->firstWhere('label', $label)['url'];
+
+        if (! $queued) {
+            return $url;
+        }
+
+        $exportIndex = collect($exports)->search(fn (array $export): bool => $export['label'] === $label);
+
+        return URL::signedRoute('inertia-tables.async-export', [
+            'table' => base64_encode(static::class),
+            'name' => $table->getName(),
+            'export' => $exportIndex,
+        ]);
+    }
+
+    public static function asyncExportUrl(string $label): string
+    {
+        return static::exportUrl($label, queued: true);
     }
 }

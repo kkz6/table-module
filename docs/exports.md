@@ -1,9 +1,12 @@
 # Table Exports
 
-The table module ships a Filament-style **background export** pipeline. A user picks
+The table module ships a Filament-style **streamed export** pipeline. A user picks
 columns (and optionally reorders/relabels them) and a format in a modal, the export
-runs in chunked queued jobs, and when it finishes the user gets a bell notification
-with a download link.
+is prepared while the modal shows an exporting state, and the browser downloads the
+file as soon as it is ready.
+
+The original queued pipeline remains available for legacy `Export::make(...)`
+definitions that do not use a pipeline exporter.
 
 There are two ways to define an export:
 
@@ -15,27 +18,35 @@ There are two ways to define an export:
 
 ## 1. Quick start (table-backed)
 
-Add an `exports()` method to your `Table` and call `->tableExporter()`:
+Add an `export()` method to your `Table`. Singular table exports are table-backed
+by default, including definitions that still pass legacy filename or Excel event
+arguments:
 
 ```php
 use Modules\Table\Export;
 use Modules\Table\Exports\ExportFormat;
 
-public function exports(): array
+public function export(): Export
 {
-    return [
-        Export::make(label: __('finance::reimbursements.export_label'))
-            ->tableExporter()
-            ->formats([ExportFormat::Csv, ExportFormat::Xlsx])
-            ->limitToFilteredRows()
-            ->limitToSelectedRows(),
-    ];
+    return Export::make(label: __('finance::reimbursements.export_label'))
+        ->formats([ExportFormat::Csv, ExportFormat::Xlsx])
+        ->limitToFilteredRows()
+        ->limitToSelectedRows();
 }
 ```
 
 That's it. The export modal lists every table column that is exportable (see
-[`dontExport()`](#column-level-configuration)), in table order, and the exported file
+[`exportable(false)`](#column-level-configuration)), in table order, and the exported file
 reuses each column's label and value transform.
+
+Tables that need more than one export can continue to override the legacy
+`exports(): array` method.
+
+Call `->tableExporter()` explicitly when constructing an export outside the table
+normalization flow. Tables that need multiple exports can keep using
+`exports(): array`; those legacy entries use the streamed exporter only when they
+use the default configuration, while custom legacy entries retain their existing
+behavior.
 
 ---
 
@@ -49,6 +60,8 @@ required in practice; everything else has a sensible default.
 | Method / argument | Type | What it does |
 |---|---|---|
 | `Export::make(label:)` | `string` | The label shown in the actions dropdown. |
+| `->dynamicExport()` | `true` | Use the dynamic table export with column and format selection. |
+| `->dynamicExport(false)` | — | Force this export to use the simple legacy exporter. |
 | `->tableExporter()` | — | Resolve columns from the table (no exporter class needed). |
 | `->exporter(Foo::class)` | `class-string` | Use a [custom exporter class](#6-custom-exporter-class) instead. |
 | `->formats([...])` | `ExportFormat[]` \| `Closure` | Allowed formats. Defaults to the exporter's formats (CSV + XLSX). |
@@ -96,11 +109,11 @@ Export::make(label: 'Export')
 | `->columnMapping(false)` | `true` | Hide the column picker and export every default-enabled column as-is. |
 | `->enableVisibleTableColumnsByDefault()` | `false` | Pre-check only the columns currently visible in the table. |
 
-### Performance / queue
+### Performance / streaming
 
 | Method | Default | What it does |
 |---|---|---|
-| `->chunkSize(500)` | `100` | Rows per chunk job. Also accepts a `Closure(): int`. |
+| `->chunkSize(500)` | `100` | Rows read per keyset-pagination chunk. Also accepts a `Closure(): int`. |
 | `->options(['foo' => 'bar'])` | `[]` | Fixed values passed through to `modifyQueryUsing` and column closures via the `$options` array. |
 
 > **Memory note:** XLSX assembly loads the whole workbook into memory (~1 KB/cell). For
@@ -115,8 +128,8 @@ need to configure anything. When you do, these methods live on every `Column`:
 
 | Method | What it does |
 |---|---|
-| `->dontExport()` | Exclude the column from exports entirely (e.g. an `id` or an action column). |
-| `->exportEnabledByDefault(false)` | Keep the column available in the modal but unchecked by default. |
+| `->exportable(false)` | Exclude the column from exports entirely (e.g. an `id` or an action column). |
+| `->includeInExportByDefault(false)` | Keep the column available in the modal but unchecked by default. |
 | `->exportAs($closure)` | Use a different value **for export** than for display. |
 | `->mapAs($closure)` | Display transform — also used for export when `exportAs()` is not set. |
 
@@ -125,10 +138,10 @@ public function columns(): array
 {
     return [
         // Never exported.
-        TextColumn::make('id')->dontExport(),
+        TextColumn::make('id')->exportable(false),
 
         // Available in the modal, but unchecked unless the user opts in.
-        TextColumn::make('description')->exportEnabledByDefault(false),
+        TextColumn::make('description')->includeInExportByDefault(false),
 
         // Different formatting for the sheet than for the on-screen table:
         // table shows "1,200.00 (JPY)"; the export writes "1,200.00 JPY".
@@ -284,19 +297,22 @@ public static function getOptionsFormComponents(): array
 
 ## 7. How it works
 
-- **Pipeline:** `PrepareExportJob` (writes the header + fans out chunks) → batched
-  `ExportRowsJob`s (write CSV parts) → `CreateCsvFileJob` / `CreateXlsxFileJob` (merge)
-  → `CompleteExportJob` (notify).
-- **Notifications:** completion persists a database notification (the header bell) and
-  broadcasts a `Modules\Table\Events\ExportReady` event over the user's private channel
-  for realtime delivery.
-- **Downloads:** the notification carries signed download URLs
-  (`inertia-tables.exports.download`), authorized by export ownership.
-- **Auth scoping:** jobs run as the export's owner, so an auth-dependent `columns()`
-  method resolves the same columns in the background as the user saw in the modal.
-- **Row order:** rows are streamed with keyset pagination (`chunkById`), so the file is
-  ordered by primary key, not by the table's `defaultSort` or a `modifyQueryUsing`
-  `orderBy`. Sort in the spreadsheet (XLSX headers carry sort/filter dropdowns).
+- **Streamed pipeline:** `StreamingExportController` resolves the signed request,
+  applies the selected columns and query options, then reads records with keyset
+  pagination (`lazyById`). CSV is written directly to the response. XLSX is built in
+  a temporary file and streamed when complete. Selecting both formats returns one ZIP
+  containing both files.
+- **Exporting state:** the modal remains open and locked while the request is active;
+  successful responses trigger a browser download and close the modal.
+- **Legacy compatibility:** entries returned from the legacy `exports(): array`
+  method keep their existing direct, custom, or queued behavior unless they use the
+  default configuration. Singular `export(): Export` entries are table-backed by
+  default.
+- **Auth scoping:** the signed request resolves the table and exporter using the
+  current authenticated user, so authorization and auth-dependent columns are applied
+  at export time.
+- **Row order:** rows are read by primary key rather than the table's `defaultSort` or
+  a custom `orderBy`. Sort in the spreadsheet (XLSX headers carry sort/filter dropdowns).
 
 ---
 

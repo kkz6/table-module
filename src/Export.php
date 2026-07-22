@@ -13,8 +13,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\URL;
 use Maatwebsite\Excel\Excel;
 use Modules\Table\Exports\ExportColumn;
-use Modules\Table\Exports\ExportFormat;
 use Modules\Table\Exports\Exporter as PipelineExporter;
+use Modules\Table\Exports\ExportFormat;
 use Modules\Table\Exports\Options\OptionField;
 use Modules\Table\Exports\TableExportColumnResolver;
 use Modules\Table\Exports\TableExporter;
@@ -69,8 +69,6 @@ class Export implements Arrayable
 
     /**
      * An explicit, translatable label for the exported resource (modal title/toasts).
-     *
-     * @var string|Closure|null
      */
     protected string|Closure|null $resourceLabel = null;
 
@@ -93,8 +91,6 @@ class Export implements Arrayable
 
     /**
      * The number of rows per export chunk (or a Closure that returns it).
-     *
-     * @var int|Closure
      */
     protected int|Closure $chunkSize = 100;
 
@@ -105,10 +101,13 @@ class Export implements Arrayable
 
     /**
      * The pipeline file name (string or Closure receiving TableExport).
-     *
-     * @var string|Closure|null
      */
     protected string|Closure|null $pipelineFileName = null;
+
+    /**
+     * Whether the table-backed exporter was explicitly disabled.
+     */
+    protected bool $tableExporterDisabled = false;
 
     /**
      * Options to pass through to the pipeline export run.
@@ -135,8 +134,8 @@ class Export implements Arrayable
     private ?array $cachedPipelineMeta = null;
 
     /**
-     * @param (Closure(Table, Export, Request, Builder): mixed)|null $using
-     * @param Closure(PendingDispatch): mixed|null                   $withQueuedJob
+     * @param  (Closure(Table, Export, Request, Builder): mixed)|null  $using
+     * @param  Closure(PendingDispatch): mixed|null  $withQueuedJob
      */
     public function __construct(
         public string $label,
@@ -278,7 +277,7 @@ class Export implements Arrayable
         string $title = 'Export',
         string $message = 'Your export is being processed.'
     ): self {
-        $this->dialogTitle   = $title;
+        $this->dialogTitle = $title;
         $this->dialogMessage = $message;
 
         return $this->asDownload(false);
@@ -319,7 +318,7 @@ class Export implements Arrayable
     /**
      * Indicate that the export should be queued.
      *
-     * @param (callable(PendingDispatch): mixed)|(Closure(PendingDispatch): mixed)|null $withQueuedJob
+     * @param  (callable(PendingDispatch): mixed)|(Closure(PendingDispatch): mixed)|null  $withQueuedJob
      */
     public function queue(
         ?string $filename = null,
@@ -331,10 +330,10 @@ class Export implements Arrayable
     ): self {
         $this->filename = $filename ?? $this->filename;
 
-        $this->queue         = true;
-        $this->queueName     = $queue instanceof BackedEnum ? $queue->value : $queue;
-        $this->queueDisk     = $disk instanceof BackedEnum ? $disk->value : $disk;
-        $this->dialogTitle   = $title;
+        $this->queue = true;
+        $this->queueName = $queue instanceof BackedEnum ? $queue->value : $queue;
+        $this->queueDisk = $disk instanceof BackedEnum ? $disk->value : $disk;
+        $this->dialogTitle = $title;
         $this->dialogMessage = $message;
 
         return $withQueuedJob ? $this->withQueuedJob($withQueuedJob) : $this;
@@ -368,7 +367,7 @@ class Export implements Arrayable
 
         if (! $this->hasUsingCallback() && ! empty($job->chained)) {
             $job->afterBuiltInExporter = $job->chained;
-            $job->chained              = [];
+            $job->chained = [];
         }
 
         return [$job, $pendingDispatch];
@@ -377,8 +376,8 @@ class Export implements Arrayable
     /**
      * Create a new Export instance.
      *
-     * @param (callable(PendingDispatch): mixed)|(Closure(PendingDispatch): mixed)|null                                 $withQueuedJob
-     * @param (callable(Table, Export, Request, Builder): mixed)|(Closure(Table, Export, Request, Builder): mixed)|null $using
+     * @param  (callable(PendingDispatch): mixed)|(Closure(PendingDispatch): mixed)|null  $withQueuedJob
+     * @param  (callable(Table, Export, Request, Builder): mixed)|(Closure(Table, Export, Request, Builder): mixed)|null  $using
      */
     public static function make(
         string $label = 'Excel Export',
@@ -404,7 +403,7 @@ class Export implements Arrayable
             ? fn () => redirect()->to($redirect)
             : Helpers::asClosure($redirect);
 
-        $using         = Helpers::asClosure($using);
+        $using = Helpers::asClosure($using);
         $withQueuedJob = Helpers::asClosure($withQueuedJob);
 
         // @phpstan-ignore-next-line
@@ -433,7 +432,7 @@ class Export implements Arrayable
     /**
      * Set the closure that should be used to export the data.
      *
-     * @param (callable(Table, Export, Request, Builder): mixed)|(Closure(Table, Export, Request, Builder): mixed) $using
+     * @param  (callable(Table, Export, Request, Builder): mixed)|(Closure(Table, Export, Request, Builder): mixed)  $using
      */
     public function using(Closure|callable $using): self
     {
@@ -512,7 +511,60 @@ class Export implements Arrayable
      */
     public function tableExporter(): self
     {
+        $this->tableExporterDisabled = false;
         $this->exporterClass = TableExporter::class;
+
+        return $this;
+    }
+
+    /**
+     * Select the dynamic table export or the simple legacy export.
+     *
+     * Singular table exports default to the dynamic table exporter. Passing
+     * false opts that export out of the default and keeps the legacy exporter.
+     */
+    public function dynamicExport(bool $enabled = true): self
+    {
+        if ($enabled) {
+            return $this->tableExporter();
+        }
+
+        $this->tableExporterDisabled = true;
+        $this->exporterClass = null;
+
+        return $this;
+    }
+
+    /**
+     * Determine whether the dynamic table exporter was explicitly disabled.
+     */
+    public function isDynamicExportDisabled(): bool
+    {
+        return $this->tableExporterDisabled;
+    }
+
+    /**
+     * Apply the table-backed exporter when a legacy export uses the default
+     * configuration. Singular Table::export() definitions are attached to the
+     * table-backed exporter by Table::getExports() directly; this method keeps
+     * the legacy Table::exports() array compatible with existing exports.
+     */
+    public function useTableExporterByDefault(): self
+    {
+        if (
+            $this->exporterClass === null
+            && ! $this->isDynamicExportDisabled()
+            && $this->filename === 'export.xlsx'
+            && $this->type === Excel::XLSX
+            && $this->events === []
+            && $this->using === null
+            && $this->withQueuedJob === null
+            && $this->redirect === null
+            && ! $this->queue
+            && $this->asDownload
+        ) {
+            $this->tableExporter();
+        }
 
         return $this;
     }
@@ -731,8 +783,6 @@ class Export implements Arrayable
 
     /**
      * Set a Closure that further modifies the exporter query.
-     *
-     * @param  callable|Closure  $closure
      */
     public function modifyQueryUsing(callable|Closure $closure): self
     {
@@ -783,9 +833,11 @@ class Export implements Arrayable
      */
     public function getExportUrl(): string
     {
-        $routeName = $this->hasExporter() || $this->queue || ! $this->asDownload
-            ? 'inertia-tables.async-export'
-            : 'inertia-tables.export';
+        $routeName = $this->hasExporter()
+            ? 'inertia-tables.stream-export'
+            : (($this->queue || ! $this->asDownload)
+                ? 'inertia-tables.async-export'
+                : 'inertia-tables.export');
 
         return $this->generateSignedTableUrl($this->table, $routeName, [
             'export' => $this->index,
@@ -805,28 +857,28 @@ class Export implements Arrayable
         }
 
         $array = [
-            'label'               => $this->getLabel(),
-            'authorized'          => $this->isAuthorized(),
-            'dataAttributes'      => $this->buildDataAttributes(),
-            'meta'                => $this->meta,
+            'label' => $this->getLabel(),
+            'authorized' => $this->isAuthorized(),
+            'dataAttributes' => $this->buildDataAttributes(),
+            'meta' => $this->meta,
             'limitToSelectedRows' => $this->shouldLimitToSelectedRows(),
-            'asDownload'          => ! $this->hasExporter() && ! $this->queue && $this->asDownload,
-            'url'                 => $this->getExportUrl(),
+            'asDownload' => ! $this->hasExporter() && ! $this->queue && $this->asDownload,
+            'url' => $this->getExportUrl(),
         ];
 
         if ($this->hasExporter()) {
             $array = array_merge($array, $this->cachedPipelineMeta ??= [
-                'hasExporter'                        => true,
-                'resourceLabel'                      => $this->getResourceLabel(),
-                'hasColumnMapping'                   => $this->hasColumnMapping(),
+                'hasExporter' => true,
+                'resourceLabel' => $this->getResourceLabel(),
+                'hasColumnMapping' => $this->hasColumnMapping(),
                 'enableVisibleTableColumnsByDefault' => $this->shouldEnableVisibleTableColumnsByDefault(),
-                'columns'                            => collect($this->getExportColumns())
+                'columns' => collect($this->getExportColumns())
                     ->map(fn (ExportColumn $column): array => [
-                        'name'             => $column->getName(),
-                        'label'            => $column->getLabel(),
+                        'name' => $column->getName(),
+                        'label' => $column->getLabel(),
                         'enabledByDefault' => $column->isEnabledByDefault(),
                     ])->values()->all(),
-                'formats'     => array_map(fn (ExportFormat $format): string => $format->value, $this->getFormats()),
+                'formats' => array_map(fn (ExportFormat $format): string => $format->value, $this->getFormats()),
                 'optionsForm' => array_map(fn (OptionField $field): array => $field->toArray(), $this->getExporterClass()::getOptionsFormComponents()),
             ]);
         }

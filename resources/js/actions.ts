@@ -1,6 +1,7 @@
 import { router } from '@inertiajs/react';
 import { default as Axios } from 'axios';
 import { useMemo, useState } from 'react';
+import { downloadExportResponse } from './download';
 import type {
     ActionErrorResult,
     ActionSuccessResult,
@@ -14,10 +15,10 @@ import type {
 
 export const useActions = (
     resource?: any,
-    tableInstance?: any,
-    onActionSuccess?: ((action: any, keys: any[]) => void) | null,
-    onActionError?: ((action: any, keys: any[], error: any) => void) | null,
-    onCustomAction?: ((action: any, keys: any[], onFinish?: () => void) => void) | null,
+    _tableInstance?: any,
+    _onActionSuccess?: ((action: any, keys: any[]) => void) | null,
+    _onActionError?: ((action: any, keys: any[], error: any) => void) | null,
+    _onCustomAction?: ((action: any, keys: any[], onFinish?: () => void) => void) | null,
 ): UseActionsReturn => {
     const [isPerformingAction, setIsPerformingAction] = useState<boolean>(false);
     const [selectedItems, setSelectedItems] = useState<(string | number)[]>([]);
@@ -54,8 +55,15 @@ export const useActions = (
 
             setIsPerformingAction(true);
 
-            Axios.post(makeExportUrl(tableExport), payload ?? {})
+            Axios.post(makeExportUrl(tableExport), payload ?? {}, {
+                headers: tableExport.hasExporter ? { Accept: 'application/octet-stream' } : undefined,
+                responseType: tableExport.hasExporter ? 'blob' : 'json',
+            })
                 .then((response) => {
+                    if (tableExport.hasExporter) {
+                        downloadExportResponse(response, 'export');
+                    }
+
                     const result: ExportSuccessResult = { keys, response };
                     resolve(result);
 

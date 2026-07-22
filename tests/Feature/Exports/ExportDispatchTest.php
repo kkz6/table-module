@@ -19,9 +19,9 @@ it('creates a table export row and dispatches the chain', function (): void {
     Bus::fake();
     User::factory()->count(3)->create();
 
-    $response = $this->postJson(TestUsersTable::exportUrl('Pipeline Export'), [
+    $response = $this->postJson(TestUsersTable::asyncExportUrl('Pipeline Export'), [
         'columnMap' => [
-            'name'  => ['isEnabled' => true, 'label' => 'Full name'],
+            'name' => ['isEnabled' => true, 'label' => 'Full name'],
             'email' => ['isEnabled' => false, 'label' => ''],
         ],
         'formats' => ['csv', 'xlsx'],
@@ -50,9 +50,9 @@ it('creates a table export row and dispatches the chain', function (): void {
 
 it('places the xlsx job before completion when xlsx is the only format', function (): void {
     Bus::fake();
-    $this->postJson(TestUsersTable::exportUrl('Pipeline Export'), [
+    $this->postJson(TestUsersTable::asyncExportUrl('Pipeline Export'), [
         'columnMap' => ['name' => ['isEnabled' => true, 'label' => '']],
-        'formats'   => ['xlsx'],
+        'formats' => ['xlsx'],
     ])->assertSuccessful();
 
     Bus::assertChained([
@@ -64,9 +64,9 @@ it('places the xlsx job before completion when xlsx is the only format', functio
 
 it('rejects when no column is enabled', function (): void {
     Bus::fake();
-    $this->postJson(TestUsersTable::exportUrl('Pipeline Export'), [
+    $this->postJson(TestUsersTable::asyncExportUrl('Pipeline Export'), [
         'columnMap' => ['name' => ['isEnabled' => false, 'label' => '']],
-        'formats'   => ['csv'],
+        'formats' => ['csv'],
     ])->assertUnprocessable();
 
     Bus::assertNothingDispatched();
@@ -75,20 +75,20 @@ it('rejects when no column is enabled', function (): void {
 
 it('rejects unknown formats and unknown columns are ignored', function (): void {
     Bus::fake();
-    $this->postJson(TestUsersTable::exportUrl('Pipeline Export'), [
+    $this->postJson(TestUsersTable::asyncExportUrl('Pipeline Export'), [
         'columnMap' => ['hacked' => ['isEnabled' => true, 'label' => 'x'], 'name' => ['isEnabled' => true, 'label' => '']],
-        'formats'   => ['pdf'],
+        'formats' => ['pdf'],
     ])->assertUnprocessable();
 });
 
 it('aborts when max rows is exceeded', function (): void {
     Bus::fake();
     User::factory()->count(3)->create();
-    $url = TestUsersTable::exportUrl('Tiny Export');
+    $url = TestUsersTable::asyncExportUrl('Tiny Export');
 
     $this->postJson($url, [
         'columnMap' => ['name' => ['isEnabled' => true, 'label' => '']],
-        'formats'   => ['csv'],
+        'formats' => ['csv'],
     ])->assertUnprocessable();
 
     Bus::assertNothingDispatched();
@@ -96,7 +96,7 @@ it('aborts when max rows is exceeded', function (): void {
 
 it('uses default-enabled columns when column mapping is disabled', function (): void {
     Bus::fake();
-    $url = TestUsersTable::exportUrl('No Mapping Export');
+    $url = TestUsersTable::asyncExportUrl('No Mapping Export');
 
     $this->postJson($url, [
         'formats' => ['csv'],
@@ -113,7 +113,7 @@ it('uses default-enabled columns when column mapping is disabled', function (): 
 
 it('merges static options under request options', function (): void {
     Bus::fake();
-    $url = TestUsersTable::exportUrl('No Mapping Export');
+    $url = TestUsersTable::asyncExportUrl('No Mapping Export');
 
     $this->postJson($url, [
         'formats' => ['csv'],
@@ -131,10 +131,10 @@ it('merges static options under request options', function (): void {
 
 it('requires authentication and authorization', function (): void {
     auth()->logout();
-    $this->postJson(TestUsersTable::exportUrl('Pipeline Export'), [])->assertUnauthorized();
+    $this->postJson(TestUsersTable::asyncExportUrl('Pipeline Export'), [])->assertUnauthorized();
 
     $this->actingAs(User::factory()->create());
-    $this->postJson(TestUsersTable::exportUrl('Forbidden Export'), [])->assertForbidden();
+    $this->postJson(TestUsersTable::asyncExportUrl('Forbidden Export'), [])->assertForbidden();
 });
 
 it('leaves the legacy sync export untouched', function (): void {
