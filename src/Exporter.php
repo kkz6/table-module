@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Modules\Table;
 
-use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Contracts\Support\Responsable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 use Maatwebsite\Excel\Concerns\Exportable;
@@ -107,6 +107,7 @@ class Exporter implements FromQuery, Responsable, ShouldAutoSize, WithColumnForm
             $callback($query);
         }
 
+        /** @var Builder */
         return $query;
     }
 
@@ -154,7 +155,7 @@ class Exporter implements FromQuery, Responsable, ShouldAutoSize, WithColumnForm
     {
         $highest = $sheet->getHighestRowAndColumn();
 
-        $highestRow    = $highest['row'];
+        $highestRow = $highest['row'];
         $highestColumn = $highest['column'];
 
         $sheet->setAutoFilter(sprintf('A1:%s1', $highestColumn));
@@ -167,7 +168,7 @@ class Exporter implements FromQuery, Responsable, ShouldAutoSize, WithColumnForm
             }
 
             $sheetColumn = Coordinate::stringFromColumnIndex($key + 1);
-            $coordinate  = sprintf('%s2:%s%s', $sheetColumn, $sheetColumn, $highestRow);
+            $coordinate = sprintf('%s2:%s%s', $sheetColumn, $sheetColumn, $highestRow);
 
             if (is_array($exportStyling)) {
                 return [$coordinate => $exportStyling];
@@ -217,9 +218,9 @@ class Exporter implements FromQuery, Responsable, ShouldAutoSize, WithColumnForm
         // Add default center alignment event
         $defaultAlignmentEvent = [
             AfterSheet::class => function (AfterSheet $event) {
-                $sheet         = $event->sheet->getDelegate();
+                $sheet = $event->sheet->getDelegate();
                 $highestColumn = $sheet->getHighestColumn();
-                $highestRow    = $sheet->getHighestRow();
+                $highestRow = $sheet->getHighestRow();
 
                 // Set center alignment and bold for headers (row 1)
                 $headerRange = 'A1:'.$highestColumn.'1';

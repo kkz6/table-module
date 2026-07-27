@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Modules\Table\Columns;
 
+use Closure;
 use Modules\Table\Enums\ColumnAlignment;
 
 class ActionColumn extends Column
@@ -17,6 +18,55 @@ class ActionColumn extends Column
      * Whether the actions should be displayed as a dropdown by default.
      */
     protected static bool $defaultAsDropdown = false;
+
+    /**
+     * {@inheritDoc}
+     */
+    public static function make(
+        string $attribute,
+        ?string $header = null,
+        bool $sortable = false,
+        bool $toggleable = false,
+        bool $searchable = false,
+        ColumnAlignment $alignment = ColumnAlignment::Center,
+        Closure|callable|array|null $mapAs = null,
+        Closure|bool|null $exportAs = null,
+        Closure|string|null $exportFormat = null,
+        Closure|array|null $exportStyle = null,
+        bool $visible = true,
+        Closure|callable|null $sortUsing = null,
+        ?array $meta = null,
+        Closure|callable|null $url = null,
+        bool $wrap = false,
+        ?int $truncate = null,
+        array|string|null $headerClass = null,
+        array|string|null $cellClass = null,
+        Closure|callable|null $image = null,
+        ?bool $stickable = null,
+    ): static {
+        return parent::make(
+            attribute: $attribute,
+            header: $header ?? __('table::table.actions'),
+            sortable: $sortable,
+            toggleable: $toggleable,
+            searchable: $searchable,
+            alignment: $alignment,
+            mapAs: $mapAs,
+            exportAs: $exportAs,
+            exportFormat: $exportFormat,
+            exportStyle: $exportStyle,
+            visible: $visible,
+            sortUsing: $sortUsing,
+            meta: $meta,
+            url: $url,
+            wrap: $wrap,
+            truncate: $truncate,
+            headerClass: $headerClass,
+            cellClass: $cellClass,
+            image: $image,
+            stickable: $stickable,
+        );
+    }
 
     /**
      * Create a new instance with the given label.

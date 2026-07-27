@@ -12,8 +12,20 @@ return [
     'add_filter_header' => 'Add Filter',
     'toggle_columns_header' => 'Toggle Columns',
 
+    // Confirmation dialog
+    'confirm_action_title' => 'Confirm action',
+    'confirm_action_message' => 'Are you sure you want to perform this action?',
+    'confirm_action_yes' => 'Yes',
+    'confirm_action_cancel' => 'Cancel',
+
     // Search and filters
     'search_placeholder' => 'Search...',
+    'select_placeholder' => 'Select an option...',
+    'select_options_placeholder' => 'Select options...',
+    'search_options_placeholder' => 'Search options...',
+    'no_option_found' => 'No option found.',
+    'pick_a_date' => 'Pick a date',
+    'pick_dates' => 'Pick dates',
     'active_filters' => 'Active Filters',
     'no_results_found' => 'No results found',
     'between_values_and' => 'and',
@@ -90,6 +102,25 @@ return [
     'actions' => 'Actions',
     'yes' => 'Yes',
     'no' => 'No',
+
+    // Common action labels
+    'action_view' => 'View',
+    'action_edit' => 'Edit',
+    'action_delete' => 'Delete',
+    'action_approve' => 'Approve',
+    'action_reject' => 'Reject',
+    'action_cancel' => 'Cancel',
+    'action_view_pdf' => 'View PDF',
+    'action_send_email' => 'Send Email',
+    'action_duplicate' => 'Duplicate',
+    'action_send_for_approval' => 'Send for Approval',
+    'action_toggle_status' => 'Toggle Status',
+    'action_upload_to_dropbox' => 'Upload to Dropbox',
+    'action_create_meet' => 'Create Meet',
+    'action_create_employee' => 'Create Employee',
+    'action_create_invoice' => 'Create Invoice',
+    'action_manage' => 'Manage',
+    'action_export' => 'Export',
 
     // Filter clauses
     'clause_equals' => 'equals',

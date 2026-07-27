@@ -68,7 +68,7 @@ export const getClickableColumn: GetClickableColumnFunction = (column, item) => 
     return null;
 };
 
-export const getActionForItem: GetActionForItemFunction = (actionData, action) => {
+export const getActionForItem: GetActionForItemFunction = (actionData, _action) => {
     // Handle different action data formats from backend
     if (!actionData) return null;
 

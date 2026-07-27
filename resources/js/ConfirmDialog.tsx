@@ -17,8 +17,8 @@ export default function ConfirmDialog({
     onConfirm = null,
     dialogClassName = '',
     overlayClassName = '',
-    icon,
-    iconResolver,
+    icon: _icon,
+    iconResolver: _iconResolver,
 }: ConfirmDialogProps & { dialogClassName?: string; overlayClassName?: string }): React.ReactElement {
     return (
         <Dialog open={show} onOpenChange={(open) => !open && onCancel?.()}>
@@ -35,12 +35,7 @@ export default function ConfirmDialog({
                             </Button>
                         </DialogClose>
                     )}
-                    <Button
-                        type="button"
-                        variant={variant}
-                        className={cn(customVariantClass)}
-                        onClick={onConfirm || undefined}
-                    >
+                    <Button type="button" variant={variant} className={cn(customVariantClass)} onClick={onConfirm || undefined}>
                         {confirmButton}
                     </Button>
                 </DialogFooter>

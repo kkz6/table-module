@@ -13,7 +13,19 @@ return [
     'toggle_columns_header' => '列の表示切替',
 
     // Search and filters
+    // Confirmation dialog
+    'confirm_action_title' => 'アクションの確認',
+    'confirm_action_message' => 'この操作を実行してもよろしいですか？',
+    'confirm_action_yes' => 'はい',
+    'confirm_action_cancel' => 'キャンセル',
+
     'search_placeholder' => '検索...',
+    'select_placeholder' => 'オプションを選択...',
+    'select_options_placeholder' => 'オプションを選択...',
+    'search_options_placeholder' => 'オプションを検索...',
+    'no_option_found' => 'オプションが見つかりません',
+    'pick_a_date' => '日付を選択',
+    'pick_dates' => '期間を選択',
     'active_filters' => '有効なフィルター',
     'no_results_found' => '結果が見つかりません',
     'between_values_and' => 'と',
@@ -90,6 +102,25 @@ return [
     'actions' => 'アクション',
     'yes' => 'はい',
     'no' => 'いいえ',
+
+    // Common action labels
+    'action_view' => '表示',
+    'action_edit' => '編集',
+    'action_delete' => '削除',
+    'action_approve' => '承認',
+    'action_reject' => '却下',
+    'action_cancel' => 'キャンセル',
+    'action_view_pdf' => 'PDF表示',
+    'action_send_email' => 'メール送信',
+    'action_duplicate' => '複製',
+    'action_send_for_approval' => '承認依頼',
+    'action_toggle_status' => 'ステータス切替',
+    'action_upload_to_dropbox' => 'Dropboxにアップロード',
+    'action_create_meet' => 'ミーティング作成',
+    'action_create_employee' => '従業員作成',
+    'action_create_invoice' => '請求書作成',
+    'action_manage' => '管理',
+    'action_export' => 'エクスポート',
 
     // Filter clauses
     'clause_equals' => '等しい',

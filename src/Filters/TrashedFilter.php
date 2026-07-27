@@ -19,22 +19,25 @@ class TrashedFilter extends SetFilter
         bool $applyUnwrapped = false,
         mixed $hidden = false
     ): static {
-        return parent::make($attribute, $label ?? 'Trashed', true, $clauses, $applyUsing, $validateUsing, $meta, true) // Changed to true for applyUnwrapped
+        $filter = parent::make($attribute, $label ?? 'Trashed', true, $clauses, $applyUsing, $validateUsing, $meta, true);
+
+        // @phpstan-ignore return.type
+        return $filter
             ->options([
-                'all'             => 'All Records',
+                'all' => 'All Records',
                 'without_trashed' => 'Without Trashed',
-                'withTrashed'     => 'With Trashed',
-                'only_trashed'    => 'Only Trashed',
+                'withTrashed' => 'With Trashed',
+                'only_trashed' => 'Only Trashed',
             ])
             ->withoutClause()
             ->applyUsing(function (Builder $query, string $attribute, $clause, mixed $value) {
                 match ($value) {
-                    'all'             => $query->withTrashed(),
-                    'withTrashed'     => $query->withTrashed(),
-                    'only_trashed'    => $query->onlyTrashed(),
-                    'without_trashed' => $query->withoutTrashed(),
-                    default           => $query->withoutTrashed(), // Default behavior
+                    'all' => $query->withTrashed(), // @phpstan-ignore method.notFound
+                    'withTrashed' => $query->withTrashed(), // @phpstan-ignore method.notFound
+                    'only_trashed' => $query->onlyTrashed(), // @phpstan-ignore method.notFound
+                    'without_trashed' => $query->withoutTrashed(), // @phpstan-ignore method.notFound
+                    default => $query->withoutTrashed(), // @phpstan-ignore method.notFound
                 };
-            }, true); // Apply unwrapped
+            }, true);
     }
 }

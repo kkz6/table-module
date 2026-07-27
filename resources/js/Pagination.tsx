@@ -48,7 +48,7 @@ export default function TablePagination({ meta, options, perPage, type = 'full',
             on_first_page: meta.on_first_page,
             on_last_page: meta.on_last_page,
             per_page: meta.per_page,
-            to: meta.to  || 0,
+            to: meta.to || 0,
             type: type,
         };
 
@@ -57,7 +57,7 @@ export default function TablePagination({ meta, options, perPage, type = 'full',
                 ...params,
                 last: meta.last_page,
                 last_page: meta.last_page,
-                total: meta.total  || 0,
+                total: meta.total || 0,
             };
         }
 
@@ -112,12 +112,13 @@ export default function TablePagination({ meta, options, perPage, type = 'full',
 
                 {/* Pagination */}
                 {meta.last_page > 1 && (
-                    <Pagination>
+                    <Pagination className="mx-0 w-auto">
                         <PaginationContent>
                             {/* Previous button */}
                             <PaginationItem>
                                 <PaginationPrevious
                                     href="#"
+                                    label={t('table::table.Previous')}
                                     onClick={(e) => {
                                         e.preventDefault();
                                         if (meta.prev_page_url) {
@@ -128,9 +129,9 @@ export default function TablePagination({ meta, options, perPage, type = 'full',
                                 />
                             </PaginationItem>
 
-                            {/* Page numbers */}
+                            {/* Page numbers - hidden on small screens */}
                             {pageNumbers.map((page, index) => (
-                                <PaginationItem key={index}>
+                                <PaginationItem key={index} className="hidden sm:block">
                                     {page === '...' ? (
                                         <PaginationEllipsis />
                                     ) : (
@@ -156,6 +157,7 @@ export default function TablePagination({ meta, options, perPage, type = 'full',
                             <PaginationItem>
                                 <PaginationNext
                                     href="#"
+                                    label={t('table::table.Next')}
                                     onClick={(e) => {
                                         e.preventDefault();
                                         if (meta.next_page_url) {
