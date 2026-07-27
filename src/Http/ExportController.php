@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Modules\Table\Export;
+use Modules\Table\Exports\ExportDispatcher;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
 use TypeError;
@@ -20,19 +21,39 @@ class ExportController
      */
     public function __invoke(ExportRequest $request): mixed
     {
-        return $this->toResponse($request->getExport());
+        return $this->toResponse($request->getExport(), $request);
     }
 
     /**
      * Get the export response.
      */
-    public function toResponse(Export $export): mixed
+    public function toResponse(Export $export, ExportRequest $request): mixed
     {
         return match (true) {
+            $export->hasExporter()            => $this->toPipelineResponse($export, $request),
             $export->queue                    => $this->toQueuedResponse($export),
             $export->using instanceof Closure => $this->toCustomUsingResponse($export),
             default                           => $export->makeExporter(),
         };
+    }
+
+    /**
+     * Dispatch the pipeline export chain and respond with a started toast.
+     */
+    private function toPipelineResponse(Export $export, ExportRequest $request): JsonResponse
+    {
+        $result = app(ExportDispatcher::class)->dispatch($export, $request);
+
+        return response()->json([
+            'started'    => true,
+            'totalRows'  => $result['totalRows'],
+            'toastTitle' => __('table::table.export_started_toast_title', [
+                'model' => $export->getResourceLabel(),
+            ]),
+            'toastBody'  => trans_choice('table::table.export_started_toast_body', $result['totalRows'], [
+                'count' => number_format($result['totalRows']),
+            ]),
+        ]);
     }
 
     /**

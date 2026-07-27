@@ -204,6 +204,7 @@ const Table: React.FC<TableProps> = ({
                                               onSuccess={onActionSuccess}
                                               onError={onActionError}
                                               onHandle={onCustomAction}
+                                              visibleColumns={state.columns}
                                           />
                                       )}
 

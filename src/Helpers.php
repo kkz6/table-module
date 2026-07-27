@@ -44,6 +44,16 @@ class Helpers
     }
 
     /**
+     * Derive a human-readable label from a dot-separated column name.
+     *
+     * Example: "user.first_name" → "First name"
+     */
+    public static function labelFromName(string $name): string
+    {
+        return (string) str($name)->afterLast('.')->kebab()->replace(['-', '_'], ' ')->ucfirst();
+    }
+
+    /**
      * Determine if the request is a partial reload.
      */
     public static function isPartialReload(?Request $request = null): bool

@@ -24,19 +24,19 @@ class TrashedFilter extends SetFilter
         // @phpstan-ignore return.type
         return $filter
             ->options([
-                'all'             => 'All Records',
+                'all' => 'All Records',
                 'without_trashed' => 'Without Trashed',
-                'withTrashed'     => 'With Trashed',
-                'only_trashed'    => 'Only Trashed',
+                'withTrashed' => 'With Trashed',
+                'only_trashed' => 'Only Trashed',
             ])
             ->withoutClause()
             ->applyUsing(function (Builder $query, string $attribute, $clause, mixed $value) {
                 match ($value) {
-                    'all'             => $query->withTrashed(), // @phpstan-ignore method.notFound
-                    'withTrashed'     => $query->withTrashed(), // @phpstan-ignore method.notFound
-                    'only_trashed'    => $query->onlyTrashed(), // @phpstan-ignore method.notFound
+                    'all' => $query->withTrashed(), // @phpstan-ignore method.notFound
+                    'withTrashed' => $query->withTrashed(), // @phpstan-ignore method.notFound
+                    'only_trashed' => $query->onlyTrashed(), // @phpstan-ignore method.notFound
                     'without_trashed' => $query->withoutTrashed(), // @phpstan-ignore method.notFound
-                    default           => $query->withoutTrashed(), // @phpstan-ignore method.notFound
+                    default => $query->withoutTrashed(), // @phpstan-ignore method.notFound
                 };
             }, true);
     }

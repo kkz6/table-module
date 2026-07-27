@@ -34,10 +34,8 @@ class {{ class }} extends Table
         ];
     }
 
-    public function exports(): array
+    public function export(): ?Export
     {
-        return [
-            //
-        ];
+        return null;
     }
 }
