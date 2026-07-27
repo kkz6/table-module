@@ -28,8 +28,8 @@ class CreateXlsxFileJob implements ShouldQueue
     public array $backoff = [30, 60, 300];
 
     /**
-     * @param  array<string, string>  $columnMap
-     * @param  array<string, mixed>   $options
+     * @param array<string, string> $columnMap
+     * @param array<string, mixed>  $options
      */
     public function __construct(
         public TableExport $export,

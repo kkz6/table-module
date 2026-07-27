@@ -25,9 +25,9 @@ class ExportConfiguration
      */
     public function resolve(Export $export, ExportRequest $request): array
     {
-        $options = array_merge($export->getExportOptions(), $request->input('options', []) ?? []);
+        $options   = array_merge($export->getExportOptions(), $request->input('options', []) ?? []);
         $columnMap = $this->resolveColumnMap($export, $request);
-        $formats = collect(array_map(ExportFormat::from(...), $request->input('formats')))
+        $formats   = collect(array_map(ExportFormat::from(...), $request->input('formats')))
             ->unique()
             ->values()
             ->all();
@@ -42,7 +42,7 @@ class ExportConfiguration
         if (($maxRows = $export->getMaxRows()) !== null && $maxRows < $totalRows) {
             throw ValidationException::withMessages([
                 'maxRows' => __('table::table.export_max_rows_message', [
-                    'max' => number_format($maxRows),
+                    'max'   => number_format($maxRows),
                     'count' => number_format($totalRows),
                 ]),
             ]);
@@ -50,9 +50,9 @@ class ExportConfiguration
 
         return [
             'columnMap' => $columnMap,
-            'formats' => $formats,
-            'options' => $options,
-            'query' => $query,
+            'formats'   => $formats,
+            'options'   => $options,
+            'query'     => $query,
             'totalRows' => $totalRows,
             'chunkSize' => $export->getChunkSize(),
         ];

@@ -21,7 +21,7 @@ it('creates a table export row and dispatches the chain', function (): void {
 
     $response = $this->postJson(TestUsersTable::asyncExportUrl('Pipeline Export'), [
         'columnMap' => [
-            'name' => ['isEnabled' => true, 'label' => 'Full name'],
+            'name'  => ['isEnabled' => true, 'label' => 'Full name'],
             'email' => ['isEnabled' => false, 'label' => ''],
         ],
         'formats' => ['csv', 'xlsx'],
@@ -52,7 +52,7 @@ it('places the xlsx job before completion when xlsx is the only format', functio
     Bus::fake();
     $this->postJson(TestUsersTable::asyncExportUrl('Pipeline Export'), [
         'columnMap' => ['name' => ['isEnabled' => true, 'label' => '']],
-        'formats' => ['xlsx'],
+        'formats'   => ['xlsx'],
     ])->assertSuccessful();
 
     Bus::assertChained([
@@ -66,7 +66,7 @@ it('rejects when no column is enabled', function (): void {
     Bus::fake();
     $this->postJson(TestUsersTable::asyncExportUrl('Pipeline Export'), [
         'columnMap' => ['name' => ['isEnabled' => false, 'label' => '']],
-        'formats' => ['csv'],
+        'formats'   => ['csv'],
     ])->assertUnprocessable();
 
     Bus::assertNothingDispatched();
@@ -77,7 +77,7 @@ it('rejects unknown formats and unknown columns are ignored', function (): void 
     Bus::fake();
     $this->postJson(TestUsersTable::asyncExportUrl('Pipeline Export'), [
         'columnMap' => ['hacked' => ['isEnabled' => true, 'label' => 'x'], 'name' => ['isEnabled' => true, 'label' => '']],
-        'formats' => ['pdf'],
+        'formats'   => ['pdf'],
     ])->assertUnprocessable();
 });
 
@@ -88,7 +88,7 @@ it('aborts when max rows is exceeded', function (): void {
 
     $this->postJson($url, [
         'columnMap' => ['name' => ['isEnabled' => true, 'label' => '']],
-        'formats' => ['csv'],
+        'formats'   => ['csv'],
     ])->assertUnprocessable();
 
     Bus::assertNothingDispatched();

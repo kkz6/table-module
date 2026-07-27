@@ -27,7 +27,7 @@ it('marks an export as pipeline when an exporter is attached', function (): void
 });
 
 it('serializes pipeline metadata to the frontend payload', function (): void {
-    $table = TestUsersTable::make();
+    $table   = TestUsersTable::make();
     $payload = collect($table->toArray()['exports'])->firstWhere('label', 'Pipeline Export');
 
     expect($payload['hasColumnMapping'])->toBeTrue()
@@ -50,7 +50,7 @@ it('keeps the legacy payload shape for non-exporter exports', function (): void 
 });
 
 it('normalizes the singular table export into the table export payload', function (): void {
-    $table = SingleExportUsersTable::make();
+    $table   = SingleExportUsersTable::make();
     $payload = $table->toArray();
 
     expect($payload['exports'])->toHaveCount(1)
@@ -117,7 +117,7 @@ it('builds the exporter query with modifyQuery hooks applied', function (): void
     User::factory()->count(3)->create();
     $blocked = User::factory()->create(['name' => 'BLOCKED']);
 
-    $table = TestUsersTable::make();
+    $table  = TestUsersTable::make();
     $export = $table->getExportById(1);   // pipeline export (index 1)
     $export->modifyQueryUsing(fn ($query) => $query->where('name', '!=', 'BLOCKED'));
 
@@ -154,9 +154,9 @@ it('serializes option form fields', function (): void {
     $select = SelectOption::make('tone')->label('Tone')->options(['formal' => 'Formal'])->default('formal');
 
     expect($select->toArray())->toBe([
-        'type' => 'select',
-        'name' => 'tone',
-        'label' => 'Tone',
+        'type'    => 'select',
+        'name'    => 'tone',
+        'label'   => 'Tone',
         'default' => 'formal',
         'options' => ['formal' => 'Formal'],
     ]);
@@ -164,18 +164,18 @@ it('serializes option form fields', function (): void {
     $text = TextOption::make('note');
 
     expect($text->toArray())->toBe([
-        'type' => 'text',
-        'name' => 'note',
-        'label' => 'Note',
+        'type'    => 'text',
+        'name'    => 'note',
+        'label'   => 'Note',
         'default' => null,
     ]);
 
     $checkbox = CheckboxOption::make('include_archived')->label('Include archived');
 
     expect($checkbox->toArray())->toBe([
-        'type' => 'checkbox',
-        'name' => 'include_archived',
-        'label' => 'Include archived',
+        'type'    => 'checkbox',
+        'name'    => 'include_archived',
+        'label'   => 'Include archived',
         'default' => null,
     ]);
 });
@@ -202,7 +202,7 @@ it('defaults column mapping to true and can be toggled', function (): void {
 });
 
 it('pipeline export url uses stream-export route', function (): void {
-    $table = TestUsersTable::make();
+    $table  = TestUsersTable::make();
     $export = $table->getExportById(1); // pipeline export
 
     expect($export->getExportUrl())->toContain('/stream-export/');

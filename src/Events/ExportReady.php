@@ -15,7 +15,7 @@ class ExportReady implements ShouldBroadcastNow
     use InteractsWithSockets;
 
     /**
-     * @param  array<string, mixed>  $payload
+     * @param array<string, mixed> $payload
      */
     public function __construct(
         private readonly int $userId,

@@ -134,8 +134,8 @@ class Export implements Arrayable
     private ?array $cachedPipelineMeta = null;
 
     /**
-     * @param  (Closure(Table, Export, Request, Builder): mixed)|null  $using
-     * @param  Closure(PendingDispatch): mixed|null  $withQueuedJob
+     * @param (Closure(Table, Export, Request, Builder): mixed)|null $using
+     * @param Closure(PendingDispatch): mixed|null                   $withQueuedJob
      */
     public function __construct(
         public string $label,
@@ -277,7 +277,7 @@ class Export implements Arrayable
         string $title = 'Export',
         string $message = 'Your export is being processed.'
     ): self {
-        $this->dialogTitle = $title;
+        $this->dialogTitle   = $title;
         $this->dialogMessage = $message;
 
         return $this->asDownload(false);
@@ -318,7 +318,7 @@ class Export implements Arrayable
     /**
      * Indicate that the export should be queued.
      *
-     * @param  (callable(PendingDispatch): mixed)|(Closure(PendingDispatch): mixed)|null  $withQueuedJob
+     * @param (callable(PendingDispatch): mixed)|(Closure(PendingDispatch): mixed)|null $withQueuedJob
      */
     public function queue(
         ?string $filename = null,
@@ -330,10 +330,10 @@ class Export implements Arrayable
     ): self {
         $this->filename = $filename ?? $this->filename;
 
-        $this->queue = true;
-        $this->queueName = $queue instanceof BackedEnum ? $queue->value : $queue;
-        $this->queueDisk = $disk instanceof BackedEnum ? $disk->value : $disk;
-        $this->dialogTitle = $title;
+        $this->queue         = true;
+        $this->queueName     = $queue instanceof BackedEnum ? $queue->value : $queue;
+        $this->queueDisk     = $disk instanceof BackedEnum ? $disk->value : $disk;
+        $this->dialogTitle   = $title;
         $this->dialogMessage = $message;
 
         return $withQueuedJob ? $this->withQueuedJob($withQueuedJob) : $this;
@@ -367,7 +367,7 @@ class Export implements Arrayable
 
         if (! $this->hasUsingCallback() && ! empty($job->chained)) {
             $job->afterBuiltInExporter = $job->chained;
-            $job->chained = [];
+            $job->chained              = [];
         }
 
         return [$job, $pendingDispatch];
@@ -376,8 +376,8 @@ class Export implements Arrayable
     /**
      * Create a new Export instance.
      *
-     * @param  (callable(PendingDispatch): mixed)|(Closure(PendingDispatch): mixed)|null  $withQueuedJob
-     * @param  (callable(Table, Export, Request, Builder): mixed)|(Closure(Table, Export, Request, Builder): mixed)|null  $using
+     * @param (callable(PendingDispatch): mixed)|(Closure(PendingDispatch): mixed)|null                                 $withQueuedJob
+     * @param (callable(Table, Export, Request, Builder): mixed)|(Closure(Table, Export, Request, Builder): mixed)|null $using
      */
     public static function make(
         string $label = 'Excel Export',
@@ -403,7 +403,7 @@ class Export implements Arrayable
             ? fn () => redirect()->to($redirect)
             : Helpers::asClosure($redirect);
 
-        $using = Helpers::asClosure($using);
+        $using         = Helpers::asClosure($using);
         $withQueuedJob = Helpers::asClosure($withQueuedJob);
 
         // @phpstan-ignore-next-line
@@ -432,7 +432,7 @@ class Export implements Arrayable
     /**
      * Set the closure that should be used to export the data.
      *
-     * @param  (callable(Table, Export, Request, Builder): mixed)|(Closure(Table, Export, Request, Builder): mixed)  $using
+     * @param (callable(Table, Export, Request, Builder): mixed)|(Closure(Table, Export, Request, Builder): mixed) $using
      */
     public function using(Closure|callable $using): self
     {
@@ -495,7 +495,7 @@ class Export implements Arrayable
      *
      * When set, this takes precedence over queue()/using() for route and payload generation.
      *
-     * @param  class-string<PipelineExporter>  $exporterClass
+     * @param class-string<PipelineExporter> $exporterClass
      */
     public function exporter(string $exporterClass): self
     {
@@ -512,7 +512,7 @@ class Export implements Arrayable
     public function tableExporter(): self
     {
         $this->tableExporterDisabled = false;
-        $this->exporterClass = TableExporter::class;
+        $this->exporterClass         = TableExporter::class;
 
         return $this;
     }
@@ -530,7 +530,7 @@ class Export implements Arrayable
         }
 
         $this->tableExporterDisabled = true;
-        $this->exporterClass = null;
+        $this->exporterClass         = null;
 
         return $this;
     }
@@ -656,7 +656,7 @@ class Export implements Arrayable
     /**
      * Set the allowed export formats.
      *
-     * @param  array<int, ExportFormat>|Closure  $formats
+     * @param array<int, ExportFormat>|Closure $formats
      */
     public function formats(array|Closure $formats): self
     {
@@ -698,7 +698,7 @@ class Export implements Arrayable
     /**
      * Set the number of rows per export chunk.
      *
-     * @param  int|Closure():int  $chunkSize
+     * @param int|Closure():int $chunkSize
      */
     public function chunkSize(int|Closure $chunkSize): self
     {
@@ -738,7 +738,7 @@ class Export implements Arrayable
     /**
      * Set the pipeline file name (string passthrough, or Closure receiving TableExport).
      *
-     * @param  string|Closure(TableExport): string  $fileName
+     * @param string|Closure(TableExport): string $fileName
      */
     public function fileName(string|Closure $fileName): self
     {
@@ -762,7 +762,7 @@ class Export implements Arrayable
     /**
      * Set additional options to pass through to the pipeline export run.
      *
-     * @param  array<string, mixed>  $options
+     * @param array<string, mixed> $options
      */
     public function options(array $options): self
     {
@@ -813,7 +813,7 @@ class Export implements Arrayable
      * Build the Eloquent query for the pipeline exporter.
      * Applies the exporter's static modifyQuery hook followed by the optional modifyQueryUsing closure.
      *
-     * @param  array<string, mixed>  $options
+     * @param array<string, mixed> $options
      */
     public function buildExporterQuery(array $options = []): Builder
     {
@@ -857,28 +857,28 @@ class Export implements Arrayable
         }
 
         $array = [
-            'label' => $this->getLabel(),
-            'authorized' => $this->isAuthorized(),
-            'dataAttributes' => $this->buildDataAttributes(),
-            'meta' => $this->meta,
+            'label'               => $this->getLabel(),
+            'authorized'          => $this->isAuthorized(),
+            'dataAttributes'      => $this->buildDataAttributes(),
+            'meta'                => $this->meta,
             'limitToSelectedRows' => $this->shouldLimitToSelectedRows(),
-            'asDownload' => ! $this->hasExporter() && ! $this->queue && $this->asDownload,
-            'url' => $this->getExportUrl(),
+            'asDownload'          => ! $this->hasExporter() && ! $this->queue && $this->asDownload,
+            'url'                 => $this->getExportUrl(),
         ];
 
         if ($this->hasExporter()) {
             $array = array_merge($array, $this->cachedPipelineMeta ??= [
-                'hasExporter' => true,
-                'resourceLabel' => $this->getResourceLabel(),
-                'hasColumnMapping' => $this->hasColumnMapping(),
+                'hasExporter'                        => true,
+                'resourceLabel'                      => $this->getResourceLabel(),
+                'hasColumnMapping'                   => $this->hasColumnMapping(),
                 'enableVisibleTableColumnsByDefault' => $this->shouldEnableVisibleTableColumnsByDefault(),
-                'columns' => collect($this->getExportColumns())
+                'columns'                            => collect($this->getExportColumns())
                     ->map(fn (ExportColumn $column): array => [
-                        'name' => $column->getName(),
-                        'label' => $column->getLabel(),
+                        'name'             => $column->getName(),
+                        'label'            => $column->getLabel(),
                         'enabledByDefault' => $column->isEnabledByDefault(),
                     ])->values()->all(),
-                'formats' => array_map(fn (ExportFormat $format): string => $format->value, $this->getFormats()),
+                'formats'     => array_map(fn (ExportFormat $format): string => $format->value, $this->getFormats()),
                 'optionsForm' => array_map(fn (OptionField $field): array => $field->toArray(), $this->getExporterClass()::getOptionsFormComponents()),
             ]);
         }

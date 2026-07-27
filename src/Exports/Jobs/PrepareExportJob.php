@@ -28,10 +28,10 @@ class PrepareExportJob implements ShouldQueue
     public bool $deleteWhenMissingModels = true;
 
     /**
-     * @param  array<string, string>  $columnMap
-     * @param  array<string, mixed>   $options
-     * @param  int                    $chunkSize  Rows fetched per ExportRowsJob. Prefer larger values (500–1000)
-     *                                            for very large tables to reduce batch-insert overhead.
+     * @param array<string, string> $columnMap
+     * @param array<string, mixed>  $options
+     * @param int                   $chunkSize Rows fetched per ExportRowsJob. Prefer larger values (500–1000)
+     *                                         for very large tables to reduce batch-insert overhead.
      */
     public function __construct(
         public TableExport $export,

@@ -32,9 +32,9 @@ class ExportRowsJob implements ShouldQueue
     private ?Exporter $resolvedExporter = null;
 
     /**
-     * @param  array<int, mixed>      $keys
-     * @param  array<string, string>  $columnMap
-     * @param  array<string, mixed>   $options
+     * @param array<int, mixed>     $keys
+     * @param array<string, string> $columnMap
+     * @param array<string, mixed>  $options
      */
     public function __construct(
         public TableExport $export,
