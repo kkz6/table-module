@@ -32,9 +32,10 @@ export const useTable = (resource: TableResource): UseTableReturn => {
         return resourceKey ? (page.props as Record<string, any>)[resourceKey] : undefined;
     };
 
-    const getFilterByAttribute = (attribute: string): FilterDefinition | undefined => {
-        return resource.filters.find((filter) => filter.attribute === attribute);
-    };
+    const getFilterByAttribute = useCallback(
+        (attribute: string): FilterDefinition | undefined => resource.filters.find((filter) => filter.attribute === attribute),
+        [resource.filters],
+    );
 
     const navigate = () => {
         const newState: any = {
@@ -146,6 +147,9 @@ export const useTable = (resource: TableResource): UseTableReturn => {
         visitTableUrl(window.location.pathname + (queryString ? `?${queryString}` : ''));
     };
 
+    const navigateRef = useRef(navigate);
+    navigateRef.current = navigate;
+
     const ensureNotFurtherThanLastPage = () => {
         if (!isNavigating) {
             const currentResource = getResourceFromPage();
@@ -161,27 +165,33 @@ export const useTable = (resource: TableResource): UseTableReturn => {
         }
     };
 
+    const ensureNotFurtherThanLastPageRef = useRef(ensureNotFurtherThanLastPage);
+    ensureNotFurtherThanLastPageRef.current = ensureNotFurtherThanLastPage;
+
     useEffect(() => {
-        ensureNotFurtherThanLastPage();
+        ensureNotFurtherThanLastPageRef.current();
     }, [page.props]);
 
-    function setValueOfFilter(attribute: string, value: any) {
-        if (state.filters[attribute].value === value) {
-            return;
-        }
+    const setValueOfFilter = useCallback(
+        (attribute: string, value: unknown): void => {
+            if (state.filters[attribute].value === value) {
+                return;
+            }
 
-        setState(function (prev: TableState) {
-            const newState = {
-                ...prev,
-                filters: {
-                    ...prev.filters,
-                    [attribute]: { ...prev.filters[attribute], value },
-                },
-            };
+            setState(function (prev: TableState) {
+                const newState = {
+                    ...prev,
+                    filters: {
+                        ...prev.filters,
+                        [attribute]: { ...prev.filters[attribute], value },
+                    },
+                };
 
-            return newState;
-        });
-    }
+                return newState;
+            });
+        },
+        [state.filters],
+    );
 
     const isFirstRender = useRef(true);
 
@@ -237,7 +247,7 @@ export const useTable = (resource: TableResource): UseTableReturn => {
         }
 
         if (clientSideVisit) {
-            return navigate();
+            return navigateRef.current();
         }
 
         setIsNavigating(true);
@@ -248,11 +258,20 @@ export const useTable = (resource: TableResource): UseTableReturn => {
         setDebounceTimeoutId(null);
 
         if (!debounceOnNextVisit) {
-            return navigate();
+            return navigateRef.current();
         }
 
-        setDebounceTimeoutId(setTimeout(navigate, resource.debounceTime));
-    }, [state]);
+        setDebounceTimeoutId(setTimeout(() => navigateRef.current(), resource.debounceTime));
+    }, [
+        clientSideVisit,
+        debounceOnNextVisit,
+        debounceTimeoutId,
+        getFilterByAttribute,
+        preventNavigation,
+        resource.debounceTime,
+        setValueOfFilter,
+        state,
+    ]);
 
     const setPerPage = (perPage: string | number) => {
         setDebounceOnNextVisit(false);
@@ -422,7 +441,7 @@ export const useTable = (resource: TableResource): UseTableReturn => {
 
     const hasSelectableRows = useMemo(() => {
         return resource.hasBulkActions || resource.hasExportsThatLimitsToSelectedRows;
-    }, [resource.hasExports, resource.hasExportsThatLimitsToSelectedRows]);
+    }, [resource.hasBulkActions, resource.hasExportsThatLimitsToSelectedRows]);
 
     const hasStickyColumns = useMemo(() => {
         return state.sticky && state.sticky.length > 0;
