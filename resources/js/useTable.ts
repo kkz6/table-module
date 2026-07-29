@@ -11,7 +11,6 @@ export const useTable = (resource: TableResource): UseTableReturn => {
     const [preventNavigation, setPreventNavigation] = useState<boolean>(false);
     const [clientSideVisit, setClientSideVisit] = useState<boolean>(false);
     const [debounceOnNextVisit, setDebounceOnNextVisit] = useState<boolean>(true);
-    const [debounceTimeoutId, setDebounceTimeoutId] = useState<NodeJS.Timeout | null>(null);
 
     const page = usePage();
 
@@ -252,26 +251,14 @@ export const useTable = (resource: TableResource): UseTableReturn => {
 
         setIsNavigating(true);
 
-        if (debounceTimeoutId) {
-            clearTimeout(debounceTimeoutId);
-        }
-        setDebounceTimeoutId(null);
-
         if (!debounceOnNextVisit) {
             return navigateRef.current();
         }
 
-        setDebounceTimeoutId(setTimeout(() => navigateRef.current(), resource.debounceTime));
-    }, [
-        clientSideVisit,
-        debounceOnNextVisit,
-        debounceTimeoutId,
-        getFilterByAttribute,
-        preventNavigation,
-        resource.debounceTime,
-        setValueOfFilter,
-        state,
-    ]);
+        const debounceTimeoutId = setTimeout(() => navigateRef.current(), resource.debounceTime);
+
+        return () => clearTimeout(debounceTimeoutId);
+    }, [clientSideVisit, debounceOnNextVisit, getFilterByAttribute, preventNavigation, resource.debounceTime, setValueOfFilter, state]);
 
     const setPerPage = (perPage: string | number) => {
         setDebounceOnNextVisit(false);
