@@ -30,6 +30,8 @@ class MakeExporterCommand extends GeneratorCommand
 
     /**
      * Build the class with the given name, replacing the model placeholder.
+     *
+     * @param mixed $name
      */
     protected function buildClass($name): string
     {

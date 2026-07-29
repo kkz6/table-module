@@ -26,7 +26,7 @@ class CompleteExportJob implements ShouldQueue
     public int $tries = 1;
 
     /**
-     * @param  array<int, ExportFormat>  $formats
+     * @param array<int, ExportFormat> $formats
      */
     public function __construct(
         public TableExport $export,

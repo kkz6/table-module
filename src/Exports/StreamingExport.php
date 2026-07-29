@@ -25,9 +25,9 @@ class StreamingExport
     public function stream(Export $export, ExportRequest $request): Response
     {
         $configuration = $this->configuration->resolve($export, $request);
-        $formats = $configuration['formats'];
-        $tableExport = $this->makeExportState($export, $request, $configuration['totalRows']);
-        $exporter = $tableExport->getExporter($configuration['columnMap'], $configuration['options'], $export->getTable());
+        $formats       = $configuration['formats'];
+        $tableExport   = $this->makeExportState($export, $request, $configuration['totalRows']);
+        $exporter      = $tableExport->getExporter($configuration['columnMap'], $configuration['options'], $export->getTable());
 
         $this->applyColumnLoading($configuration['query'], $exporter, $configuration['columnMap']);
 
@@ -101,7 +101,7 @@ class StreamingExport
     }
 
     /**
-     * @param  array<int, ExportFormat>  $formats
+     * @param array<int, ExportFormat> $formats
      * @param  array{
      *     columnMap: array<string, string>,
      *     formats: array<int, ExportFormat>,
@@ -128,7 +128,7 @@ class StreamingExport
         }
 
         $archivePath = (string) tempnam(sys_get_temp_dir(), 'table-export-');
-        $archive = new ZipArchive;
+        $archive     = new ZipArchive;
 
         if ($archive->open($archivePath) !== true) {
             $this->deleteTemporaryFile($archivePath);
@@ -166,7 +166,7 @@ class StreamingExport
     private function writeCsv(array $configuration, Exporter $exporter): string
     {
         $temporaryFile = (string) tempnam(sys_get_temp_dir(), 'table-export-');
-        $output = fopen($temporaryFile, 'wb');
+        $output        = fopen($temporaryFile, 'wb');
 
         if (! is_resource($output)) {
             throw new RuntimeException('Unable to create the CSV export.');
@@ -204,7 +204,7 @@ class StreamingExport
     private function writeXlsx(array $configuration, Exporter $exporter): string
     {
         $temporaryFile = (string) tempnam(sys_get_temp_dir(), 'table-export-');
-        $rows = (function () use ($configuration, $exporter): Generator {
+        $rows          = (function () use ($configuration, $exporter): Generator {
             yield array_values($configuration['columnMap']);
 
             yield from $this->rows($configuration['query'], $exporter, $configuration['totalRows'], $configuration['chunkSize']);
@@ -226,10 +226,10 @@ class StreamingExport
      */
     private function rows(Builder $query, Exporter $exporter, int $rowLimit, int $chunkSize = 100): Generator
     {
-        $model = $query->getModel();
-        $keyName = $model->getKeyName();
+        $model        = $query->getModel();
+        $keyName      = $model->getKeyName();
         $qualifiedKey = $model->getQualifiedKeyName();
-        $remaining = $rowLimit;
+        $remaining    = $rowLimit;
 
         foreach ($query->clone()->reorder()->lazyById($chunkSize, $qualifiedKey, $keyName) as $record) {
             if ($remaining <= 0) {
@@ -249,18 +249,18 @@ class StreamingExport
     private function makeExportState(Export $export, ExportRequest $request, int $totalRows): TableExport
     {
         $tableExport = new TableExport([
-            'exporter' => $export->getExporterClass(),
-            'total_rows' => $totalRows,
-            'processed_rows' => 0,
+            'exporter'        => $export->getExporterClass(),
+            'total_rows'      => $totalRows,
+            'processed_rows'  => 0,
             'successful_rows' => 0,
-            'file_disk' => 'local',
+            'file_disk'       => 'local',
         ]);
 
         $tableExport->forceFill([
-            'id' => random_int(1, PHP_INT_MAX),
+            'id'         => random_int(1, PHP_INT_MAX),
             'created_at' => now(),
             'updated_at' => now(),
-            'user_id' => $request->user()->getKey(),
+            'user_id'    => $request->user()->getKey(),
         ]);
 
         return $tableExport;
@@ -288,7 +288,7 @@ class StreamingExport
     }
 
     /**
-     * @param  array<string, string>  $temporaryFiles
+     * @param array<string, string> $temporaryFiles
      */
     private function deleteTemporaryFiles(array $temporaryFiles): void
     {

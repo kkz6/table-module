@@ -127,7 +127,7 @@ export const useStickyHeader = (getTableContainer: GetElementFunction, getHeader
             tableContainer._stickyHeaderCleanup();
             delete tableContainer._stickyHeaderCleanup;
         }
-    }, [getTableContainer, getHeaderElement]);
+    }, [getTableContainer]);
 
     return { add, remove };
 };

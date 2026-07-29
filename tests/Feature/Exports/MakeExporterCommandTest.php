@@ -14,7 +14,7 @@ it('scaffolds an exporter class', function () {
 
         expect(File::get($path))
             ->toContain('class PlanetExporter extends Exporter')
-            ->toContain("protected static ?string \$model = \\App\\Models\\Planet::class;")
+            ->toContain('protected static ?string $model = \\App\\Models\\Planet::class;')
             ->toContain('public static function getColumns(): array');
     } finally {
         File::delete($path);

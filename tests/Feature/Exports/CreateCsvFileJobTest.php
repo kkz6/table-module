@@ -11,9 +11,9 @@ it('merges parts into a single csv file with BOM at the top level', function ():
     Storage::fake('local');
 
     $tableExport = TableExport::factory()->create([
-        'exporter'  => TestUserExporter::class,
-        'file_disk' => 'local',
-        'file_name' => 'people',
+        'exporter'   => TestUserExporter::class,
+        'file_disk'  => 'local',
+        'file_name'  => 'people',
         'total_rows' => 2,
     ]);
 

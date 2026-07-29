@@ -14,7 +14,7 @@ class ExportReadyNotification extends Notification
     use Queueable;
 
     /**
-     * @param  array<int, ExportFormat>  $formats
+     * @param array<int, ExportFormat> $formats
      */
     public function __construct(public TableExport $export, public array $formats, public string $resourceLabel) {}
 
