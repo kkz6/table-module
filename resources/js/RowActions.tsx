@@ -9,6 +9,12 @@ import TableActions from './TableActions';
 import type { RowActionsProps, TableAction } from './types';
 import { getActionForItem } from './urlHelpers';
 
+// Inline row actions use the quieter destructive treatment; a solid red slab in
+// every row reads as an alarm rather than an action.
+function toRowVariant(variant?: string) {
+    return variant === 'destructive' ? 'destructiveGhost' : variant;
+}
+
 export default function RowActions({
     item,
     actions,
@@ -71,7 +77,7 @@ export default function RowActions({
                 return {
                     onClick: () => handle(action),
                     disabled: !action.authorized,
-                    variant: action.variant || 'outline',
+                    variant: toRowVariant(action.variant) || 'outline',
                 };
             }
 
@@ -91,7 +97,7 @@ export default function RowActions({
 
             // Pass through the variant directly from the backend for all components
             if ('variant' in mutableActionItem && mutableActionItem.variant) {
-                mutableActionItem.bindings.variant = mutableActionItem.variant;
+                mutableActionItem.bindings.variant = toRowVariant(mutableActionItem.variant as string);
             }
 
             if (mutableActionItem.bindings?.class) {
