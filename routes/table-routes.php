@@ -6,7 +6,8 @@ use Modules\Table\Http\ActionController;
 use Modules\Table\Http\ExportController;
 use Modules\Table\Http\ViewController;
 
-Route::name('inertia-tables.')->prefix('/_inertia-tables/{table}/{name}')->group(function () {
+// Signed URLs still need the browser session and CSRF protection for mutations.
+Route::middleware('web')->name('inertia-tables.')->prefix('/_inertia-tables/{table}/{name}')->group(function () {
     Route::post('/action/{action}/{state?}', ActionController::class)
         ->middleware(ValidateSignature::absolute())
         ->name('action');
