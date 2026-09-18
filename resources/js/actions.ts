@@ -1,6 +1,6 @@
 import { router } from '@inertiajs/react';
 import { default as Axios } from 'axios';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type {
     ActionErrorResult,
     ActionSuccessResult,
@@ -21,6 +21,12 @@ export const useActions = (
 ): UseActionsReturn => {
     const [isPerformingAction, setIsPerformingAction] = useState<boolean>(false);
     const [selectedItems, setSelectedItems] = useState<(string | number)[]>([]);
+    const selectionScope = JSON.stringify(resource?.state ?? null);
+
+    // A changed filter or page must not leave invisible records selected.
+    useEffect(() => {
+        setSelectedItems([]);
+    }, [selectionScope]);
 
     const toggleItem = useMemo(
         () => (id: string | number | '*') => {

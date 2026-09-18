@@ -18,6 +18,7 @@ import Filter from './Filter';
 import LoadingSpinner from './LoadingSpinner';
 import Pagination from './Pagination';
 import RowActions from './RowActions';
+import SelectionActionBar from './SelectionActionBar';
 import TableCellImage from './TableCellImage';
 import TableHeaderDropdown from './TableHeaderDropdown';
 import ToggleColumnDropdown from './ToggleColumnDropdown';
@@ -84,7 +85,7 @@ const Table: React.FC<TableProps> = ({
         visitPaginationUrl,
     } = tableInstance;
 
-    const actions = useActions();
+    const actions = useActions(resource);
     const visibleFilters = resource.filters.filter((filter) => state.filters[filter.attribute]?.enabled);
     const { performAction, performAsyncExport, toggleItem, isPerformingAction, allItemsAreSelected, selectedItems } = actions;
 
@@ -155,7 +156,7 @@ const Table: React.FC<TableProps> = ({
     ].join(' ');
 
     return (
-        <div ref={tableWrapperRef} className="it-wrapper relative" {...(isPerformingAction ? { inert: true } : {})}>
+        <div ref={tableWrapperRef} className={clsx('it-wrapper relative', selectedItems.length > 0 && 'pb-24')} {...(isPerformingAction ? { inert: true } : {})}>
             {isPerformingAction && (loading ? loading({ table: tableInstance, actions }) : <LoadingSpinner />)}
 
             {!resource.hasFilters && resource.emptyState && (resource.emptyState !== true || emptyState) ? (
@@ -196,9 +197,9 @@ const Table: React.FC<TableProps> = ({
                                   )}
 
                                   <div className="flex flex-shrink-0 gap-2">
-                                      {(resource.hasBulkActions || resource.hasExports) && (
+                                      {resource.hasExports && selectedItems.length === 0 && (
                                           <ActionsDropdown
-                                              actions={resource.actions || []}
+                                              actions={[]}
                                               exports={resource.exports || []}
                                               selectedItems={selectedItems}
                                               performAction={performAction}
@@ -626,6 +627,21 @@ const Table: React.FC<TableProps> = ({
                                   )}
                               </div>
                           )}
+                    <SelectionActionBar
+                        actions={resource.actions || []}
+                        exports={resource.exports || []}
+                        rows={resource.results?.data || []}
+                        total={resource.results?.total || 0}
+                        selectedItems={selectedItems}
+                        busy={isPerformingAction}
+                        onClear={actions.removeSelection}
+                        performAction={performAction}
+                        performAsyncExport={performAsyncExport}
+                        iconResolver={(icon) => (iconResolver || resolveIcon)(icon) ?? React.Fragment}
+                        onSuccess={onActionSuccess}
+                        onError={onActionError}
+                        onHandle={onCustomAction}
+                    />
                 </fieldset>
             )}
         </div>
