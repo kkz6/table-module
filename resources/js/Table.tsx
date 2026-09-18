@@ -9,7 +9,6 @@ import { useStickyColumns, useStickyHeader } from './useStickyTable';
 import { Badge } from '@shared/components/ui/badge';
 import { Checkbox } from '@shared/components/ui/checkbox';
 import { Input } from '@shared/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@shared/components/ui/select';
 import { Table as ShadcnTable, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shared/components/ui/table';
 import ActionsDropdown from './ActionsDropdown';
 import AddFilterDropdown from './AddFilterDropdown';
@@ -69,7 +68,6 @@ const Table: React.FC<TableProps> = ({
 
     const {
         addFilter,
-        hasFilters,
         hasSelectableRows,
         hasStickyColumns,
         isNavigating,
@@ -87,7 +85,7 @@ const Table: React.FC<TableProps> = ({
     } = tableInstance;
 
     const actions = useActions();
-    const trashFilter = resource.filters.find((filter) => filter.type === 'trashed');
+    const visibleFilters = resource.filters.filter((filter) => state.filters[filter.attribute]?.enabled);
     const { performAction, performAsyncExport, toggleItem, isPerformingAction, allItemsAreSelected, selectedItems } = actions;
 
     const tableWrapperRef = useRef<HTMLDivElement>(null);
@@ -160,7 +158,7 @@ const Table: React.FC<TableProps> = ({
         <div ref={tableWrapperRef} className="it-wrapper relative" {...(isPerformingAction ? { inert: true } : {})}>
             {isPerformingAction && (loading ? loading({ table: tableInstance, actions }) : <LoadingSpinner />)}
 
-            {!trashFilter && resource.emptyState && (resource.emptyState !== true || emptyState) ? (
+            {!resource.hasFilters && resource.emptyState && (resource.emptyState !== true || emptyState) ? (
                 emptyState ? (
                     emptyState({ table: tableInstance })
                 ) : (
@@ -195,23 +193,6 @@ const Table: React.FC<TableProps> = ({
                                   )}
 
                                   <div className="flex flex-shrink-0 gap-2">
-                                      {trashFilter && (
-                                          <Select
-                                              value={state.filters[trashFilter.attribute]?.enabled
-                                                  ? state.filters[trashFilter.attribute].clause
-                                                  : 'without_trashed'}
-                                              onValueChange={(clause) => setFilter(trashFilter, clause, null)}
-                                          >
-                                              <SelectTrigger aria-label="Show active or trashed items" className="w-36">
-                                                  <SelectValue />
-                                              </SelectTrigger>
-                                              <SelectContent>
-                                                  <SelectItem value="without_trashed">Active items</SelectItem>
-                                                  <SelectItem value="only_trashed">Trash</SelectItem>
-                                                  <SelectItem value="with_trashed">All items</SelectItem>
-                                              </SelectContent>
-                                          </Select>
-                                      )}
                                       {(resource.hasBulkActions || resource.hasExports) && (
                                           <ActionsDropdown
                                               actions={resource.actions || []}
@@ -227,7 +208,7 @@ const Table: React.FC<TableProps> = ({
                                       )}
 
                                       {resource.hasFilters && (
-                                          <AddFilterDropdown state={state.filters} filters={resource.filters.filter((filter) => filter.type !== 'trashed')} onAdd={addFilter} />
+                                          <AddFilterDropdown state={state.filters} filters={resource.filters} onAdd={addFilter} />
                                       )}
 
                                       {resource.hasToggleableColumns && (
@@ -240,11 +221,11 @@ const Table: React.FC<TableProps> = ({
                     {/* Filters */}
                     {filters
                         ? filters({ table: tableInstance, actions })
-                        : hasFilters && (
+                        : visibleFilters.length > 0 && (
                               <div className="it-filters flex flex-wrap items-center space-y-2 space-x-2 md:space-y-0 md:space-x-4 rtl:space-x-reverse">
-                                  {Object.entries(resource.filters).map(
+                                  {Object.entries(visibleFilters).map(
                                       ([key, filter]: [string, any]) =>
-                                          filter.type !== 'trashed' && state.filters[filter.attribute].enabled && (
+                                          state.filters[filter.attribute].enabled && (
                                               <Filter
                                                   key={key}
                                                   value={state.filters[filter.attribute]}
@@ -361,9 +342,7 @@ const Table: React.FC<TableProps> = ({
                                                 <TableRow>
                                                     <TableCell colSpan={resource.columns.filter((column) => state.columns[column.attribute]).length + (hasSelectableRows ? 1 : 0)}>
                                                         <p className="p-8 text-center font-medium text-gray-900 dark:text-zinc-200">
-                                                            {trashFilter && state.filters[trashFilter.attribute]?.clause === 'only_trashed'
-                                                                ? 'Trash is empty.'
-                                                                : t('table::table.no_results_found')}
+                                                            {t('table::table.no_results_found')}
                                                         </p>
                                                     </TableCell>
                                                 </TableRow>
