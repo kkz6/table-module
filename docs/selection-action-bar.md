@@ -1,6 +1,7 @@
 # Selection action bar
 
 Both table renderers use `SelectionActionBar` when one or more rows are selected.
+Its visual shell is the shared UI `FloatingSelectionBar`, also used by Media Manager.
 It replaces the bulk Actions menu without adding table-specific frontend rules.
 Exports remain in the header menu when nothing is selected.
 
