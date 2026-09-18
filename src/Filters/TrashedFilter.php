@@ -10,6 +10,12 @@ use Modules\Table\Exceptions\UnsupportedClauseException;
 
 class TrashedFilter extends Filter
 {
+    public function shouldBeAppliedUnwrapped(): bool
+    {
+        // Global scopes must be removed on the root builder, not a nested WHERE.
+        return true;
+    }
+
     public function __construct(
         string $attribute,
         ?string $label = null,
@@ -57,10 +63,8 @@ class TrashedFilter extends Filter
      */
     protected function modelUsesSoftDeletes(Builder $resource): bool
     {
-        // Use method_exists to check if the soft delete methods are available
-        return method_exists($resource, 'withTrashed') &&
-            method_exists($resource, 'onlyTrashed') &&
-            method_exists($resource, 'withoutTrashed');
+        // These scopes are builder macros, not concrete methods.
+        return in_array(SoftDeletes::class, class_uses_recursive($resource->getModel()), true);
     }
 
     /**
@@ -68,10 +72,7 @@ class TrashedFilter extends Filter
      */
     protected function applyWithTrashed(Builder $resource): void
     {
-        // Use dynamic method call to avoid static analysis issues
-        if (method_exists($resource, 'withTrashed')) {
-            call_user_func([$resource, 'withTrashed']);
-        }
+        $resource->withTrashed();
     }
 
     /**
@@ -79,10 +80,7 @@ class TrashedFilter extends Filter
      */
     protected function applyOnlyTrashed(Builder $resource): void
     {
-        // Use dynamic method call to avoid static analysis issues
-        if (method_exists($resource, 'onlyTrashed')) {
-            call_user_func([$resource, 'onlyTrashed']);
-        }
+        $resource->onlyTrashed();
     }
 
     /**
@@ -90,10 +88,7 @@ class TrashedFilter extends Filter
      */
     protected function applyWithoutTrashed(Builder $resource): void
     {
-        // Use dynamic method call to avoid static analysis issues
-        if (method_exists($resource, 'withoutTrashed')) {
-            call_user_func([$resource, 'withoutTrashed']);
-        }
+        $resource->withoutTrashed();
     }
 
     /**

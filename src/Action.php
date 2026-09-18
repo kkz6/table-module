@@ -37,6 +37,16 @@ class Action implements Arrayable
      */
     protected int $index;
 
+    protected bool $includeTrashed = false;
+
+    /** Allow explicitly selected soft-deleted records to be restored. */
+    public function withTrashed(bool $include = true): self
+    {
+        $this->includeTrashed = $include;
+
+        return $this;
+    }
+
     public function __construct(
         public string $label,
         public bool $asRowAction,
@@ -623,6 +633,11 @@ class Action implements Arrayable
             $query = $allItemsAreSelected
                 ? $queryBuilder->getResourceWithRequestApplied(applySort: false)
                 : $queryBuilder->getResource()->tap(fn (Builder $query) => $this->table->scopePrimaryKey($query, $keys));
+
+            // Wildcard selections must retain the current view's filters.
+            if ($this->includeTrashed && ! $allItemsAreSelected) {
+                $query->withTrashed();
+            }
 
             $result = null;
 

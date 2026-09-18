@@ -35,7 +35,10 @@ export function InertiaTableWrapper<T = any>({
     // 2. There's no active search
     // 3. There are no active filters
     const shouldShowEmptyState =
-        resource.results?.total === 0 && !resource.state.search && !Object.values(resource.state.filters).some((f: FilterState) => f.enabled);
+        resource.results?.total === 0 &&
+        !resource.filters.some((filter) => filter.type === 'trashed') &&
+        !resource.state.search &&
+        !Object.values(resource.state.filters).some((f: FilterState) => f.enabled);
 
     if (shouldShowEmptyState && emptyState) {
         return (

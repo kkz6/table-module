@@ -3,6 +3,7 @@ import qs from 'qs';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FilterDefinition, FilterState, TableColumn, TableResource, TableState, UseTableReturn } from './types';
 import { replaceUrl } from './urlHelpers';
+import { filterQuery } from './filterQuery';
 
 export const useTable = (resource: TableResource): UseTableReturn => {
     const [state, setState] = useState<TableState>(resource.state);
@@ -74,8 +75,6 @@ export const useTable = (resource: TableResource): UseTableReturn => {
             newState.perPage = state.perPage;
         }
 
-        const clausesWithoutValue = ['is_true', 'is_false', 'is_set', 'is_not_set'];
-
         Object.entries(state.filters).forEach(([key, filter]: [string, FilterState]) => {
             // Only add filters to the query string if they're enabled
             if (!filter.enabled) {
@@ -88,14 +87,12 @@ export const useTable = (resource: TableResource): UseTableReturn => {
                 return;
             }
 
-            if (!clausesWithoutValue.includes(filter.clause || '') && (filter.value === null || filter.value === '')) {
+            const query = filterQuery(filter);
+            if (query === null) {
                 return;
             }
 
-            newState.filters[key] = {
-                clause: filter.clause,
-                value: filter.value,
-            };
+            newState.filters[key] = query;
         });
 
         const enabledColumns = Object.entries(state.columns)
@@ -437,12 +434,17 @@ export const useTable = (resource: TableResource): UseTableReturn => {
     };
 
     const setFilter = (filter: FilterDefinition, clause: string, value: any) => {
+        setPreventNavigation(false);
+        if (filter.type === 'trashed') setDebounceOnNextVisit(false);
         setState((prev: TableState) => ({
             ...prev,
+            page: 1,
+            cursor: null,
             filters: {
                 ...prev.filters,
                 [filter.attribute]: {
                     ...prev.filters[filter.attribute],
+                    enabled: true,
                     clause,
                     value,
                 },
