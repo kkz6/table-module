@@ -156,7 +156,7 @@ const Table: React.FC<TableProps> = ({
     ].join(' ');
 
     return (
-        <div ref={tableWrapperRef} className={clsx('it-wrapper relative', selectedItems.length > 0 && 'pb-24')} {...(isPerformingAction ? { inert: true } : {})}>
+        <div ref={tableWrapperRef} className="it-wrapper relative" {...(isPerformingAction ? { inert: true } : {})}>
             {isPerformingAction && (loading ? loading({ table: tableInstance, actions }) : <LoadingSpinner />)}
 
             {!resource.hasFilters && resource.emptyState && (resource.emptyState !== true || emptyState) ? (
