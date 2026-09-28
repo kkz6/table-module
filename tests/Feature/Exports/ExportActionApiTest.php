@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Modules\Auth\Enums\Role;
 use Modules\Table\Columns\TextColumn;
 use Modules\Table\Export;
 use Modules\Table\Exports\ExportFormat;
@@ -13,9 +14,17 @@ use Modules\Table\Tests\Support\SingleExportUsersTable;
 use Modules\Table\Tests\Support\TestUserExporter;
 use Modules\Table\Tests\Support\TestUsersTable;
 use Modules\User\Models\User;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role as PermissionRole;
 
 beforeEach(function (): void {
-    $this->actingAs(User::factory()->create());
+    $adminRole = PermissionRole::findOrCreate(Role::ADMIN->value, 'web');
+    $adminRole->givePermissionTo(Permission::findOrCreate('access all company data', 'web'));
+
+    $user = User::factory()->forInternalCompany()->create();
+    $user->assignRole(Role::ADMIN);
+
+    $this->actingAs($user);
 });
 
 it('marks an export as pipeline when an exporter is attached', function (): void {

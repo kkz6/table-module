@@ -4,14 +4,21 @@ declare(strict_types=1);
 
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
+use Modules\Auth\Enums\Role;
 use Modules\Table\Exports\ExportFormat;
 use Modules\Table\Exports\Jobs\CreateXlsxFileJob;
 use Modules\Table\Models\TableExport;
 use Modules\Table\Tests\Support\TestUserExporter;
 use Modules\User\Models\User;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role as PermissionRole;
 
 beforeEach(function (): void {
-    $this->user = User::factory()->create();
+    $adminRole = PermissionRole::findOrCreate(Role::ADMIN->value, 'web');
+    $adminRole->givePermissionTo(Permission::findOrCreate('access all company data', 'web'));
+
+    $this->user = User::factory()->forInternalCompany()->create();
+    $this->user->assignRole(Role::ADMIN);
     $this->actingAs($this->user);
 });
 
@@ -67,12 +74,12 @@ it('builds the xlsx on the fly when the stored file is missing', function (): vo
     $this->get(ExportFormat::Xlsx->getDownloadUrl($export))->assertSuccessful();
 });
 
-it('forbids other users', function (): void {
+it('does not resolve exports owned by other users', function (): void {
     $export = makeCompletedExport();
     $url    = ExportFormat::Csv->getDownloadUrl($export);
 
     $this->actingAs(User::factory()->create());
-    $this->get($url)->assertForbidden();
+    $this->get($url)->assertNotFound();
 });
 
 it('rejects a tampered signature', function (): void {

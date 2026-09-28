@@ -12,7 +12,7 @@ use Modules\Table\Tests\Support\TestUsersTable;
 use Modules\User\Models\User;
 
 beforeEach(function (): void {
-    $this->actingAs(User::factory()->create());
+    $this->actingAs(User::factory()->admin()->create());
 });
 
 it('creates a table export row and dispatches the chain', function (): void {

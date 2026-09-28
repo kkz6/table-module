@@ -10,6 +10,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Modules\Table\Exports\Jobs\Concerns\RunsAsExportOwner;
 use Modules\Table\Models\TableExport;
 use Modules\Table\Table;
 
@@ -19,6 +20,7 @@ class PrepareExportJob implements ShouldQueue
     use Dispatchable;
     use InteractsWithQueue;
     use Queueable;
+    use RunsAsExportOwner;
     use SerializesModels;
 
     public int $tries = 1;
@@ -44,9 +46,7 @@ class PrepareExportJob implements ShouldQueue
 
     public function handle(): void
     {
-        auth()->setUser($this->export->user);
-
-        try {
+        $this->runAsExportOwner($this->export, function (): void {
             $exportAction = $this->table->getExportById($this->index)
                 ?? throw new \RuntimeException(sprintf('Export index [%d] no longer exists on table [%s].', $this->index, $this->table::class));
             $exporter = $this->export->getExporter($this->columnMap, $this->options, $this->table);
@@ -104,8 +104,6 @@ class PrepareExportJob implements ShouldQueue
             if ($jobs !== []) {
                 $this->batch()?->add($jobs);
             }
-        } finally {
-            auth()->forgetGuards();
-        }
+        });
     }
 }

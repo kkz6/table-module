@@ -6,6 +6,7 @@ namespace Modules\Table;
 
 use BackedEnum;
 use Closure;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Foundation\Bus\PendingDispatch;
@@ -356,9 +357,22 @@ class Export implements Arrayable
      */
     public function dispatchJob(): array
     {
+        $owner = auth()->user();
+
+        if (! $owner instanceof Authenticatable) {
+            throw new RuntimeException('Queued exports require an authenticated owner.');
+        }
+
+        $ownerId = $owner->getAuthIdentifier();
+
+        if (! is_int($ownerId) && ! is_string($ownerId)) {
+            throw new RuntimeException('Queued exports require a scalar owner identifier.');
+        }
+
         $pendingDispatch = dispatch($job = new ExportJob(
             $this->getTable(),
             $this->getIndex(),
+            $ownerId,
         ));
 
         if (($callback = $this->withQueuedJob) instanceof Closure) {
@@ -889,7 +903,7 @@ class Export implements Arrayable
     /**
      * Get the Exporter instance for the Export.
      */
-    public function makeExporter(): Exporter
+    public function makeExporter(int|string|null $ownerId = null): Exporter
     {
         return new Exporter(
             $this->table,
@@ -897,7 +911,8 @@ class Export implements Arrayable
             $this->getType(),
             $this->getEvents(),
             $this->shouldLimitToFilteredRows(),
-            $this->shouldLimitToSelectedRows()
+            $this->shouldLimitToSelectedRows(),
+            $ownerId,
         );
     }
 }

@@ -18,6 +18,7 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Events\AfterSheet;
 use Modules\Table\Columns\Column;
+use Modules\Table\Exports\Jobs\Middleware\RunExportAsOwner;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
@@ -44,7 +45,21 @@ class Exporter implements FromQuery, Responsable, ShouldAutoSize, WithColumnForm
         protected array $events,
         protected bool $limitToFilteredRows = false,
         protected bool $limitToSelectedRows = false,
+        protected int|string|null $ownerId = null,
     ) {}
+
+    /**
+     * Keep every Laravel Excel queue stage inside the requesting user's
+     * execution context, including the jobs dispatched after ExportJob.
+     *
+     * @return array<int, RunExportAsOwner>
+     */
+    public function middleware(): array
+    {
+        return $this->ownerId !== null
+            ? [new RunExportAsOwner($this->ownerId)]
+            : [];
+    }
 
     /**
      * Returns the file name for the export.

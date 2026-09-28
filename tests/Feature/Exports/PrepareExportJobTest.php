@@ -3,6 +3,9 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\Storage;
+use Modules\Auth\Enums\Role;
+use Modules\Company\Models\Company;
+use Modules\Shared\Tenancy\TenantContext;
 use Modules\Table\Exports\Jobs\ExportRowsJob;
 use Modules\Table\Exports\Jobs\PrepareExportJob;
 use Modules\Table\Models\TableExport;
@@ -12,6 +15,7 @@ use Modules\Table\Tests\Support\OrderedUsersTable;
 use Modules\Table\Tests\Support\TestUserExporter;
 use Modules\Table\Tests\Support\TestUsersTable;
 use Modules\User\Models\User;
+use Spatie\Permission\Models\Role as SpatieRole;
 
 it('writes the headers csv and fans out chunk jobs', function (): void {
     Storage::fake('local');
@@ -113,4 +117,33 @@ it('fans out without an ambiguous key when the resource joins another table', fu
 
     expect($allKeys)->toHaveCount(5)
         ->and(array_diff($users->pluck('id')->all(), $allKeys))->toBeEmpty();
+});
+
+it('fans out only same-company keys for a company manager', function (): void {
+    Storage::fake('local');
+    SpatieRole::findOrCreate(Role::EMPLOYEE->value, 'web');
+    SpatieRole::findOrCreate(Role::COMPANY_MANAGER->value, 'web');
+
+    $company      = Company::factory()->create(['is_internal' => false]);
+    $otherCompany = Company::factory()->create(['is_internal' => false]);
+    $manager      = User::factory()->create(['company_id' => $company->id]);
+    $manager->assignRole(Role::EMPLOYEE, Role::COMPANY_MANAGER);
+    $colleague = User::factory()->create(['company_id' => $company->id]);
+    $outsider  = User::factory()->create(['company_id' => $otherCompany->id]);
+
+    $tableExport = TableExport::factory()->for($manager)->create([
+        'exporter'   => TestUserExporter::class,
+        'file_disk'  => 'local',
+        'total_rows' => 10,
+    ]);
+
+    [$job, $batch] = (new PrepareExportJob($tableExport, TestUsersTable::make(), 1, ['name' => 'Full name'], [], 10))->withFakeBatch();
+    $job->handle();
+
+    $allKeys = array_merge(...array_map(fn (ExportRowsJob $job): array => $job->keys, $batch->added));
+
+    expect($allKeys)
+        ->toEqualCanonicalizing([$manager->id, $colleague->id])
+        ->not->toContain($outsider->id)
+        ->and(app(TenantContext::class)->isEstablished())->toBeFalse();
 });

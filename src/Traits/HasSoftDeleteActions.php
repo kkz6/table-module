@@ -6,6 +6,7 @@ namespace Modules\Table\Traits;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Gate;
 use Modules\Table\Action;
 use Modules\Table\Contracts\SoftDeletableTable;
 use Modules\Table\Filters\TrashedFilter;
@@ -61,11 +62,16 @@ trait HasSoftDeleteActions
     {
         return Action::make(
             label: 'Force Delete',
-            handle: fn (Model $model) => $this->handleForceDelete($model),
+            handle: function (Model $model): mixed {
+                Gate::authorize('forceDelete', $model);
+
+                return $this->handleForceDelete($model);
+            },
             icon: 'Trash2',
+            authorize: $canManage,
             hidden: function (Model $model) use ($canManage) {
                 // @phpstan-ignore-next-line - SoftDeletes methods are available on models using the trait
-                return ! $model->trashed() || ! $canManage;
+                return ! $model->trashed() || ! $canManage || Gate::denies('forceDelete', $model);
             },
         )->asButton()->variant(\Modules\Table\Enums\Variant::Destructive)->confirm(
             title: $this->getForceDeleteConfirmTitle(),
@@ -83,11 +89,16 @@ trait HasSoftDeleteActions
     {
         return Action::make(
             label: 'Restore',
-            handle: fn (Model $model) => $this->handleRestore($model),
+            handle: function (Model $model): mixed {
+                Gate::authorize('restore', $model);
+
+                return $this->handleRestore($model);
+            },
             icon: 'RotateCcw',
+            authorize: $canManage,
             hidden: function (Model $model) use ($canManage) {
                 // @phpstan-ignore-next-line - SoftDeletes methods are available on models using the trait
-                return ! $model->trashed() || ! $canManage;
+                return ! $model->trashed() || ! $canManage || Gate::denies('restore', $model);
             },
         )->asButton()->variant(\Modules\Table\Enums\Variant::Success)->confirm(
             title: $this->getRestoreConfirmTitle(),

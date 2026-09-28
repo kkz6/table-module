@@ -6,7 +6,7 @@ use Modules\Table\Tests\Support\TestUsersTable;
 use Modules\User\Models\User;
 
 beforeEach(function (): void {
-    $this->actingAs(User::factory()->create(['name' => 'Owner']));
+    $this->actingAs(User::factory()->admin()->create(['name' => 'Owner']));
 });
 
 it('streams a selected table export as csv', function (): void {

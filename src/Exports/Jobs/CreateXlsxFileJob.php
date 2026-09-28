@@ -10,6 +10,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Http\File;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Modules\Table\Exports\Jobs\Concerns\RunsAsExportOwner;
 use Modules\Table\Exports\XlsxFileBuilder;
 use Modules\Table\Models\TableExport;
 
@@ -18,6 +19,7 @@ class CreateXlsxFileJob implements ShouldQueue
     use Dispatchable;
     use InteractsWithQueue;
     use Queueable;
+    use RunsAsExportOwner;
     use SerializesModels;
 
     public int $tries = 3;
@@ -39,19 +41,21 @@ class CreateXlsxFileJob implements ShouldQueue
 
     public function handle(): void
     {
-        $tmp = app(XlsxFileBuilder::class)->writeToTemp(
-            $this->export,
-            $this->export->getExporter($this->columnMap, $this->options),
-        );
-
-        try {
-            $this->export->getFileDisk()->putFileAs(
-                $this->export->getFileDirectory(),
-                new File($tmp),
-                $this->export->file_name.'.xlsx',
+        $this->runAsExportOwner($this->export, function (): void {
+            $tmp = app(XlsxFileBuilder::class)->writeToTemp(
+                $this->export,
+                $this->export->getExporter($this->columnMap, $this->options),
             );
-        } finally {
-            @unlink($tmp);
-        }
+
+            try {
+                $this->export->getFileDisk()->putFileAs(
+                    $this->export->getFileDirectory(),
+                    new File($tmp),
+                    $this->export->file_name.'.xlsx',
+                );
+            } finally {
+                @unlink($tmp);
+            }
+        });
     }
 }
