@@ -10,6 +10,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Modules\Table\Exports\CsvFileMerger;
+use Modules\Table\Exports\Jobs\Concerns\RunsAsExportOwner;
 use Modules\Table\Models\TableExport;
 
 class CreateCsvFileJob implements ShouldQueue
@@ -17,6 +18,7 @@ class CreateCsvFileJob implements ShouldQueue
     use Dispatchable;
     use InteractsWithQueue;
     use Queueable;
+    use RunsAsExportOwner;
     use SerializesModels;
 
     public int $tries = 3;
@@ -30,6 +32,9 @@ class CreateCsvFileJob implements ShouldQueue
 
     public function handle(): void
     {
-        app(CsvFileMerger::class)->merge($this->export);
+        $this->runAsExportOwner(
+            $this->export,
+            fn (): string => app(CsvFileMerger::class)->merge($this->export),
+        );
     }
 }

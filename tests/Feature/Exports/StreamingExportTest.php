@@ -6,7 +6,7 @@ use Modules\Table\Tests\Support\TestUsersTable;
 use Modules\User\Models\User;
 
 beforeEach(function (): void {
-    $this->actingAs(User::factory()->create(['name' => 'Owner']));
+    $this->actingAs(User::factory()->admin()->create(['name' => 'Owner']));
 });
 
 it('streams a selected table export as csv', function (): void {
@@ -16,7 +16,7 @@ it('streams a selected table export as csv', function (): void {
     $response = $this->withHeader('Accept', 'application/octet-stream')
         ->post(TestUsersTable::exportUrl('Pipeline Export'), [
             'columnMap' => [
-                'name' => ['isEnabled' => true, 'label' => 'Full name'],
+                'name'  => ['isEnabled' => true, 'label' => 'Full name'],
                 'email' => ['isEnabled' => true, 'label' => 'Email'],
             ],
             'formats' => ['csv'],
@@ -39,7 +39,7 @@ it('streams multiple selected formats in one archive', function (): void {
     $response = $this->withHeader('Accept', 'application/octet-stream')
         ->post(TestUsersTable::exportUrl('Pipeline Export'), [
             'columnMap' => ['name' => ['isEnabled' => true, 'label' => 'Full name']],
-            'formats' => ['csv', 'xlsx'],
+            'formats'   => ['csv', 'xlsx'],
         ]);
 
     $response->assertSuccessful()

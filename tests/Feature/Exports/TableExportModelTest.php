@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Storage;
 use Modules\Table\Models\TableExport;
 use Modules\User\Models\User;
@@ -41,4 +42,30 @@ it('casts completed_at and row counters', function () {
 
     expect($export->completed_at)->toBeInstanceOf(\Illuminate\Support\Carbon::class)
         ->and($export->total_rows)->toBeInt();
+});
+
+it('shows authenticated users only their own export records', function (): void {
+    $owner       = User::factory()->create();
+    $other       = User::factory()->create();
+    $ownExport   = TableExport::factory()->for($owner)->create();
+    $otherExport = TableExport::factory()->for($other)->create();
+
+    $this->actingAs($owner);
+
+    expect(TableExport::query()->pluck('id')->all())->toBe([$ownExport->id])
+        ->and(TableExport::query()->find($otherExport->id))->toBeNull();
+});
+
+it('rejects cross-owner export creation and owner changes', function (): void {
+    $owner = User::factory()->create();
+    $other = User::factory()->create();
+    $this->actingAs($owner);
+
+    expect(fn () => TableExport::factory()->for($other)->create())
+        ->toThrow(AuthorizationException::class);
+
+    $export = TableExport::factory()->for($owner)->create();
+
+    expect(fn () => $export->forceFill(['user_id' => $other->id])->save())
+        ->toThrow(AuthorizationException::class);
 });

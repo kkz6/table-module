@@ -109,7 +109,7 @@ export default function ExportModal({ show, tableExport, visibleColumns, onClose
         setOptions(initialOptions);
     }, [tableExport]);
 
-    const columns = tableExport?.columns ?? [];
+    const columns = useMemo(() => tableExport?.columns ?? [], [tableExport]);
     const availableFormats = tableExport?.formats ?? [];
     const optionsForm = tableExport?.optionsForm ?? [];
 

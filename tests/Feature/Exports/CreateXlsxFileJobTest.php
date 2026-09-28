@@ -11,9 +11,9 @@ use Modules\Table\Tests\Support\TestUserExporter;
 it('assembles an xlsx from headers and part files', function (): void {
     Storage::fake('local');
     $tableExport = TableExport::factory()->create([
-        'exporter'  => TestUserExporter::class,
-        'file_disk' => 'local',
-        'file_name' => 'my-export',
+        'exporter'   => TestUserExporter::class,
+        'file_disk'  => 'local',
+        'file_name'  => 'my-export',
         'total_rows' => 2,
     ]);
     Storage::disk('local')->put($tableExport->getPartsDirectory().'/headers.csv', "Full name\n");
@@ -93,9 +93,9 @@ it('stores formula-like cell values as plain strings to prevent injection', func
 it('applies custom cell style and sheet hook from an overriding exporter', function (): void {
     Storage::fake('local');
     $tableExport = TableExport::factory()->create([
-        'exporter'  => StyledUserExporter::class,
-        'file_disk' => 'local',
-        'file_name' => 'styled-export',
+        'exporter'   => StyledUserExporter::class,
+        'file_disk'  => 'local',
+        'file_name'  => 'styled-export',
         'total_rows' => 1,
     ]);
     Storage::disk('local')->put($tableExport->getPartsDirectory().'/headers.csv', "Full name\n");

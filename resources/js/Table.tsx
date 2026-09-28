@@ -1,6 +1,6 @@
 import { useLang } from '@shared/hooks/use-lang';
 import { clsx } from 'clsx';
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { resolveIcon } from './iconResolver';
 import { getClickableColumn, useActions, useTable, visitUrl } from './inertiauiTable';
 import { TableColumn, TableResource } from './types';
@@ -103,29 +103,30 @@ const Table: React.FC<TableProps> = ({
     }
 
     // Sticky Table Header
-    const stickyHeader = useStickyHeader(
-        () => tableContainerRef.current,
-        () => theadRef.current,
-    );
+    const getTableContainer = useCallback(() => tableContainerRef.current, []);
+    const getHeaderElement = useCallback(() => theadRef.current, []);
+    const stickyHeader = useStickyHeader(getTableContainer, getHeaderElement);
 
     // Sticky Columns
-    const stickyColumns = useStickyColumns(() => tableContainerRef.current);
+    const stickyColumns = useStickyColumns(getTableContainer);
+    const { add: addStickyColumns, remove: removeStickyColumns } = stickyColumns;
+    const { add: addStickyHeader, remove: removeStickyHeader } = stickyHeader;
 
     useEffect(() => {
         if (!tableContainerRef.current) {
             return;
         }
 
-        stickyColumns.add();
-        const cleanup = [stickyColumns.remove];
+        addStickyColumns();
+        const cleanup = [removeStickyColumns];
 
         if (resource.stickyHeader) {
-            stickyHeader.add();
-            cleanup.push(stickyHeader.remove);
+            addStickyHeader();
+            cleanup.push(removeStickyHeader);
         }
 
         return () => cleanup.forEach((callback) => callback());
-    }, []);
+    }, [resource.stickyHeader, addStickyColumns, removeStickyColumns, addStickyHeader, removeStickyHeader]);
 
     function unstick(column: TableColumn) {
         undoSticky(column);

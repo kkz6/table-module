@@ -24,13 +24,13 @@ class ExportDispatcher
     {
         $configuration = app(ExportConfiguration::class)->resolve($export, $request);
         $exporterClass = $export->getExporterClass();
-        $columnMap = $configuration['columnMap'];
-        $formats = $configuration['formats'];
-        $options = $configuration['options'];
-        $totalRows = $configuration['totalRows'];
+        $columnMap     = $configuration['columnMap'];
+        $formats       = $configuration['formats'];
+        $options       = $configuration['options'];
+        $totalRows     = $configuration['totalRows'];
 
         $tableExport = new TableExport([
-            'exporter' => $exporterClass,
+            'exporter'   => $exporterClass,
             'total_rows' => $totalRows,
         ]);
         $tableExport->user()->associate($request->user());
@@ -52,9 +52,9 @@ class ExportDispatcher
     /**
      * Build and dispatch the job chain.
      *
-     * @param  array<string, string>  $columnMap
-     * @param  array<string, mixed>  $options
-     * @param  array<int, ExportFormat>  $formats
+     * @param array<string, string>    $columnMap
+     * @param array<string, mixed>     $options
+     * @param array<int, ExportFormat> $formats
      */
     protected function dispatchChain(
         Export $export,
@@ -64,10 +64,10 @@ class ExportDispatcher
         array $options,
         array $formats,
     ): void {
-        $hasCsv = in_array(ExportFormat::Csv, $formats, true);
+        $hasCsv  = in_array(ExportFormat::Csv, $formats, true);
         $hasXlsx = in_array(ExportFormat::Xlsx, $formats, true);
 
-        $queue = $exporter->getJobQueue();
+        $queue      = $exporter->getJobQueue();
         $connection = $exporter->getJobConnection();
 
         $batch = Bus::batch([new PrepareExportJob(

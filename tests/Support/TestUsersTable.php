@@ -40,9 +40,9 @@ class TestUsersTable extends Table
 
     public static function exportUrl(string $label, bool $queued = false): string
     {
-        $table = static::make();
+        $table   = static::make();
         $exports = $table->toArray()['exports'];
-        $url = collect($exports)->firstWhere('label', $label)['url'];
+        $url     = collect($exports)->firstWhere('label', $label)['url'];
 
         if (! $queued) {
             return $url;
@@ -51,8 +51,8 @@ class TestUsersTable extends Table
         $exportIndex = collect($exports)->search(fn (array $export): bool => $export['label'] === $label);
 
         return URL::signedRoute('inertia-tables.async-export', [
-            'table' => base64_encode(static::class),
-            'name' => $table->getName(),
+            'table'  => base64_encode(static::class),
+            'name'   => $table->getName(),
             'export' => $exportIndex,
         ]);
     }

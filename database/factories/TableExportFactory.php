@@ -27,7 +27,7 @@ class TableExportFactory extends Factory
             'total_rows'      => 0,
             'successful_rows' => 0,
             'processed_rows'  => 0,
-            'user_id'         => User::factory(),
+            'user_id'         => User::factory()->admin(),
         ];
     }
 

@@ -173,7 +173,7 @@ class ExportColumn
     }
 
     /**
-     * @param  string|array<int, string>  $relationships
+     * @param string|array<int, string> $relationships
      */
     public function counts(string|array $relationships): static
     {
@@ -183,7 +183,7 @@ class ExportColumn
     }
 
     /**
-     * @param  string|array<int, string>  $relationships
+     * @param string|array<int, string> $relationships
      */
     public function exists(string|array $relationships): static
     {
@@ -193,7 +193,7 @@ class ExportColumn
     }
 
     /**
-     * @param  string|array<int, string>  $relationships
+     * @param string|array<int, string> $relationships
      */
     public function avg(string|array $relationships, string $column): static
     {
@@ -203,7 +203,7 @@ class ExportColumn
     }
 
     /**
-     * @param  string|array<int, string>  $relationships
+     * @param string|array<int, string> $relationships
      */
     public function min(string|array $relationships, string $column): static
     {
@@ -213,7 +213,7 @@ class ExportColumn
     }
 
     /**
-     * @param  string|array<int, string>  $relationships
+     * @param string|array<int, string> $relationships
      */
     public function max(string|array $relationships, string $column): static
     {
@@ -223,7 +223,7 @@ class ExportColumn
     }
 
     /**
-     * @param  string|array<int, string>  $relationships
+     * @param string|array<int, string> $relationships
      */
     public function sum(string|array $relationships, string $column): static
     {
@@ -349,7 +349,7 @@ class ExportColumn
         }
 
         if (filled($state)) {
-            $state = $this->evaluate($this->prefix) . $state . $this->evaluate($this->suffix);
+            $state = $this->evaluate($this->prefix).$state.$this->evaluate($this->suffix);
         }
 
         return $state;

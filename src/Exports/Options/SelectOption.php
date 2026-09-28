@@ -12,7 +12,7 @@ class SelectOption extends OptionField
     /**
      * Set the available options (value => label).
      *
-     * @param  array<string, string>  $options
+     * @param array<string, string> $options
      */
     public function options(array $options): static
     {

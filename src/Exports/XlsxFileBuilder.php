@@ -27,9 +27,9 @@ class XlsxFileBuilder
      */
     public function write(TableExport $export, Exporter $exporter, string $localPath): void
     {
-        $disk = $export->getFileDisk();
+        $disk           = $export->getFileDisk();
         $partsDirectory = $export->getPartsDirectory();
-        $delimiter = $exporter::getCsvDelimiter();
+        $delimiter      = $exporter::getCsvDelimiter();
 
         $rows = (function () use ($disk, $partsDirectory, $delimiter): Generator {
             $paths = [$partsDirectory.'/headers.csv', ...collect($disk->files($partsDirectory))
@@ -61,13 +61,13 @@ class XlsxFileBuilder
     /**
      * Write rows to an XLSX workbook without requiring an intermediate table export.
      *
-     * @param  iterable<int, array<int, mixed>>  $rows
+     * @param iterable<int, array<int, mixed>> $rows
      */
     public function writeRows(iterable $rows, Exporter $exporter, string $localPath): void
     {
         $spreadsheet = new Spreadsheet;
-        $sheet = $spreadsheet->getActiveSheet();
-        $rowIndex = 1;
+        $sheet       = $spreadsheet->getActiveSheet();
+        $rowIndex    = 1;
 
         /** @var IValueBinder $previousBinder */
         $previousBinder = Cell::getValueBinder();
@@ -79,7 +79,7 @@ class XlsxFileBuilder
             }
 
             $highestColumn = $sheet->getHighestColumn();
-            $highestRow = $sheet->getHighestRow();
+            $highestRow    = $sheet->getHighestRow();
 
             // Center every cell on both axes, then auto-size each column to its content.
             // Applied before the exporter hooks so a custom exporter can still override.

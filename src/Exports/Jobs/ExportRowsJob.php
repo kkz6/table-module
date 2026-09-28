@@ -13,6 +13,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Modules\Table\Exports\Exporter;
+use Modules\Table\Exports\Jobs\Concerns\RunsAsExportOwner;
 use Modules\Table\Models\TableExport;
 use Modules\Table\Table;
 use Throwable;
@@ -23,6 +24,7 @@ class ExportRowsJob implements ShouldQueue
     use Dispatchable;
     use InteractsWithQueue;
     use Queueable;
+    use RunsAsExportOwner;
     use SerializesModels;
 
     public int $maxExceptions = 5;
@@ -32,9 +34,9 @@ class ExportRowsJob implements ShouldQueue
     private ?Exporter $resolvedExporter = null;
 
     /**
-     * @param  array<int, mixed>      $keys
-     * @param  array<string, string>  $columnMap
-     * @param  array<string, mixed>   $options
+     * @param array<int, mixed>     $keys
+     * @param array<string, string> $columnMap
+     * @param array<string, mixed>  $options
      */
     public function __construct(
         public TableExport $export,
@@ -48,14 +50,8 @@ class ExportRowsJob implements ShouldQueue
 
     public function handle(): void
     {
-        // Scope auth to the export owner before resolving the exporter, so a
-        // table-backed exporter sees the same (auth-dependent) columns the
-        // owner saw when the export was dispatched.
-        auth()->setUser($this->export->user);
-
-        $exporter = $this->exporter();
-
-        try {
+        $this->runAsExportOwner($this->export, function (): void {
+            $exporter     = $this->exporter();
             $exportAction = $this->table->getExportById($this->index)
                 ?? throw new \RuntimeException(sprintf('Export index [%d] no longer exists on table [%s].', $this->index, $this->table::class));
             $query = $exportAction->buildExporterQuery($this->options);
@@ -121,9 +117,7 @@ class ExportRowsJob implements ShouldQueue
                     'successful_rows' => min($export->successful_rows + $successful, $export->total_rows),
                 ]);
             });
-        } finally {
-            auth()->forgetGuards();
-        }
+        });
     }
 
     /**
@@ -140,12 +134,18 @@ class ExportRowsJob implements ShouldQueue
      */
     public function middleware(): array
     {
-        return $this->exporter()->getJobMiddleware();
+        return $this->runAsExportOwner(
+            $this->export,
+            fn (): array => $this->exporter()->getJobMiddleware(),
+        );
     }
 
     public function retryUntil(): ?CarbonInterface
     {
-        return $this->exporter()->getJobRetryUntil();
+        return $this->runAsExportOwner(
+            $this->export,
+            fn (): ?CarbonInterface => $this->exporter()->getJobRetryUntil(),
+        );
     }
 
     /**
@@ -153,7 +153,10 @@ class ExportRowsJob implements ShouldQueue
      */
     public function backoff(): int|array|null
     {
-        return $this->exporter()->getJobBackoff();
+        return $this->runAsExportOwner(
+            $this->export,
+            fn (): int|array|null => $this->exporter()->getJobBackoff(),
+        );
     }
 
     /**
@@ -161,6 +164,9 @@ class ExportRowsJob implements ShouldQueue
      */
     public function tags(): array
     {
-        return $this->exporter()->getJobTags();
+        return $this->runAsExportOwner(
+            $this->export,
+            fn (): array => $this->exporter()->getJobTags(),
+        );
     }
 }

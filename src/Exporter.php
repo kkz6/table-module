@@ -18,6 +18,7 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Events\AfterSheet;
 use Modules\Table\Columns\Column;
+use Modules\Table\Exports\Jobs\Middleware\RunExportAsOwner;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
@@ -44,7 +45,21 @@ class Exporter implements FromQuery, Responsable, ShouldAutoSize, WithColumnForm
         protected array $events,
         protected bool $limitToFilteredRows = false,
         protected bool $limitToSelectedRows = false,
+        protected int|string|null $ownerId = null,
     ) {}
+
+    /**
+     * Keep every Laravel Excel queue stage inside the requesting user's
+     * execution context, including the jobs dispatched after ExportJob.
+     *
+     * @return array<int, RunExportAsOwner>
+     */
+    public function middleware(): array
+    {
+        return $this->ownerId !== null
+            ? [new RunExportAsOwner($this->ownerId)]
+            : [];
+    }
 
     /**
      * Returns the file name for the export.
@@ -155,7 +170,7 @@ class Exporter implements FromQuery, Responsable, ShouldAutoSize, WithColumnForm
     {
         $highest = $sheet->getHighestRowAndColumn();
 
-        $highestRow = $highest['row'];
+        $highestRow    = $highest['row'];
         $highestColumn = $highest['column'];
 
         $sheet->setAutoFilter(sprintf('A1:%s1', $highestColumn));
@@ -168,7 +183,7 @@ class Exporter implements FromQuery, Responsable, ShouldAutoSize, WithColumnForm
             }
 
             $sheetColumn = Coordinate::stringFromColumnIndex($key + 1);
-            $coordinate = sprintf('%s2:%s%s', $sheetColumn, $sheetColumn, $highestRow);
+            $coordinate  = sprintf('%s2:%s%s', $sheetColumn, $sheetColumn, $highestRow);
 
             if (is_array($exportStyling)) {
                 return [$coordinate => $exportStyling];
@@ -218,9 +233,9 @@ class Exporter implements FromQuery, Responsable, ShouldAutoSize, WithColumnForm
         // Add default center alignment event
         $defaultAlignmentEvent = [
             AfterSheet::class => function (AfterSheet $event) {
-                $sheet = $event->sheet->getDelegate();
+                $sheet         = $event->sheet->getDelegate();
                 $highestColumn = $sheet->getHighestColumn();
-                $highestRow = $sheet->getHighestRow();
+                $highestRow    = $sheet->getHighestRow();
 
                 // Set center alignment and bold for headers (row 1)
                 $headerRange = 'A1:'.$highestColumn.'1';

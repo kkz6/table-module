@@ -8,7 +8,7 @@ import { useLang } from '@shared/hooks/use-lang';
 import { cn } from '@shared/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { CalendarIcon, Check, ChevronsUpDown, Filter as FilterIcon, Search, X } from 'lucide-react';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { getSymbolForClause } from './clauses';
 import type { FilterProps } from './types';
 
@@ -58,7 +58,7 @@ const Filter = ({ filter, value, onChange, onRemove }: FilterProps): React.React
         return value.value;
     };
 
-    const focusValueInput = (): void => {
+    const focusValueInput = useCallback((): void => {
         const focusOptions = { preventScroll: true };
 
         if (filter.type === 'boolean') {
@@ -67,19 +67,19 @@ const Filter = ({ filter, value, onChange, onRemove }: FilterProps): React.React
             const element = inputRef.current?.querySelector('input,select') as HTMLElement;
             element?.focus(focusOptions);
         }
-    };
+    }, [filter.type]);
 
     useEffect(() => {
         if (value.new) {
             setIsOpen(true);
         }
-    }, []);
+    }, [value.new]);
 
     useEffect(() => {
         if (!value.value) {
             focusValueInput();
         }
-    }, [value]);
+    }, [focusValueInput, value.value]);
 
     // Multi-select component for filter options
     const MultiSelectFilter = ({ options }: { options: { label: string; value: string | number }[] }) => {

@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
 use Modules\Table\Database\Factories\TableExportFactory;
+use Modules\Table\Models\Concerns\HasAuthenticatedOwnerScope;
 
 /**
  * @property int                             $id
@@ -26,7 +27,7 @@ use Modules\Table\Database\Factories\TableExportFactory;
  */
 class TableExport extends Model
 {
-    use HasFactory;
+    use HasAuthenticatedOwnerScope, HasFactory;
 
     protected $guarded = [];
 

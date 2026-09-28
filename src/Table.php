@@ -218,7 +218,7 @@ abstract class Table implements Arrayable
      */
     public function cursorPagination(): self
     {
-        $this->pagination = true;
+        $this->pagination     = true;
         $this->paginationType = PaginationType::Cursor;
 
         return $this;
@@ -229,7 +229,7 @@ abstract class Table implements Arrayable
      */
     public function simplePagination(): self
     {
-        $this->pagination = true;
+        $this->pagination     = true;
         $this->paginationType = PaginationType::Simple;
 
         return $this;
@@ -728,7 +728,7 @@ abstract class Table implements Arrayable
      */
     protected function getExports(): array
     {
-        $singleExport = $this->export();
+        $singleExport  = $this->export();
         $singleExports = $singleExport instanceof Export
             ? [
                 $singleExport->hasExporter() || $singleExport->isDynamicExportDisabled()
@@ -833,9 +833,9 @@ abstract class Table implements Arrayable
     public function getReloadProps(): array
     {
         return match (true) {
-            $this->reloadProps !== [] => $this->reloadProps,
+            $this->reloadProps !== []     => $this->reloadProps,
             static::$alwaysReloadAllProps => ['*'],
-            default => [],
+            default                       => [],
         };
     }
 
@@ -889,10 +889,10 @@ abstract class Table implements Arrayable
      */
     public function toArray(): array
     {
-        $tableRequest = $this->getTableRequest();
-        $queryBuilder = $this->queryBuilder();
-        $paginator = $queryBuilder->get();
-        $results = $paginator->toArray();
+        $tableRequest   = $this->getTableRequest();
+        $queryBuilder   = $this->queryBuilder();
+        $paginator      = $queryBuilder->get();
+        $results        = $paginator->toArray();
         $paginationType = $this->getPaginationType();
 
         // The CursorPaginator does not have a 'first_page_url' attribute.
@@ -903,37 +903,37 @@ abstract class Table implements Arrayable
 
         // A unified way to determine if the current page is the first or last page.
         $results['on_first_page'] = $paginator->onFirstPage();
-        $results['on_last_page'] = $paginator->onLastPage();
+        $results['on_last_page']  = $paginator->onLastPage();
 
         return tap([
-            'name' => $this->name,
-            'results' => $results,
-            'search' => $search = $this->search(),
-            'columns' => $columns = collect($this->buildColumns())->toArray(),
-            'filters' => $filters = collect($this->buildFilters())->reject(fn (Filter $filter): bool => $filter->isHidden())->values()->toArray(),
-            'actions' => $actions = collect($this->buildActions())->map(fn (Action $action) => $action->toArray())->toArray(),
-            'exports' => $exports = $this->buildExports(),
-            'state' => $tableRequest->toArray(),
-            'pagination' => $this->shouldPaginate(),
-            'paginationType' => $paginationType?->value,
-            'perPageOptions' => $this->getPerPageOptions(),
-            'defaultPerPage' => $this->getDefaultPerPage(),
-            'defaultSort' => $this->getDefaultSort(),
-            'debounceTime' => $this->getDebounceTime(),
-            'reloadProps' => $this->getReloadProps(),
-            'hasActions' => count($actions) > 0,
-            'hasBulkActions' => collect($actions)->contains(fn (array $action): bool => $action['asBulkAction']),
-            'hasExports' => $exports !== [],
+            'name'                               => $this->name,
+            'results'                            => $results,
+            'search'                             => $search  = $this->search(),
+            'columns'                            => $columns = collect($this->buildColumns())->toArray(),
+            'filters'                            => $filters = collect($this->buildFilters())->reject(fn (Filter $filter): bool => $filter->isHidden())->values()->toArray(),
+            'actions'                            => $actions = collect($this->buildActions())->map(fn (Action $action) => $action->toArray())->toArray(),
+            'exports'                            => $exports = $this->buildExports(),
+            'state'                              => $tableRequest->toArray(),
+            'pagination'                         => $this->shouldPaginate(),
+            'paginationType'                     => $paginationType?->value,
+            'perPageOptions'                     => $this->getPerPageOptions(),
+            'defaultPerPage'                     => $this->getDefaultPerPage(),
+            'defaultSort'                        => $this->getDefaultSort(),
+            'debounceTime'                       => $this->getDebounceTime(),
+            'reloadProps'                        => $this->getReloadProps(),
+            'hasActions'                         => count($actions) > 0,
+            'hasBulkActions'                     => collect($actions)->contains(fn (array $action): bool => $action['asBulkAction']),
+            'hasExports'                         => $exports !== [],
             'hasExportsThatLimitsToSelectedRows' => collect($exports)->contains(fn (array $export): bool => $export['limitToSelectedRows']),
-            'hasFilters' => count($filters) > 0,
-            'hasSearch' => $search !== [] || $queryBuilder->hasCustomSearch(),
-            'hasToggleableColumns' => collect($columns)->contains(fn (array $column): bool => $column['toggleable']),
-            'scrollPositionAfterPageChange' => $this->getScrollPositionAfterPageChange()->value,
-            'autofocus' => $this->getAutofocus()->value,
-            'emptyState' => $this->resolveEmptyState($paginator, $tableRequest),
-            'stickyHeader' => $this->getStickyHeader(),
-            'views' => $this->buildViews()?->toArray(),
-            'inDefaultState' => $tableRequest->inDefaultState(),
+            'hasFilters'                         => count($filters) > 0,
+            'hasSearch'                          => $search !== [] || $queryBuilder->hasCustomSearch(),
+            'hasToggleableColumns'               => collect($columns)->contains(fn (array $column): bool => $column['toggleable']),
+            'scrollPositionAfterPageChange'      => $this->getScrollPositionAfterPageChange()->value,
+            'autofocus'                          => $this->getAutofocus()->value,
+            'emptyState'                         => $this->resolveEmptyState($paginator, $tableRequest),
+            'stickyHeader'                       => $this->getStickyHeader(),
+            'views'                              => $this->buildViews()?->toArray(),
+            'inDefaultState'                     => $tableRequest->inDefaultState(),
         ], fn () => $this->flushStateCache());
     }
 
@@ -947,14 +947,14 @@ abstract class Table implements Arrayable
 
         if ($this->request instanceof Request) {
             $this->sleepingRequest = [
-                'class' => $this->request::class,
-                'query' => $this->request->query->all(),
-                'request' => $this->request->request->all(),
-                'server' => ['CONTENT_TYPE' => $this->request->server->get('CONTENT_TYPE', '')],
-                'content' => $this->request->getContent(),
-                'locale' => $this->request->getLocale(),
+                'class'         => $this->request::class,
+                'query'         => $this->request->query->all(),
+                'request'       => $this->request->request->all(),
+                'server'        => ['CONTENT_TYPE' => $this->request->server->get('CONTENT_TYPE', '')],
+                'content'       => $this->request->getContent(),
+                'locale'        => $this->request->getLocale(),
                 'defaultLocale' => $this->request->getDefaultLocale(),
-                'json' => $this->request->json(),
+                'json'          => $this->request->json(),
             ];
 
             $this->request = null;

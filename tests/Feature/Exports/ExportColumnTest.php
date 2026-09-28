@@ -3,8 +3,8 @@
 declare(strict_types=1);
 
 use Modules\Table\Exports\ExportColumn;
-use Modules\Table\Exports\ExportFormat;
 use Modules\Table\Exports\Exporter;
+use Modules\Table\Exports\ExportFormat;
 use Modules\Table\Models\TableExport;
 use Modules\User\Models\User;
 
@@ -12,7 +12,8 @@ function makeExporterDouble(array $columnMap = []): Exporter
 {
     $export = TableExport::factory()->create();
 
-    return new class($export, $columnMap, ['tone' => 'formal']) extends Exporter {
+    return new class($export, $columnMap, ['tone' => 'formal']) extends Exporter
+    {
         public static function getColumns(): array
         {
             return [];
@@ -54,7 +55,7 @@ it('uses a state closure with named injections', function () {
     $exporter->useRecord($user);
 
     $column = ExportColumn::make('custom')
-        ->state(fn (User $record, array $options): string => $record->name . '-' . $options['tone'])
+        ->state(fn (User $record, array $options): string => $record->name.'-'.$options['tone'])
         ->exporter($exporter);
 
     expect($column->getFormattedState())->toBe('Aiko-formal');

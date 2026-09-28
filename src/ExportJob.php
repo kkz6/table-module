@@ -11,6 +11,7 @@ use Illuminate\Foundation\Bus\PendingDispatch;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Maatwebsite\Excel\Jobs\QueueExport;
+use Modules\Table\Contracts\ExportExecutionContext;
 use ReflectionClass;
 
 class ExportJob implements ShouldQueue
@@ -26,6 +27,7 @@ class ExportJob implements ShouldQueue
     public function __construct(
         public Table $table,
         public int $index,
+        public int|string $ownerId,
         public array $afterBuiltInExporter = [],
     ) {}
 
@@ -34,47 +36,49 @@ class ExportJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $export = $this->table->getExportById($this->index);
+        app(ExportExecutionContext::class)->run($this->ownerId, function (): void {
+            $export = $this->table->getExportById($this->index);
 
-        // Use a custom callback to handle the export...
-        if ($export->hasUsingCallback()) {
-            $export->executeUsingCallback();
+            // Use a custom callback to handle the export...
+            if ($export->hasUsingCallback()) {
+                $export->executeUsingCallback();
 
-            return;
-        }
+                return;
+            }
 
-        // Use the built-in exporter from the Maatwebsite\Excel package...
-        /** @var PendingDispatch $pendingDispatch */
-        $pendingDispatch = $export->makeExporter()->queue(
-            $export->filename,
-            $export->getQueueDisk(),
-            $export->getType()
-        );
+            // Use the built-in exporter from the Maatwebsite\Excel package...
+            /** @var PendingDispatch $pendingDispatch */
+            $pendingDispatch = $export->makeExporter($this->ownerId)->queue(
+                $export->filename,
+                $export->getQueueDisk(),
+                $export->getType()
+            );
 
-        if (! blank($this->connection)) {
-            $pendingDispatch->onConnection($this->connection);
-        }
+            if (! blank($this->connection)) {
+                $pendingDispatch->onConnection($this->connection);
+            }
 
-        if (! blank($this->queue)) {
-            $pendingDispatch->onQueue($this->queue);
-        }
+            if (! blank($this->queue)) {
+                $pendingDispatch->onQueue($this->queue);
+            }
 
-        if (! blank($this->chainConnection)) {
-            $pendingDispatch->allOnConnection($this->chainConnection);
-        }
+            if (! blank($this->chainConnection)) {
+                $pendingDispatch->allOnConnection($this->chainConnection);
+            }
 
-        if (! blank($this->chainQueue)) {
-            $pendingDispatch->allOnQueue($this->chainQueue);
-        }
+            if (! blank($this->chainQueue)) {
+                $pendingDispatch->allOnQueue($this->chainQueue);
+            }
 
-        if ($this->afterBuiltInExporter !== []) {
-            /** @var QueueExport $job */
-            $job          = $this->getJobFromPendingDispatch($pendingDispatch);
-            $job->chained = [
-                ...$job->chained,
-                ...$this->afterBuiltInExporter,
-            ];
-        }
+            if ($this->afterBuiltInExporter !== []) {
+                /** @var QueueExport $job */
+                $job          = $this->getJobFromPendingDispatch($pendingDispatch);
+                $job->chained = [
+                    ...$job->chained,
+                    ...$this->afterBuiltInExporter,
+                ];
+            }
+        });
     }
 
     /**
