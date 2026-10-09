@@ -22,12 +22,12 @@ export default function RowActions({
     const componentType = useCallback(
         (action: TableAction, key: number): React.ComponentType<any> | string => {
             // Check if we have action data for this item
-            if (!item._actions || !item._actions[String(key)]) {
+            if (!item._actions || !item._actions[key]) {
                 // Fallback based on action type
                 return action.type === 'link' ? 'a' : Button;
             }
 
-            const actionItem = getActionForItem(item._actions[String(key)] as any, action);
+            const actionItem = getActionForItem(item._actions[key], action);
 
             if (actionItem?.componentType === 'button-component' || actionItem?.style === 'button' || actionItem?.type === 'button') {
                 return asDropdown ? 'button' : Button;
@@ -42,11 +42,11 @@ export default function RowActions({
     const actionIsVisible = useCallback(
         (action: TableAction, key: number): boolean => {
             // Check if we have action data for this item
-            if (!item._actions || !item._actions[String(key)]) {
+            if (!item._actions || !item._actions[key]) {
                 return true; // Default to visible
             }
 
-            return getActionForItem(item._actions[String(key)], action)?.isVisible ?? true;
+            return getActionForItem(item._actions[key], action)?.isVisible ?? true;
         },
         [item],
     );
@@ -62,9 +62,7 @@ export default function RowActions({
                 };
             }
 
-            // Try to find the action data using string key (since backend uses string keys)
-            const stringKey = String(key);
-            const actionData = item._actions[stringKey];
+            const actionData = item._actions[key];
 
             if (!actionData) {
                 // Use the variant directly from the action since item._actions doesn't have the data
@@ -75,7 +73,7 @@ export default function RowActions({
                 };
             }
 
-            const actionItem = getActionForItem(actionData as any, action);
+            const actionItem = getActionForItem(actionData, action);
 
             if (!actionItem) {
                 return {

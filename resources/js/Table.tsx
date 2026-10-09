@@ -3,7 +3,7 @@ import { clsx } from 'clsx';
 import React, { useCallback, useEffect, useRef } from 'react';
 import { resolveIcon } from './iconResolver';
 import { getClickableColumn, useActions, useTable, visitUrl } from './inertiauiTable';
-import { TableColumn, TableResource } from './types';
+import { IconResolver, TableColumn, TableResource } from './types';
 import { useStickyColumns, useStickyHeader } from './useStickyTable';
 
 import { Badge } from '@shared/components/ui/badge';
@@ -24,7 +24,7 @@ import ToggleColumnDropdown from './ToggleColumnDropdown';
 
 interface TableProps {
     resource: TableResource;
-    iconResolver?: ((icon: string) => React.ComponentType<any>) | null;
+    iconResolver?: IconResolver | null;
     loading?: ((props: any) => React.ReactNode) | null;
     topbar?: ((props: any) => React.ReactNode) | null;
     filters?: ((props: any) => React.ReactNode) | null;
@@ -65,6 +65,8 @@ const Table: React.FC<TableProps> = ({
 }) => {
     const { t } = useLang();
     const tableInstance = useTable(resource);
+    const items = resource.results?.data ?? [];
+    const total = resource.results?.total ?? 0;
 
     const {
         addFilter,
@@ -230,7 +232,10 @@ const Table: React.FC<TableProps> = ({
                                           state.filters[filter.attribute].enabled && (
                                               <Filter
                                                   key={key}
-                                                  value={state.filters[filter.attribute]}
+                                                  value={{
+                                                      ...state.filters[filter.attribute],
+                                                      clause: state.filters[filter.attribute].clause ?? filter.clauses?.[0] ?? 'equals',
+                                                  }}
                                                   onChange={(newState: any) => setFilter(filter, newState.clause, newState.value)}
                                                   filter={filter}
                                                   onRemove={() => removeFilter(filter)}
@@ -252,7 +257,7 @@ const Table: React.FC<TableProps> = ({
                                 <ShadcnTable className="it-table w-full caption-bottom text-left transition-opacity dark:text-zinc-300">
                                     {thead ? (
                                         thead({ table: tableInstance, actions })
-                                    ) : resource.results.data.length ? (
+                                    ) : items.length ? (
                                         <TableHeader
                                             ref={theadRef}
                                             className="it-table-head relative z-20 opacity-100 transition !duration-100 ease-out group-data-[scroll-y]/table:translate-y-[var(--header-offset)] group-data-[scroll-y]/table:shadow-lg group-data-[is-scrolling-y]/table:group-data-[scroll-y]/table:opacity-0"
@@ -340,7 +345,7 @@ const Table: React.FC<TableProps> = ({
                                         tbody({ table: tableInstance, actions })
                                     ) : (
                                         <TableBody className="it-table-body [&_tr:last-child]:border-0">
-                                            {!resource.results.data.length ? (
+                                            {!items.length ? (
                                                 <TableRow>
                                                     <TableCell>
                                                         <p className="p-8 text-center font-medium text-gray-900 dark:text-zinc-200">
@@ -349,7 +354,7 @@ const Table: React.FC<TableProps> = ({
                                                     </TableCell>
                                                 </TableRow>
                                             ) : null}
-                                            {resource.results.data.map((item, itemIndex) => (
+                                            {items.map((item, itemIndex) => (
                                                 <TableRow
                                                     key={hasSelectableRows ? item._primary_key : itemIndex}
                                                     className={clsx('group border-b border-gray-200 dark:border-zinc-700', {
@@ -476,7 +481,7 @@ const Table: React.FC<TableProps> = ({
                                                                                 <RowActions
                                                                                     iconResolver={iconResolver ?? resolveIcon}
                                                                                     item={item}
-                                                                                    actions={resource.actions}
+                                                                                    actions={resource.actions ?? []}
                                                                                     performAction={performAction}
                                                                                     key={item._primary_key}
                                                                                     asDropdown={column.asDropdown}
@@ -536,9 +541,11 @@ const Table: React.FC<TableProps> = ({
                                                                                             : {}
                                                                                     }
                                                                                 >
-                                                                                    {item[column.attribute].map((value, index) => (
-                                                                                        <li key={index}>{value}</li>
-                                                                                    ))}
+                                                                                    {item[column.attribute].map(
+                                                                                        (value: React.ReactNode, index: number) => (
+                                                                                            <li key={index}>{value}</li>
+                                                                                        ),
+                                                                                    )}
                                                                                 </ul>
                                                                             ) : (
                                                                                 <span
@@ -582,27 +589,25 @@ const Table: React.FC<TableProps> = ({
                               >
                                   {hasSelectableRows && selectedItems.length > 0 && (
                                       <div className="flex-shrink-0 font-medium">
-                                          {allItemsAreSelected && resource.results.total === 1 ? (
+                                          {allItemsAreSelected && total === 1 ? (
                                               <p className="whitespace-nowrap">{t('table::table.one_row_selected')}</p>
                                           ) : allItemsAreSelected ? (
-                                              <p className="whitespace-nowrap">
-                                                  {t('table::table.all_rows_selected', { total: resource.results.total })}
-                                              </p>
+                                              <p className="whitespace-nowrap">{t('table::table.all_rows_selected', { total: String(total) })}</p>
                                           ) : selectedItems.length === 1 ? (
                                               <p className="whitespace-nowrap">{t('table::table.one_row_selected')}</p>
                                           ) : selectedItems.length > 0 ? (
                                               <p className="whitespace-nowrap">
-                                                  {t('table::table.selected_rows', { count: selectedItems.length, total: resource.results.total })}
+                                                  {t('table::table.selected_rows', { count: String(selectedItems.length), total: String(total) })}
                                               </p>
                                           ) : null}
                                       </div>
                                   )}
 
-                                  {resource.pagination && (
+                                  {resource.pagination && resource.results && (
                                       <Pagination
                                           meta={resource.results}
                                           type={resource.paginationType}
-                                          options={resource.perPageOptions}
+                                          options={resource.perPageOptions ?? []}
                                           perPage={state.perPage}
                                           onClick={(event: string) => visitPaginationUrl(event, scrollToTopOfTable)}
                                           onChange={setPerPage}
