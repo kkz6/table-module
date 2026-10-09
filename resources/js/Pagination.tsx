@@ -11,31 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useLang } from '@shared/hooks/use-lang';
 import { cn } from '@shared/lib/utils';
 import { useMemo } from 'react';
-
-interface PaginationMeta {
-    current_page: number;
-    last_page: number;
-    from: number;
-    to: number;
-    per_page: number;
-    total: number;
-    on_first_page: boolean;
-    on_last_page: boolean;
-    first_page_url?: string;
-    prev_page_url?: string | null;
-    next_page_url?: string | null;
-    last_page_url?: string;
-    links?: Array<{ url: string | null; label: string; page: number | null; active: boolean }>;
-}
-
-interface TablePaginationProps {
-    meta: PaginationMeta;
-    options: number[];
-    perPage: number;
-    type?: 'full' | 'simple';
-    onClick: (url: string) => void;
-    onChange: (perPage: number) => void;
-}
+import type { TablePaginationProps } from './types';
 
 export default function TablePagination({ meta, options, perPage, type = 'full', onClick, onChange }: TablePaginationProps) {
     const { t } = useLang();
@@ -66,8 +42,8 @@ export default function TablePagination({ meta, options, perPage, type = 'full',
 
     // Generate page numbers to show
     const generatePageNumbers = (): (number | string)[] => {
-        const current = meta.current_page;
-        const total = meta.last_page;
+        const current = meta.current_page ?? 1;
+        const total = meta.last_page ?? 1;
         const delta = 2; // Pages to show on each side of current page
         const pages: (number | string)[] = [];
 
@@ -108,10 +84,10 @@ export default function TablePagination({ meta, options, perPage, type = 'full',
             {/* Page info and navigation */}
             <div className="flex items-center gap-4">
                 {/* Page info */}
-                <p className="text-muted-foreground text-sm whitespace-nowrap">{translatedString}</p>
+                {type !== 'cursor' && <p className="text-muted-foreground text-sm whitespace-nowrap">{translatedString}</p>}
 
                 {/* Pagination */}
-                {meta.last_page > 1 && (
+                {((meta.last_page ?? 1) > 1 || (type !== 'full' && (!meta.on_first_page || !meta.on_last_page))) && (
                     <Pagination className="mx-0 w-auto">
                         <PaginationContent>
                             {/* Previous button */}
@@ -130,28 +106,29 @@ export default function TablePagination({ meta, options, perPage, type = 'full',
                             </PaginationItem>
 
                             {/* Page numbers - hidden on small screens */}
-                            {pageNumbers.map((page, index) => (
-                                <PaginationItem key={index} className="hidden sm:block">
-                                    {page === '...' ? (
-                                        <PaginationEllipsis />
-                                    ) : (
-                                        <PaginationLink
-                                            href="#"
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                // Find the URL for this page number from the links array
-                                                const link = meta.links?.find((l) => l.page === page);
-                                                if (link?.url) {
-                                                    onClick(link.url);
-                                                }
-                                            }}
-                                            isActive={page === meta.current_page}
-                                        >
-                                            {page}
-                                        </PaginationLink>
-                                    )}
-                                </PaginationItem>
-                            ))}
+                            {type === 'full' &&
+                                pageNumbers.map((page, index) => (
+                                    <PaginationItem key={index} className="hidden sm:block">
+                                        {page === '...' ? (
+                                            <PaginationEllipsis />
+                                        ) : (
+                                            <PaginationLink
+                                                href="#"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    // Find the URL for this page number from the links array
+                                                    const link = meta.links?.find((l) => l.page === page);
+                                                    if (link?.url) {
+                                                        onClick(link.url);
+                                                    }
+                                                }}
+                                                isActive={page === meta.current_page}
+                                            >
+                                                {page}
+                                            </PaginationLink>
+                                        )}
+                                    </PaginationItem>
+                                ))}
 
                             {/* Next button */}
                             <PaginationItem>

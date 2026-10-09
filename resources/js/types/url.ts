@@ -42,6 +42,7 @@ export interface TableItem {
 // Action item for matching - extended from base Action
 export interface ActionItem extends Action {
     componentType?: string;
+    style?: string;
     bindings?: Record<string, any>;
     type?: 'button' | 'link';
     isVisible?: boolean;
