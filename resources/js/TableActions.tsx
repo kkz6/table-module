@@ -191,7 +191,7 @@ export default function Actions({
 
             <ConfirmActionDialog
                 show={confirmDialogIsOpen}
-                action={confirmContext?.action as any}
+                action={confirmContext?.action}
                 iconResolver={iconResolver}
                 onCancel={() => setConfirmDialogIsOpen(false)}
                 onConfirm={() => confirmContext && perform(confirmContext.action)}

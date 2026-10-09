@@ -68,23 +68,25 @@ export interface TableColumn {
 
 // This interface is moved to the bottom to avoid conflicts
 
+export interface TableResults<T = any> {
+    data: T[];
+    total?: number;
+    per_page?: number;
+    current_page?: number;
+    last_page?: number;
+    last_page_url?: string;
+    first_page_url?: string;
+    prev_page_url?: string | null;
+    next_page_url?: string | null;
+    from?: number | null;
+    to?: number | null;
+    on_first_page: boolean;
+    on_last_page: boolean;
+    links?: { url: string | null; label: string; page: number | null; active: boolean }[];
+}
+
 export interface TableConfig<T = any> extends TableResource {
-    results?: {
-        total: number;
-        data: T[];
-        per_page?: number;
-        current_page?: number;
-        last_page?: number;
-        last_page_url?: string;
-        first_page_url?: string;
-        prev_page_url?: string | null;
-        next_page_url?: string | null;
-        from?: number;
-        to?: number;
-        on_first_page?: boolean;
-        on_last_page?: boolean;
-        links?: { url: string | null; label: string; page: number | null; active: boolean }[];
-    };
+    results?: TableResults<T>;
 }
 
 // Dynamic Icon Types (removed duplicate - using definition below)
@@ -207,7 +209,7 @@ export interface ConfirmDialogProps {
     cancelButton?: string | false;
     show: boolean;
     danger?: boolean;
-    variant?: 'danger' | 'info' | null;
+    variant?: TableAction['variant'] | 'danger' | null;
     customVariantClass?: string;
     onCancel?: (() => void) | null;
     onConfirm?: (() => void) | null;
@@ -223,8 +225,8 @@ export interface ConfirmActionDialogProps {
         confirmationCancelButton?: string;
         confirmationConfirmButton?: string;
         icon?: string;
-        variant?: 'danger' | 'info';
-        buttonClass?: string;
+        variant?: TableAction['variant'] | 'danger';
+        buttonClass?: string | null;
     };
     onConfirm?: (() => void) | null;
     onCancel?: (() => void) | null;
@@ -319,7 +321,7 @@ export interface TableCellImageData {
 
 export interface TableCellImageProps {
     data?: TableCellImageData | null;
-    iconResolver?: ((icon: string) => React.ComponentType<any>) | null;
+    iconResolver?: IconResolver | null;
     renderDefaultSlot?: boolean;
     children?: React.ReactNode;
     fallback?: (() => React.ReactNode) | null;
@@ -338,7 +340,7 @@ export interface RowActionsProps {
     item: TableRowItem;
     actions: TableAction[];
     performAction: (action: TableAction, keys?: (string | number)[] | null) => Promise<any>;
-    iconResolver: ((icon: string) => React.ComponentType<any>) | null;
+    iconResolver: IconResolver | null;
     asDropdown?: boolean;
     onSuccess?: ((action: TableAction, keys: (string | number)[]) => void) | null;
     onError?: ((action: TableAction, keys: (string | number)[], error: any) => void) | null;
@@ -346,27 +348,13 @@ export interface RowActionsProps {
 }
 
 // Pagination Types
-export interface PaginationMeta {
-    current_page: number;
-    from: number;
-    last_page: number;
-    on_first_page: boolean;
-    on_last_page: boolean;
-    per_page: number;
-    to: number;
-    total: number;
-    first_page_url?: string;
-    prev_page_url?: string | null;
-    next_page_url?: string | null;
-    last_page_url?: string;
-    links?: Array<{ url: string | null; label: string; page: number | null; active: boolean }>;
-}
+export type PaginationMeta = Omit<TableResults, 'data'>;
 
 export interface TablePaginationProps {
     meta: PaginationMeta;
     options: number[];
     perPage: number;
-    type?: 'full' | 'simple';
+    type?: 'full' | 'simple' | 'cursor';
     onClick: (url: string) => void;
     onChange: (perPage: number) => void;
 }
@@ -379,22 +367,7 @@ export interface TableResource {
     filters: FilterDefinition[];
     actions?: TableAction[];
     exports?: TableExport[];
-    results?: {
-        total: number;
-        data: any[];
-        per_page?: number;
-        current_page?: number;
-        last_page?: number;
-        last_page_url?: string;
-        first_page_url?: string;
-        prev_page_url?: string | null;
-        next_page_url?: string | null;
-        from?: number;
-        to?: number;
-        on_first_page?: boolean;
-        on_last_page?: boolean;
-        links?: { url: string | null; label: string; page: number | null; active: boolean }[];
-    };
+    results?: TableResults;
     defaultSort: string;
     defaultPerPage: number;
     perPageOptions?: number[];

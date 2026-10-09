@@ -1,4 +1,5 @@
 // Action-specific types for table operations
+import type { IconResolver } from './index';
 
 // Extended action interface for table operations (matches backend Action.php)
 export interface TableAction {
@@ -118,7 +119,7 @@ export interface ActionsProps {
     performAction: (action: TableAction, keys?: (string | number)[] | null) => Promise<ActionSuccessResult | CustomActionResult>;
     performAsyncExport?: ((tableExport: TableExport, payload?: object) => Promise<ExportSuccessResult>) | null;
     item?: any;
-    iconResolver: (icon: string) => React.ComponentType<any>;
+    iconResolver: IconResolver;
     onSuccess?: ((action: TableAction, keys: (string | number)[]) => void) | null;
     onError?: ((action: TableAction, keys: (string | number)[], error: any) => void) | null;
     onHandle?: ((action: TableAction, keys: (string | number)[], onFinish: () => void) => void) | null;
@@ -133,7 +134,7 @@ export interface ActionsDropdownProps {
     selectedItems: (string | number)[];
     performAction: (action: TableAction, keys?: (string | number)[] | null) => Promise<ActionSuccessResult | CustomActionResult>;
     performAsyncExport: (tableExport: TableExport, payload?: object) => Promise<ExportSuccessResult>;
-    iconResolver: (icon: string) => React.ComponentType<any>;
+    iconResolver: IconResolver;
     onSuccess?: ((action: TableAction, keys: (string | number)[]) => void) | null;
     onError?: ((action: TableAction, keys: (string | number)[], error: any) => void) | null;
     onHandle?: ((action: TableAction, keys: (string | number)[], onFinish: () => void) => void) | null;

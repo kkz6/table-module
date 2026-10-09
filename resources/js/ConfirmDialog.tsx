@@ -11,7 +11,8 @@ export default function ConfirmDialog({
     confirmButton,
     cancelButton = false,
     show,
-    variant = 'primary',
+    variant = 'info',
+    danger = false,
     customVariantClass = '',
     onCancel,
     onConfirm = null,
@@ -20,6 +21,15 @@ export default function ConfirmDialog({
     icon: _icon,
     iconResolver: _iconResolver,
 }: ConfirmDialogProps & { dialogClassName?: string; overlayClassName?: string }): React.ReactElement {
+    const buttonVariant =
+        danger || variant === 'danger' || variant === 'destructive'
+            ? 'destructive'
+            : variant === 'success'
+              ? 'secondary'
+              : variant === 'info' || variant === 'warning' || variant === null
+                ? 'default'
+                : variant;
+
     return (
         <Dialog open={show} onOpenChange={(open) => !open && onCancel?.()}>
             <DialogContent className={cn('gap-3 p-5 sm:max-w-[425px]', dialogClassName, overlayClassName)}>
@@ -35,7 +45,7 @@ export default function ConfirmDialog({
                             </Button>
                         </DialogClose>
                     )}
-                    <Button type="button" variant={variant} className={cn(customVariantClass)} onClick={onConfirm || undefined}>
+                    <Button type="button" variant={buttonVariant} className={cn(customVariantClass)} onClick={onConfirm || undefined}>
                         {confirmButton}
                     </Button>
                 </DialogFooter>
