@@ -35,12 +35,7 @@ export default function ConfirmDialog({
                             </Button>
                         </DialogClose>
                     )}
-                    <Button
-                        type="button"
-                        variant={variant}
-                        className={cn(customVariantClass)}
-                        onClick={onConfirm || undefined}
-                    >
+                    <Button type="button" variant={variant} className={cn(customVariantClass)} onClick={onConfirm || undefined}>
                         {confirmButton}
                     </Button>
                 </DialogFooter>

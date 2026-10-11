@@ -1,27 +1,26 @@
+import { Button } from '@shared/components/ui/button';
 import { useLang } from '@shared/hooks/use-lang';
+import { badgeTone } from '@shared/lib/status-colors';
 import { clsx } from 'clsx';
+import { SearchX } from 'lucide-react';
 import React, { useEffect, useRef } from 'react';
 import { resolveIcon } from './iconResolver';
 import { getClickableColumn, useActions, useTable, visitUrl } from './inertiauiTable';
+import TableToolbar from './TableToolbar';
 import { TableColumn, TableResource } from './types';
 import { useStickyColumns, useStickyHeader } from './useStickyTable';
 
 import { Badge } from '@shared/components/ui/badge';
 import { Checkbox } from '@shared/components/ui/checkbox';
-import { Input } from '@shared/components/ui/input';
 import { Table as ShadcnTable, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shared/components/ui/table';
-import ActionsDropdown from './ActionsDropdown';
-import AddFilterDropdown from './AddFilterDropdown';
 import DynamicIcon from './DynamicIcon';
 import EmptyState from './EmptyState';
-import Filter from './Filter';
 import LoadingSpinner from './LoadingSpinner';
 import Pagination from './Pagination';
 import RowActions from './RowActions';
 import SelectionActionBar from './SelectionActionBar';
 import TableCellImage from './TableCellImage';
 import TableHeaderDropdown from './TableHeaderDropdown';
-import ToggleColumnDropdown from './ToggleColumnDropdown';
 
 interface TableProps {
     resource: TableResource;
@@ -78,6 +77,7 @@ const Table: React.FC<TableProps> = ({
         setFilter,
         setPerPage,
         setSearch,
+        clearFilters,
         setSort,
         state,
         toggleColumn,
@@ -175,72 +175,17 @@ const Table: React.FC<TableProps> = ({
                         'opacity-75 blur-sm grayscale': isPerformingAction,
                     })}
                 >
-                    {/* Search and Actions */}
-                    {topbar
-                        ? topbar({ table: tableInstance, actions })
-                        : (resource.hasBulkActions ||
-                              resource.hasSearch ||
-                              resource.hasExports ||
-                              resource.hasFilters ||
-                              resource.hasToggleableColumns) && (
-                              <div className="it-topbar flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                                  {resource.hasSearch && (
-                                      <div className="flex-1 sm:max-w-sm lg:max-w-md">
-                                          <Input
-                                              value={state.search ?? ''}
-                                              onChange={(e) => setSearch(e.target.value)}
-                                              className="w-full"
-                                              autoFocus={resource.autofocus === 'search'}
-                                              placeholder={t('table::table.search_placeholder')}
-                                          />
-                                      </div>
-                                  )}
-
-                                  <div className="flex flex-shrink-0 gap-2">
-                                      {resource.hasExports && selectedItems.length === 0 && (
-                                          <ActionsDropdown
-                                              actions={[]}
-                                              exports={resource.exports || []}
-                                              selectedItems={selectedItems}
-                                              performAction={performAction}
-                                              performAsyncExport={performAsyncExport}
-                                              iconResolver={(iconResolver ?? resolveIcon) as (icon: string) => React.ComponentType<any>}
-                                              onSuccess={onActionSuccess}
-                                              onError={onActionError}
-                                              onHandle={onCustomAction}
-                                          />
-                                      )}
-
-                                      {resource.hasFilters && (
-                                          <AddFilterDropdown state={state.filters} filters={resource.filters} onAdd={addFilter} />
-                                      )}
-
-                                      {resource.hasToggleableColumns && (
-                                          <ToggleColumnDropdown state={state.columns} columns={resource.columns} onToggle={toggleColumn} />
-                                      )}
-                                  </div>
-                              </div>
-                          )}
-
-                    {/* Filters */}
-                    {filters
-                        ? filters({ table: tableInstance, actions })
-                        : visibleFilters.length > 0 && (
-                              <div className="it-filters flex flex-wrap items-center space-y-2 space-x-2 md:space-y-0 md:space-x-4 rtl:space-x-reverse">
-                                  {Object.entries(visibleFilters).map(
-                                      ([key, filter]: [string, any]) =>
-                                          state.filters[filter.attribute].enabled && (
-                                              <Filter
-                                                  key={key}
-                                                  value={state.filters[filter.attribute] as any}
-                                                  onChange={(newState: any) => setFilter(filter, newState.clause, newState.value)}
-                                                  filter={filter}
-                                                  onRemove={() => removeFilter(filter)}
-                                              />
-                                          ),
-                                  )}
-                              </div>
-                          )}
+                    <TableToolbar
+                        resource={resource}
+                        table={tableInstance}
+                        actions={actions}
+                        topbar={topbar}
+                        filters={filters}
+                        iconResolver={iconResolver}
+                        onActionSuccess={onActionSuccess}
+                        onActionError={onActionError}
+                        onCustomAction={onCustomAction}
+                    />
 
                     {/* Table */}
                     {table ? (
@@ -285,6 +230,15 @@ const Table: React.FC<TableProps> = ({
                                                         <TableHead
                                                             key={column.attribute}
                                                             data-column={column.attribute}
+                                                            aria-sort={
+                                                                column.sortable
+                                                                    ? isSortedByColumn(column) === 'asc'
+                                                                        ? 'ascending'
+                                                                        : isSortedByColumn(column) === 'desc'
+                                                                          ? 'descending'
+                                                                          : 'none'
+                                                                    : undefined
+                                                            }
                                                             className={clsx(
                                                                 'h-10 px-2 align-middle text-sm font-medium text-gray-500 group-hover:bg-gray-100/50 first:ps-4 dark:text-zinc-400 dark:group-hover:bg-zinc-900/50',
                                                                 {
@@ -314,12 +268,7 @@ const Table: React.FC<TableProps> = ({
                                                                 ) : !column.sortable && !column.toggleable ? (
                                                                     <span className={clsx('font-semibold', column.headerClass)}>{column.header}</span>
                                                                 ) : (
-                                                                    <div
-                                                                        className={clsx({
-                                                                            '-ms-3': column.alignment === 'left',
-                                                                            '-me-4': column.alignment === 'right',
-                                                                        })}
-                                                                    >
+                                                                    <div>
                                                                         <TableHeaderDropdown
                                                                             column={column}
                                                                             sort={isSortedByColumn(column)}
@@ -344,9 +293,27 @@ const Table: React.FC<TableProps> = ({
                                         <TableBody className="it-table-body [&_tr:last-child]:border-0">
                                             {!resource.results?.data.length ? (
                                                 <TableRow>
-                                                    <TableCell colSpan={resource.columns.filter((column) => state.columns[column.attribute]).length + (hasSelectableRows ? 1 : 0)}>
+                                                    <TableCell
+                                                        colSpan={
+                                                            resource.columns.filter((column) => state.columns[column.attribute]).length +
+                                                            (hasSelectableRows ? 1 : 0)
+                                                        }
+                                                    >
                                                         <p className="p-8 text-center font-medium text-gray-900 dark:text-zinc-200">
-                                                            {t('table::table.no_results_found')}
+                                                            <div className="flex flex-col items-center gap-2 py-8">
+                                                                <SearchX className="text-muted-foreground mb-1 size-6" />
+                                                                <p className="text-foreground font-medium">
+                                                                    {state.search ? 'No matching items' : 'No items in this view'}
+                                                                </p>
+                                                                <p className="text-muted-foreground max-w-sm text-sm">
+                                                                    {state.search
+                                                                        ? 'Try a different search or clear the active filters.'
+                                                                        : 'Adjust your filters to see more records.'}
+                                                                </p>
+                                                                <Button variant="outline" size="sm" onClick={clearFilters} className="mt-2">
+                                                                    Clear search & filters
+                                                                </Button>
+                                                            </div>
                                                         </p>
                                                     </TableCell>
                                                 </TableRow>
@@ -392,6 +359,15 @@ const Table: React.FC<TableProps> = ({
                                                             <TableCell
                                                                 key={column.attribute}
                                                                 data-column={column.attribute}
+                                                                aria-sort={
+                                                                    column.sortable
+                                                                        ? isSortedByColumn(column) === 'asc'
+                                                                            ? 'ascending'
+                                                                            : isSortedByColumn(column) === 'desc'
+                                                                              ? 'descending'
+                                                                              : 'none'
+                                                                        : undefined
+                                                                }
                                                                 className={clsx(
                                                                     'p-2 align-middle whitespace-pre transition-colors duration-150 group-hover:bg-gray-50/90 group-data-[state=selected]:bg-gray-100/90 first:ps-4 dark:text-zinc-300 group-hover:dark:bg-zinc-950/90 group-data-[state=selected]:dark:bg-zinc-800/90',
                                                                     {
@@ -496,17 +472,7 @@ const Table: React.FC<TableProps> = ({
                                                                                 />
                                                                             ) : column.type === 'badge' ? (
                                                                                 <Badge
-                                                                                    variant={
-                                                                                        item[column.attribute]?.variant === 'danger'
-                                                                                            ? 'destructive'
-                                                                                            : item[column.attribute]?.variant === 'info'
-                                                                                              ? 'default'
-                                                                                              : item[column.attribute]?.variant === 'success'
-                                                                                                ? 'secondary'
-                                                                                                : item[column.attribute]?.variant === 'warning'
-                                                                                                  ? 'outline'
-                                                                                                  : 'outline'
-                                                                                    }
+                                                                                    variant={badgeTone(item[column.attribute]?.variant)}
                                                                                     className="it-badge gap-1"
                                                                                     data-style={item[column.attribute]?.variant}
                                                                                     data-variant={item[column.attribute]?.variant}
@@ -588,7 +554,8 @@ const Table: React.FC<TableProps> = ({
                     {/* Table Footer */}
                     {footer
                         ? footer({ table: tableInstance, actions })
-                        : (hasSelectableRows || resource.pagination) && (
+                        : !!resource.results?.data.length &&
+                          (hasSelectableRows || resource.pagination) && (
                               <div
                                   className={clsx('flex flex-col gap-4 text-sm md:flex-row md:items-center md:justify-between dark:text-zinc-300', {
                                       'md:justify-end': !hasSelectableRows || selectedItems.length === 0,

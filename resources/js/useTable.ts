@@ -1,9 +1,9 @@
 import { router, usePage } from '@inertiajs/react';
 import qs from 'qs';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { FilterDefinition, FilterState, TableColumn, TableResource, TableState, UseTableReturn } from './types';
-import { replaceUrl } from './urlHelpers';
 import { filterQuery } from './filterQuery';
+import { FilterDefinition, FilterState, TableColumn, TableResource, TableState, TableTab, UseTableReturn } from './types';
+import { replaceUrl } from './urlHelpers';
 
 export const useTable = (resource: TableResource): UseTableReturn => {
     const [state, setState] = useState<TableState>(resource.state);
@@ -429,6 +429,17 @@ export const useTable = (resource: TableResource): UseTableReturn => {
         return Object.values(state.filters).some((filter: FilterState) => filter.enabled);
     }, [state.filters]);
 
+    const clearFilters = () => {
+        setDebounceOnNextVisit(false);
+        setState((prev) => ({
+            ...prev,
+            search: '',
+            filters: Object.fromEntries(
+                Object.entries(prev.filters).map(([key, value]) => [key, { ...value, enabled: false, value: null, new: false }]),
+            ),
+        }));
+    };
+
     const setSearch = (search: string) => {
         setState((prev: TableState) => ({ ...prev, search }));
     };
@@ -452,6 +463,29 @@ export const useTable = (resource: TableResource): UseTableReturn => {
         }));
     };
 
+    const setTab = (tab: TableTab) => {
+        setPreventNavigation(false);
+        setDebounceOnNextVisit(false);
+        setState((prev) => {
+            const nextFilters = { ...prev.filters };
+            for (const [attribute, preset] of Object.entries(tab.filters)) {
+                if (!getFilterByAttribute(attribute)) continue;
+                const definition =
+                    preset !== null && typeof preset === 'object' && 'value' in preset
+                        ? (preset as { value: unknown; clause?: string })
+                        : { value: preset, clause: 'equals' };
+                nextFilters[attribute] = {
+                    ...nextFilters[attribute],
+                    enabled: preset !== null,
+                    clause: definition.clause ?? 'equals',
+                    value: definition.value,
+                    new: false,
+                };
+            }
+            return { ...prev, filters: nextFilters, page: 1, cursor: null };
+        });
+    };
+
     return {
         addFilter,
         hasBulkActions,
@@ -466,6 +500,8 @@ export const useTable = (resource: TableResource): UseTableReturn => {
         setFilter,
         setPerPage,
         setSearch,
+        clearFilters,
+        setTab,
         setSort,
         sortByColumn,
         state,

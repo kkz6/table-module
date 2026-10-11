@@ -793,6 +793,38 @@ abstract class Table implements Arrayable
         return null;
     }
 
+    /** Optional status/category tabs. Null filter values disable that filter. */
+    public function tabs(): array
+    {
+        return [];
+    }
+
+    /** Attributes of simple set filters rendered directly in the toolbar. */
+    public function quickFilters(): array
+    {
+        return [];
+    }
+
+    public function quickFilterLabels(): array
+    {
+        return [];
+    }
+
+    public function buildTabs(): array
+    {
+        $tabs=$this->tabs();
+        if (! $tabs) {
+            return [];
+        }
+        $managed=array_values(array_unique(array_merge(...array_map(fn (Tab $tab) => array_keys($tab->filters), $tabs))));
+        $query  =clone $this->resourceBuilder();
+        $builder=$this->queryBuilder();
+        $builder->applySearch($query);
+        $builder->applyFilter($query, $managed);
+
+        return array_map(fn (Tab $tab) => $tab->toArray($query), $tabs);
+    }
+
     public function buildViews(): ?Views
     {
         return $this->views()?->setTable($this);
@@ -815,6 +847,14 @@ abstract class Table implements Arrayable
             $results['first_page_url'] = $paginator->url(null);
         }
 
+        // Preserve base authorization/scopes while distinguishing a new collection from a filtered result.
+        $base = $this->resource();
+        $base = is_string($base) ? $base::query() : clone $base;
+        if (in_array(\Illuminate\Database\Eloquent\SoftDeletes::class, class_uses_recursive($base->getModel()), true)) {
+            $base->withTrashed();
+        }
+        $hasRecords = $base->exists();
+
         // A unified way to determine if the current page is the first or last page.
         $results['on_first_page'] = $paginator->onFirstPage();
         $results['on_last_page']  = $paginator->onLastPage();
@@ -822,6 +862,10 @@ abstract class Table implements Arrayable
         return tap([
             'name'                               => $this->name,
             'results'                            => $results,
+            'hasRecords'                         => $hasRecords,
+            'tabs'                               => $this->buildTabs(),
+            'quickFilterLabels'                  => $this->quickFilterLabels(),
+            'quickFilters'                       => $this->quickFilters(),
             'search'                             => $search   = $this->search(),
             'columns'                            => $columns  = collect($this->buildColumns())->toArray(),
             'filters'                            => $filters  = collect($this->buildFilters())->reject(fn (Filter $filter): bool => $filter->isHidden())->values()->toArray(),
