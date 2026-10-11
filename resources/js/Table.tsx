@@ -1,3 +1,4 @@
+import { Link } from '@inertiajs/react';
 import { useLang } from '@shared/hooks/use-lang';
 import { badgeTone } from '@shared/lib/status-colors';
 import { clsx } from 'clsx';
@@ -225,7 +226,7 @@ const Table: React.FC<TableProps> = ({
                                                             key={column.attribute}
                                                             data-column={column.attribute}
                                                             className={clsx(
-                                                                'h-10 px-2 align-middle text-sm font-medium text-gray-500 group-hover:bg-gray-100/50 first:ps-4 dark:text-zinc-400 dark:group-hover:bg-zinc-900/50',
+                                                                'text-muted-foreground h-10 px-2 align-middle text-sm font-medium group-hover:bg-gray-100/50 first:ps-4 dark:group-hover:bg-zinc-900/50',
                                                                 {
                                                                     'last:pe-4': column.attribute != '_actions',
                                                                     'z-10 bg-white/90 group-data-[scroll-x]/table:sticky dark:bg-zinc-900/90':
@@ -251,7 +252,7 @@ const Table: React.FC<TableProps> = ({
                                                                 {header[column.attribute] ? (
                                                                     header[column.attribute]({ column, table: tableInstance, actions })
                                                                 ) : !column.sortable && !column.toggleable ? (
-                                                                    <span className={clsx('font-semibold', column.headerClass)}>{column.header}</span>
+                                                                    <span className={clsx('font-medium', column.headerClass)}>{column.header}</span>
                                                                 ) : (
                                                                     <div
                                                                         className={clsx({
@@ -354,12 +355,20 @@ const Table: React.FC<TableProps> = ({
                                                                           }
                                                                         : {}
                                                                 }
-                                                                onClick={() => {
+                                                                onClick={(event) => {
+                                                                    if (
+                                                                        (event.target as HTMLElement).closest(
+                                                                            'a, button, input, select, textarea, [role="button"], [role="checkbox"]',
+                                                                        )
+                                                                    )
+                                                                        return;
                                                                     if (column.attribute === '_actions') {
                                                                         return; // Don't handle click for actions column
                                                                     }
 
-                                                                    if (onRowClick) {
+                                                                    if (item._column_urls?.[column.attribute]) {
+                                                                        visitUrl(item._column_urls[column.attribute]);
+                                                                    } else if (onRowClick) {
                                                                         onRowClick(item, column);
                                                                     } else {
                                                                         const url = getClickableColumn(column, item);
@@ -476,6 +485,16 @@ const Table: React.FC<TableProps> = ({
                                                                                         <li key={index}>{value}</li>
                                                                                     ))}
                                                                                 </ul>
+                                                                            ) : item._column_urls?.[column.attribute] ? (
+                                                                                <Link
+                                                                                    href={item._column_urls[column.attribute]}
+                                                                                    className={clsx(
+                                                                                        'underline-offset-4 hover:underline focus-visible:underline',
+                                                                                        column.cellClass,
+                                                                                    )}
+                                                                                >
+                                                                                    {item[column.attribute]}
+                                                                                </Link>
                                                                             ) : (
                                                                                 <span
                                                                                     className={clsx({

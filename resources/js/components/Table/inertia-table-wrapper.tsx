@@ -1,10 +1,12 @@
 import { EmptyState } from '@shared/components/ui/empty-state';
 import { LucideIcon } from 'lucide-react';
+import type { ReactNode } from 'react';
 import Table from '../../TableComponent';
 import type { Action, FilterState, TableConfig } from '../../types';
 
 interface InertiaTableWrapperProps<T = any> {
     resource: TableConfig<T>;
+    cell?: Record<string, (props: { item: T; value: unknown }) => ReactNode>;
     emptyState?: {
         title: string;
         description?: string;
@@ -23,6 +25,7 @@ interface InertiaTableWrapperProps<T = any> {
 
 export function InertiaTableWrapper<T = any>({
     resource,
+    cell,
     emptyState,
     onCustomAction,
     onActionSuccess,
@@ -49,6 +52,7 @@ export function InertiaTableWrapper<T = any>({
     return (
         <Table
             resource={resource}
+            cell={cell}
             onCustomAction={onCustomAction as any}
             onActionSuccess={onActionSuccess as any}
             onActionError={onActionError as any}

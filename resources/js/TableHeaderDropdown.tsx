@@ -1,7 +1,6 @@
 import { Button } from '@shared/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@shared/components/ui/dropdown-menu';
 import { useLang } from '@shared/hooks/use-lang';
-import { cn } from '@shared/lib/utils';
 import { ArrowDown, ArrowUp, ChevronsUpDown, EyeOff, Lock, Unlock } from 'lucide-react';
 import React from 'react';
 import type { ButtonIconProps, TableHeaderDropdownProps } from './types';
@@ -31,10 +30,7 @@ export default function TableHeaderDropdown({
                 <Button
                     variant="ghost"
                     size="sm"
-                    className={cn(
-                        'it-table-column-dropdown ui-control hover:text-foreground h-8 gap-1.5 border-0 bg-transparent px-0 font-medium shadow-none hover:bg-transparent data-[state=open]:bg-transparent',
-                        sort ? 'text-foreground' : 'text-muted-foreground',
-                    )}
+                    className="it-table-column-dropdown ui-control text-muted-foreground hover:text-muted-foreground h-8 gap-1.5 border-0 bg-transparent px-0 font-medium shadow-none hover:bg-transparent data-[state=open]:bg-transparent"
                     style={{ height: 28, minHeight: 28, backgroundColor: 'transparent' }}
                     aria-label={`${column.header}${sort ? `, sorted ${sort === 'asc' ? 'ascending' : 'descending'}` : ', column options'}`}
                 >

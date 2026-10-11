@@ -2,11 +2,32 @@ import { router, usePage } from '@inertiajs/react';
 import qs from 'qs';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { filterQuery } from './filterQuery';
+import { activeTableTab, tabFilterAttributes } from './tableTabs';
 import { FilterDefinition, FilterState, TableColumn, TableResource, TableState, TableTab, UseTableReturn } from './types';
 import { replaceUrl } from './urlHelpers';
 
 export const useTable = (resource: TableResource): UseTableReturn => {
     const [state, setState] = useState<TableState>(resource.state);
+
+    // Filter-dependent columns may enter or leave the server's table definition.
+    // Keep existing choices, initialize new columns, and discard removed ones.
+    useEffect(() => {
+        setState((current) => {
+            const columns = Object.fromEntries(
+                resource.columns.map((column) => [
+                    column.attribute,
+                    column.toggleable ? (current.columns[column.attribute] ?? resource.state.columns[column.attribute]) : true,
+                ]),
+            );
+            if (
+                Object.keys(columns).length === Object.keys(current.columns).length &&
+                Object.entries(columns).every(([key, value]) => current.columns[key] === value)
+            ) {
+                return current;
+            }
+            return { ...current, columns };
+        });
+    }, [resource.columns, resource.state.columns]);
     const [isNavigating, setIsNavigating] = useState<boolean>(false);
 
     const [preventNavigation, setPreventNavigation] = useState<boolean>(false);
@@ -94,6 +115,12 @@ export const useTable = (resource: TableResource): UseTableReturn => {
 
             newState.filters[key] = query;
         });
+
+        // A tab is a named filter preset: serialize it once, not as repeated nested filters.
+        if (resource.tabs?.length) newState.view = activeTableTab(resource.tabs, state) || null;
+        for (const attribute of tabFilterAttributes(resource.tabs ?? [], state)) {
+            delete newState.filters[attribute];
+        }
 
         const enabledColumns = Object.entries(state.columns)
             .filter(([, enabled]) => enabled)

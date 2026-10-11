@@ -8,8 +8,8 @@ export function filterValueLabel(filter: { type: string }, state: { clause?: str
         is_not_null: 'Not empty',
         is_true: 'Yes',
         is_false: 'No',
-        with_trashed: 'Include archived',
-        only_trashed: 'Archived only',
+        with_trashed: 'Include trashed',
+        only_trashed: 'Trashed only',
         without_trashed: 'Active only',
     };
     if (special[clause]) return special[clause];

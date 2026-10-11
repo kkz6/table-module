@@ -8,7 +8,7 @@ import { useLang } from '@shared/hooks/use-lang';
 import { statusChipClasses, statusTone } from '@shared/lib/status-colors';
 import { cn } from '@shared/lib/utils';
 import { format, parseISO } from 'date-fns';
-import { CalendarIcon, Check, ChevronsUpDown, Filter as FilterIcon, Search, X } from 'lucide-react';
+import { CalendarIcon, Check, X } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { filterValueLabel } from './filterValueLabel';
 import type { FilterProps } from './types';
@@ -21,13 +21,24 @@ const Filter = ({ filter, value, onChange, onRemove }: FilterProps): React.React
             : 'muted';
     const inputRef = useRef<HTMLDivElement>(null);
     const [isOpen, setIsOpen] = useState<boolean>(false);
-    const [isMultiSelectOpen, setIsMultiSelectOpen] = useState<boolean>(false);
     const optionsRef = useRef<HTMLDivElement>(null);
-    const [commandValue, setCommandValue] = useState<string>();
+    const clauseLabel = (clause: string) =>
+        ({ with_trashed: 'Include trashed', only_trashed: 'Trashed only', without_trashed: 'Active only' })[clause] ??
+        t(`table::table.clause_${clause}`).replace(/^./, (letter) => letter.toUpperCase());
     const clauseSelectRef = useRef<HTMLButtonElement>(null);
 
     function setFilterClause(newClause: string): void {
-        onChange({ ...value, clause: newClause });
+        const multiple = ['in', 'not_in', 'between', 'not_between'].includes(newClause);
+        const nextValue = multiple
+            ? Array.isArray(value.value)
+                ? value.value
+                : value.value == null || value.value === ''
+                  ? []
+                  : [value.value]
+            : Array.isArray(value.value)
+              ? (value.value[0] ?? null)
+              : value.value;
+        onChange({ ...value, clause: newClause, value: nextValue });
     }
 
     function setFilterValue(newValue: any): void {
@@ -69,7 +80,7 @@ const Filter = ({ filter, value, onChange, onRemove }: FilterProps): React.React
         const focusOptions = { preventScroll: true };
 
         if (filter.type === 'boolean' || filter.type === 'trashed') {
-            clauseSelectRef.current?.focus(focusOptions);
+            (optionsRef.current ?? clauseSelectRef.current)?.focus(focusOptions);
         } else {
             const element = inputRef.current?.querySelector('input,select') as HTMLElement;
             element?.focus(focusOptions);
@@ -99,35 +110,27 @@ const Filter = ({ filter, value, onChange, onRemove }: FilterProps): React.React
             setFilterValue(newSelectedValues);
         };
 
-        const selectedLabels = selectedValues.map((val: any) => options.find((opt) => opt.value === val)?.label).filter(Boolean);
-
         return (
-            <Popover open={isMultiSelectOpen} onOpenChange={setIsMultiSelectOpen}>
-                <PopoverTrigger asChild>
-                    <Button variant="outline" role="combobox" aria-expanded={isMultiSelectOpen} className="h-8 w-full justify-between">
-                        {selectedValues.length === 0
-                            ? 'Select options...'
-                            : selectedValues.length === 1
-                              ? selectedLabels[0]
-                              : `${selectedValues.length} selected`}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-full p-0">
-                    <Command>
-                        <CommandInput placeholder="Search options..." />
-                        <CommandEmpty>No option found.</CommandEmpty>
-                        <CommandGroup className="max-h-64 overflow-auto">
-                            {options.map((option) => (
-                                <CommandItem key={option.value} onSelect={() => toggleValue(option.value)}>
-                                    <Check className={cn('mr-2 h-4 w-4', selectedValues.includes(option.value) ? 'opacity-100' : 'opacity-0')} />
-                                    {option.label}
-                                </CommandItem>
-                            ))}
-                        </CommandGroup>
-                    </Command>
-                </PopoverContent>
-            </Popover>
+            <Command className="rounded-md border">
+                {options.length > 7 && <CommandInput placeholder="Find an option…" className="h-8 text-xs" />}
+                <CommandList className="max-h-52">
+                    <CommandEmpty>No options found.</CommandEmpty>
+                    <CommandGroup>
+                        {options.map((option) => (
+                            <CommandItem
+                                key={option.value}
+                                value={String(option.value)}
+                                keywords={[option.label]}
+                                onSelect={() => toggleValue(option.value)}
+                                className="gap-2 py-1.5 text-xs"
+                            >
+                                <span className="flex-1">{option.label}</span>
+                                <Check className={cn('size-3.5', !selectedValues.includes(option.value) && 'opacity-0')} />
+                            </CommandItem>
+                        ))}
+                    </CommandGroup>
+                </CommandList>
+            </Command>
         );
     };
 
@@ -136,7 +139,6 @@ const Filter = ({ filter, value, onChange, onRemove }: FilterProps): React.React
             open={isOpen}
             onOpenChange={(open) => {
                 setIsOpen(open);
-                if (open) setCommandValue(String(value.value ?? ''));
                 if (open) {
                     focusValueInput();
                 }
@@ -170,29 +172,52 @@ const Filter = ({ filter, value, onChange, onRemove }: FilterProps): React.React
                 </Button>
             </div>
             <PopoverContent
-                className="w-56 p-0"
+                className="w-56 max-w-[calc(100vw-2rem)] p-0"
                 align="start"
                 sideOffset={8}
                 onOpenAutoFocus={(event) => {
-                    if (filter.type === 'set' && !filter.multiple && !['in', 'not_in', 'is_set', 'is_not_set'].includes(value.clause)) {
+                    if (
+                        filter.type === 'boolean' ||
+                        filter.type === 'trashed' ||
+                        (filter.type === 'set' && !filter.multiple && !['in', 'not_in', 'is_set', 'is_not_set'].includes(value.clause))
+                    ) {
                         event.preventDefault();
                         optionsRef.current?.focus();
                     }
                 }}
             >
-                {filter.type === 'set' && !filter.multiple && !['in', 'not_in', 'is_set', 'is_not_set'].includes(value.clause) ? (
+                {filter.type === 'boolean' || filter.type === 'trashed' ? (
+                    <div className="p-1" role="group" aria-label={filter.label} ref={optionsRef} tabIndex={-1}>
+                        <div className="text-muted-foreground px-2 py-1.5 text-xs font-medium">{filter.label}</div>
+                        {filter.clauses.map((clause) => (
+                            <button
+                                key={clause}
+                                type="button"
+                                aria-pressed={value.clause === clause}
+                                className="hover:bg-accent focus-visible:bg-accent flex min-h-8 w-full items-center justify-between gap-2 rounded-sm px-2 py-1.5 text-left text-xs outline-none"
+                                onClick={() => {
+                                    onChange({ ...value, clause, value: null });
+                                    setIsOpen(false);
+                                }}
+                            >
+                                {clauseLabel(clause)}
+                                <Check className={cn('size-3.5', value.clause !== clause && 'invisible')} />
+                            </button>
+                        ))}
+                    </div>
+                ) : filter.type === 'set' && !filter.multiple && !['in', 'not_in', 'is_set', 'is_not_set'].includes(value.clause) ? (
                     <Command>
                         <div className="text-muted-foreground border-b px-3 py-2 text-xs font-medium">{filter.label}</div>
                         {filter.clauses.length > 1 && (
                             <div className="border-b p-2">
                                 <Select value={value.clause} onValueChange={setFilterClause}>
-                                    <SelectTrigger aria-label="Filter condition" className="h-8 text-xs">
+                                    <SelectTrigger aria-label="Filter condition" className="h-7 min-h-7 text-xs">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {filter.clauses.map((clause) => (
-                                            <SelectItem key={clause} value={clause}>
-                                                {t(`table::table.clause_${clause}`)}
+                                            <SelectItem key={clause} value={clause} className="py-1.5 text-xs">
+                                                {clauseLabel(clause)}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
@@ -207,6 +232,7 @@ const Filter = ({ filter, value, onChange, onRemove }: FilterProps): React.React
                             <CommandGroup>
                                 {(Array.isArray(filter.options) ? filter.options : []).map((option) => (
                                     <CommandItem
+                                        className="py-1.5 text-xs"
                                         key={String(option.value)}
                                         value={String(option.value)}
                                         keywords={[option.label]}
@@ -223,45 +249,43 @@ const Filter = ({ filter, value, onChange, onRemove }: FilterProps): React.React
                         </CommandList>
                     </Command>
                 ) : (
-                    <div className="flex flex-col space-y-2 py-2">
+                    <div className="flex flex-col gap-2 p-2">
+                        <div className="text-muted-foreground px-1 text-xs font-medium">{filter.label}</div>
                         {filter.clauses.length > 1 && (
-                            <div className="flex items-center px-2">
-                                <div className="me-2 w-5">
-                                    <FilterIcon className="size-5" />
-                                </div>
+                            <div className="flex items-center">
                                 <Select value={value.clause} onValueChange={(newClause) => setFilterClause(newClause)}>
-                                    <SelectTrigger ref={clauseSelectRef} className="h-8 w-full">
+                                    <SelectTrigger
+                                        ref={clauseSelectRef}
+                                        aria-label={`${filter.label} condition`}
+                                        className="h-7 min-h-7 w-full text-xs"
+                                    >
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {filter.clauses.map((clause) => (
-                                            <SelectItem key={clause} value={clause}>
-                                                {t(`table::table.clause_${clause}`)}
+                                            <SelectItem key={clause} value={clause} className="py-1.5 text-xs">
+                                                {clauseLabel(clause)}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
                             </div>
                         )}
-                        {filter.type !== 'boolean' &&
-                            filter.type !== 'trashed' &&
-                            value.clause !== 'is_set' &&
+                        {value.clause !== 'is_set' &&
                             value.clause !== 'is_not_set' &&
                             value.clause !== 'with_trashed' &&
                             value.clause !== 'only_trashed' &&
                             value.clause !== 'without_trashed' && (
-                                <div className="flex items-center px-2">
-                                    <div className="me-2 w-5">
-                                        <Search className="size-5" />
-                                    </div>
-                                    <div ref={inputRef} className="grow">
+                                <div className="flex items-center">
+                                    <div ref={inputRef} className="min-w-0 grow">
                                         {filter.type === 'numeric' && (value.clause === 'between' || value.clause === 'not_between') ? (
                                             <div className="flex items-center space-x-2 rtl:space-x-reverse">
                                                 <Input
                                                     value={value.value?.[0] ?? ''}
                                                     onChange={(e) => setFilterValue([e.target.value, value.value?.[1]])}
                                                     type="number"
-                                                    className="h-8 w-28"
+                                                    aria-label="Range value"
+                                                    className="h-7 min-h-7 w-0 flex-1 text-xs"
                                                 />
                                                 <span className="text-sm text-gray-500 dark:text-zinc-500">
                                                     {t('table::table.between_values_and')}
@@ -270,7 +294,8 @@ const Filter = ({ filter, value, onChange, onRemove }: FilterProps): React.React
                                                     value={value.value?.[1] ?? ''}
                                                     onChange={(e) => setFilterValue([value.value?.[0], e.target.value])}
                                                     type="number"
-                                                    className="h-8 w-28"
+                                                    aria-label="Range value"
+                                                    className="h-7 min-h-7 w-0 flex-1 text-xs"
                                                 />
                                             </div>
                                         ) : filter.type === 'text' || filter.type === 'numeric' ? (
@@ -278,7 +303,9 @@ const Filter = ({ filter, value, onChange, onRemove }: FilterProps): React.React
                                                 value={value.value ?? ''}
                                                 onChange={(e) => setFilterValue(e.target.value)}
                                                 type={filter.type === 'text' ? 'text' : 'number'}
-                                                className="h-8 w-full"
+                                                aria-label={`${filter.label} value`}
+                                                placeholder={`Enter ${filter.label.toLowerCase()}`}
+                                                className="h-7 min-h-7 w-full text-xs"
                                             />
                                         ) : filter.type === 'set' ? (
                                             value.clause === 'in' || value.clause === 'not_in' || filter.multiple ? (
@@ -287,7 +314,7 @@ const Filter = ({ filter, value, onChange, onRemove }: FilterProps): React.React
                                             ) : (
                                                 // Single selection - use Shadcn Select
                                                 <Select value={value.value || ''} onValueChange={(newValue) => setFilterValue(newValue)}>
-                                                    <SelectTrigger className="h-8 w-full">
+                                                    <SelectTrigger className="h-7 min-h-7 w-full text-xs">
                                                         <SelectValue placeholder="Select an option..." />
                                                     </SelectTrigger>
                                                     <SelectContent>
@@ -305,7 +332,7 @@ const Filter = ({ filter, value, onChange, onRemove }: FilterProps): React.React
                                                     <Button
                                                         variant="outline"
                                                         className={cn(
-                                                            'h-8 w-full justify-start text-left font-normal',
+                                                            'h-7 min-h-7 w-full justify-start text-left text-xs font-normal',
                                                             !value.value && 'text-muted-foreground',
                                                         )}
                                                     >
@@ -347,7 +374,7 @@ const Filter = ({ filter, value, onChange, onRemove }: FilterProps): React.React
                                                                     setFilterValue(format(date, 'yyyy-MM-dd'));
                                                                 }
                                                             },
-                                                            disabled: (date: Date) => date > new Date() || date < new Date('1900-01-01'),
+                                                            disabled: (date: Date) => date < new Date('1900-01-01'),
                                                             initialFocus: true,
                                                         } as any)}
                                                     />

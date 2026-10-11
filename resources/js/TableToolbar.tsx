@@ -10,30 +10,9 @@ import AddFilterDropdown from './AddFilterDropdown';
 import DynamicIcon from './DynamicIcon';
 import Filter from './Filter';
 import { resolveIcon } from './iconResolver';
+import { activeTableTab, tabFilterAttributes } from './tableTabs';
 import ToggleColumnDropdown from './ToggleColumnDropdown';
-import type { ActionsDropdownProps, FilterDefinitionExtended, TableResource, TableTab, UseActionsReturn, UseTableReturn } from './types';
-
-export function activeTableTab(tabs: TableTab[], state: UseTableReturn['state']): string {
-    return (
-        tabs.find((tab) =>
-            Object.entries(tab.filters).every(([attribute, preset]) => {
-                const current = state.filters[attribute];
-                if (preset === null) return !current?.enabled;
-                const expected =
-                    typeof preset === 'object' && preset !== null && 'value' in preset
-                        ? (preset as { value: unknown; clause?: string })
-                        : { value: preset, clause: 'equals' };
-                return (
-                    !!current?.enabled &&
-                    current.clause === (expected.clause ?? 'equals') &&
-                    (Array.isArray(current.value) || Array.isArray(expected.value)
-                        ? JSON.stringify(current.value) === JSON.stringify(expected.value)
-                        : String(current.value) === String(expected.value))
-                );
-            }),
-        )?.value ?? ''
-    );
-}
+import type { ActionsDropdownProps, FilterDefinitionExtended, TableResource, UseActionsReturn, UseTableReturn } from './types';
 
 const activeColors: Record<string, string> = {
     neutral: 'data-[state=active]:border-primary data-[state=active]:text-foreground',
@@ -70,10 +49,14 @@ export default function TableToolbar({
     if (resource.hasRecords === false && !table.state.search) return null;
     const tabs = resource.tabs ?? [];
     const selected = activeTableTab(tabs, table.state);
+    const managed = new Set(tabs.flatMap((tab) => Object.keys(tab.filters)));
+    const represented = new Set(tabFilterAttributes(tabs, table.state));
+    const availableFilters = resource.filters.filter((filter) => !managed.has(filter.attribute));
     const quick = resource.filters.filter(
-        (filter) => (resource.quickFilters ?? []).includes(filter.attribute) && filter.type === 'set' && !filter.multiple,
+        (filter) =>
+            !managed.has(filter.attribute) && (resource.quickFilters ?? []).includes(filter.attribute) && filter.type === 'set' && !filter.multiple,
     );
-    const shownFilters = resource.filters.filter((filter) => table.state.filters[filter.attribute]?.enabled);
+    const shownFilters = resource.filters.filter((filter) => table.state.filters[filter.attribute]?.enabled && !represented.has(filter.attribute));
     if (!resource.hasSearch && !resource.hasFilters && !resource.hasExports && !resource.hasToggleableColumns && !tabs.length && !topbar && !filters)
         return null;
     const resolver = (name: string) => iconResolver?.(name) ?? resolveIcon(name) ?? (() => null);
@@ -153,8 +136,8 @@ export default function TableToolbar({
                                     onHandle={onCustomAction}
                                 />
                             )}
-                            {resource.hasFilters && (
-                                <AddFilterDropdown state={table.state.filters} filters={resource.filters} onAdd={table.addFilter} />
+                            {availableFilters.length > 0 && (
+                                <AddFilterDropdown state={table.state.filters} filters={availableFilters} onAdd={table.addFilter} />
                             )}
                             {resource.hasToggleableColumns && (
                                 <ToggleColumnDropdown state={table.state.columns} columns={resource.columns} onToggle={table.toggleColumn} />

@@ -11,5 +11,5 @@ test('boolean and archive filters use readable states',()=>{
  assert.equal(filterValueLabel({type:'boolean'},{clause:'equals',value:false},'false'),'No');
  assert.equal(filterValueLabel({type:'boolean'},{clause:'equals',value:0},'0'),'No');
  assert.equal(filterValueLabel({type:'boolean'},{clause:'is_true'},''),'Yes');
- assert.equal(filterValueLabel({type:'trashed'},{clause:'only_trashed'},''),'Archived only');
+ assert.equal(filterValueLabel({type:'trashed'},{clause:'only_trashed'},''),'Trashed only');
 });

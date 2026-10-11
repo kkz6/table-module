@@ -74,3 +74,30 @@ test('tables without presets serialize no tab or quick filter configuration', fu
     $data=Table::build(Tag::query(), [TextColumn::make('name')])->toArray();
     expect($data['tabs'])->toBe([])->and($data['quickFilters'])->toBe([]);
 });
+
+test('short view URLs expand known presets and retain unrelated filters', function () {
+    tabFixtureRecords();
+    $data = ScopedTabFixture::make()->setRequest(Request::create('/', parameters: ['view'=>'paused', 'filters'=>['slug'=>['clause'=>'equals', 'value'=>'visible-paused']]]))->toArray();
+    expect($data['results']['total'])->toBe(1)
+        ->and($data['results']['data'][0]['name'])->toBe('Visible paused')
+        ->and($data['state']['filters']['name']['value'])->toBe('Visible paused')
+        ->and($data['state']['filters']['slug']['enabled'])->toBeTrue();
+});
+
+test('short all view disables default filters and overrides stale preset filters', function () {
+    tabFixtureRecords();
+    $data = ScopedTabFixture::make()->setRequest(Request::create('/', parameters: ['view'=>'all', 'filters'=>['name'=>['clause'=>'equals', 'value'=>'Visible paused']]]))->toArray();
+    expect($data['results']['total'])->toBe(2)->and($data['state']['filters']['name']['enabled'])->toBeFalse();
+});
+
+test('unknown views cannot apply arbitrary filters', function () {
+    tabFixtureRecords();
+    $data = ScopedTabFixture::make()->setRequest(Request::create('/', parameters: ['view'=>'nonexistent']))->toArray();
+    expect($data['results']['total'])->toBe(1)->and($data['state']['filters']['name']['value'])->toBe('Visible active');
+});
+
+test('named table views stay within their own query namespace', function () {
+    tabFixtureRecords();
+    $data = ScopedTabFixture::make()->as('secondary')->setRequest(Request::create('/', parameters: ['view'=>'all', 'secondary'=>['view'=>'paused']]))->toArray();
+    expect($data['results']['total'])->toBe(1)->and($data['results']['data'][0]['name'])->toBe('Visible paused');
+});
