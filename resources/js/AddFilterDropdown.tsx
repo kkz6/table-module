@@ -1,5 +1,5 @@
-import { Filter, Plus } from 'lucide-react';
-import React from 'react';
+import { Check, Filter, Plus } from 'lucide-react';
+import React, { useRef } from 'react';
 
 import { Button } from '@shared/components/ui/button';
 import {
@@ -15,6 +15,7 @@ import type { AddFilterDropdownProps } from './types';
 
 export default function AddFilterDropdown({ filters, state, onAdd }: AddFilterDropdownProps): React.ReactElement {
     const { t } = useLang();
+    const openingFilter = useRef(false);
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -23,7 +24,15 @@ export default function AddFilterDropdown({ filters, state, onAdd }: AddFilterDr
                     <span>{t('table::table.filters_button')}</span>
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="it-add-filter-dropdown it-dropdown-items w-max min-w-24">
+            <DropdownMenuContent
+                className="it-add-filter-dropdown it-dropdown-items w-max min-w-24"
+                onCloseAutoFocus={(event) => {
+                    if (openingFilter.current) {
+                        event.preventDefault();
+                        openingFilter.current = false;
+                    }
+                }}
+            >
                 <DropdownMenuLabel className="it-dropdown-header">{t('table::table.add_filter_header')}</DropdownMenuLabel>
                 <DropdownMenuSeparator className="it-dropdown-separator" />
                 {filters.map((filter, key) => {
@@ -31,8 +40,15 @@ export default function AddFilterDropdown({ filters, state, onAdd }: AddFilterDr
                     const isEnabled = filterState?.enabled || false;
 
                     return (
-                        <DropdownMenuItem key={key} disabled={isEnabled} onClick={() => onAdd(filter)} className="it-dropdown-item">
-                            {!isEnabled && <Plus className="me-2 size-3.5" />}
+                        <DropdownMenuItem
+                            key={key}
+                            onSelect={() => {
+                                openingFilter.current = true;
+                                onAdd(filter);
+                            }}
+                            className="it-dropdown-item"
+                        >
+                            {isEnabled ? <Check className="me-2 size-3.5" /> : <Plus className="me-2 size-3.5" />}
                             <span>{filter.label}</span>
                         </DropdownMenuItem>
                     );

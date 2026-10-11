@@ -1,13 +1,15 @@
+import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core';
 import { restrictToFirstScrollableAncestor, restrictToParentElement, restrictToVerticalAxis } from '@dnd-kit/modifiers';
+import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { Button } from '@shared/components/ui/button';
 import { Checkbox } from '@shared/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@shared/components/ui/dialog';
-import { DraggableList, DraggableWrapper } from '@shared/components/ui/draggable-wrapper';
 import { Input } from '@shared/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@shared/components/ui/select';
 import { useLang } from '@shared/hooks/use-lang';
 import { cn } from '@shared/lib/utils';
-import { Check, Download, FileSpreadsheet, FileText, Loader2 } from 'lucide-react';
+import { Check, Download, FileSpreadsheet, FileText, GripVertical, Loader2 } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { ExportColumnDef, ExportModalPayload, ExportOptionField, TableExport } from './types/actions';
 
@@ -37,18 +39,28 @@ interface ExportColumnItemProps {
 }
 
 function ExportColumnItem({ name, column, columnState, canDrag, onCheckedChange, onLabelChange }: ExportColumnItemProps): React.ReactElement {
+    const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({
+        id: name,
+        disabled: !canDrag,
+    });
     return (
-        <DraggableWrapper
-            id={name}
-            canDrag={canDrag}
-            showDragHandle
-            dragHandleClassName="left-2.5"
-            isDraggingClassName="bg-blue-50/70 shadow-sm dark:bg-blue-950/30"
-            className={cn(
-                'hover:bg-muted/50 flex items-center gap-3 py-2 pr-3 transition-[transform,opacity,background-color]',
-                canDrag ? 'pl-9' : 'pl-3',
-            )}
+        <div
+            ref={setNodeRef}
+            style={{ transform: CSS.Transform.toString(transform), transition, position: 'relative', zIndex: isDragging ? 1 : undefined }}
+            className={cn('bg-background hover:bg-muted/50 flex items-center gap-3 px-3 py-2', isDragging && 'bg-muted shadow-sm')}
         >
+            {canDrag && (
+                <button
+                    type="button"
+                    ref={setActivatorNodeRef}
+                    {...attributes}
+                    {...listeners}
+                    aria-label={`Reorder ${column.label}`}
+                    className="text-muted-foreground cursor-grab touch-none"
+                >
+                    <GripVertical className="size-4" />
+                </button>
+            )}
             <Checkbox
                 id={`export-col-${name}`}
                 aria-label={column.label}
@@ -64,12 +76,16 @@ function ExportColumnItem({ name, column, columnState, canDrag, onCheckedChange,
                 onChange={(event) => onLabelChange(event.target.value)}
                 className="h-7 border-0 bg-transparent px-0 text-sm shadow-none focus-visible:ring-0"
             />
-        </DraggableWrapper>
+        </div>
     );
 }
 
 export default function ExportModal({ show, tableExport, visibleColumns, onClose, onSubmit }: ExportModalProps): React.ReactElement {
     const { t } = useLang();
+    const sensors = useSensors(
+        useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+        useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+    );
 
     const [columnMap, setColumnMap] = useState<Record<string, { isEnabled: boolean; label: string }>>({});
     const [columnOrder, setColumnOrder] = useState<string[]>([]);
@@ -236,44 +252,53 @@ export default function ExportModal({ show, tableExport, visibleColumns, onClose
                                         )}
                                     </div>
                                 </div>
-                                <DraggableList
-                                    items={columnOrder.map((name) => ({ id: name }))}
-                                    onReorder={(items) => setColumnOrder(items.map((item) => item.id))}
-                                    className="max-h-64 divide-y overflow-y-auto rounded-md border"
+                                <DndContext
+                                    sensors={sensors}
+                                    collisionDetection={closestCenter}
                                     modifiers={[restrictToVerticalAxis, restrictToParentElement, restrictToFirstScrollableAncestor]}
+                                    onDragEnd={({ active, over }) => {
+                                        if (over && active.id !== over.id)
+                                            setColumnOrder((order) =>
+                                                arrayMove(order, order.indexOf(String(active.id)), order.indexOf(String(over.id))),
+                                            );
+                                    }}
                                 >
-                                    {columnOrder.map((name) => {
-                                        const col = columnByName[name];
+                                    <SortableContext items={columnOrder} strategy={verticalListSortingStrategy}>
+                                        <div className="max-h-64 divide-y overflow-y-auto rounded-md border">
+                                            {columnOrder.map((name) => {
+                                                const col = columnByName[name];
 
-                                        if (!col) {
-                                            return null;
-                                        }
+                                                if (!col) {
+                                                    return null;
+                                                }
 
-                                        const colState = columnMap[name];
+                                                const colState = columnMap[name];
 
-                                        return (
-                                            <ExportColumnItem
-                                                key={name}
-                                                name={name}
-                                                column={col}
-                                                columnState={colState}
-                                                canDrag={columns.length > 1}
-                                                onCheckedChange={(checked) => {
-                                                    setColumnMap((previous) => ({
-                                                        ...previous,
-                                                        [name]: { ...previous[name], isEnabled: checked },
-                                                    }));
-                                                }}
-                                                onLabelChange={(label) => {
-                                                    setColumnMap((previous) => ({
-                                                        ...previous,
-                                                        [name]: { ...previous[name], label },
-                                                    }));
-                                                }}
-                                            />
-                                        );
-                                    })}
-                                </DraggableList>
+                                                return (
+                                                    <ExportColumnItem
+                                                        key={name}
+                                                        name={name}
+                                                        column={col}
+                                                        columnState={colState}
+                                                        canDrag={columns.length > 1}
+                                                        onCheckedChange={(checked) => {
+                                                            setColumnMap((previous) => ({
+                                                                ...previous,
+                                                                [name]: { ...previous[name], isEnabled: checked },
+                                                            }));
+                                                        }}
+                                                        onLabelChange={(label) => {
+                                                            setColumnMap((previous) => ({
+                                                                ...previous,
+                                                                [name]: { ...previous[name], label },
+                                                            }));
+                                                        }}
+                                                    />
+                                                );
+                                            })}
+                                        </div>
+                                    </SortableContext>
+                                </DndContext>
                             </div>
                         )}
 

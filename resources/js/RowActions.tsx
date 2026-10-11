@@ -9,6 +9,12 @@ import TableActions from './TableActions';
 import type { RowActionsProps, TableAction } from './types';
 import { getActionForItem } from './urlHelpers';
 
+// Inline row actions use the quieter destructive treatment; a solid red slab in
+// every row reads as an alarm rather than an action.
+function toRowVariant(variant?: string) {
+    return variant === 'destructive' ? 'destructiveGhost' : variant;
+}
+
 export default function RowActions({
     item,
     actions,
@@ -71,7 +77,7 @@ export default function RowActions({
                 return {
                     onClick: () => handle(action),
                     disabled: !action.authorized,
-                    variant: action.variant || 'outline',
+                    variant: toRowVariant(action.variant) || 'outline',
                 };
             }
 
@@ -91,7 +97,7 @@ export default function RowActions({
 
             // Pass through the variant directly from the backend for all components
             if ('variant' in mutableActionItem && mutableActionItem.variant) {
-                mutableActionItem.bindings.variant = mutableActionItem.variant;
+                mutableActionItem.bindings.variant = toRowVariant(mutableActionItem.variant as string);
             }
 
             if (mutableActionItem.bindings?.class) {
@@ -160,25 +166,25 @@ export default function RowActions({
                         <DropdownMenuTrigger asChild>
                             <button
                                 className={clsx(
-                                    'it-row-actions-dropdown inline-flex size-8 cursor-pointer items-center justify-center rounded transition-colors hover:bg-gray-100 data-[state=open]:bg-gray-100 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:data-[state=open]:bg-zinc-800',
+                                    'it-row-actions-dropdown text-muted-foreground hover:bg-accent hover:text-foreground data-[state=open]:bg-accent inline-flex size-8 cursor-pointer items-center justify-center rounded transition-colors',
                                 )}
                                 aria-label="Actions"
                             >
                                 <MoreHorizontal className="size-4" />
                             </button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent className="it-dropdown-items w-max min-w-24 border-zinc-800 bg-black text-white">
+                        <DropdownMenuContent className="it-dropdown-items border-border bg-popover text-popover-foreground w-48">
                             {actions.map((action, key) =>
                                 actionIsVisible(action, key) ? (
                                     <DropdownMenuItem
                                         key={key}
                                         disabled={!action.authorized}
                                         onClick={() => handle(action)}
-                                        className="it-dropdown-item text-white hover:bg-zinc-800 focus:bg-zinc-800 focus:text-white"
+                                        className="it-dropdown-item focus:bg-accent focus:text-accent-foreground"
                                     >
                                         {hasVisibleActionsWithIcons && action.icon && (
                                             <DynamicIcon
-                                                className="it-row-actions-dropdown-icon me-2 size-3.5 text-white"
+                                                className="it-row-actions-dropdown-icon text-muted-foreground me-2 size-3.5"
                                                 resolver={iconResolver as any}
                                                 icon={action.icon}
                                                 context={action}

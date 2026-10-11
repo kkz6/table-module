@@ -1,26 +1,25 @@
+import { Link } from '@inertiajs/react';
 import { useLang } from '@shared/hooks/use-lang';
+import { badgeTone } from '@shared/lib/status-colors';
 import { clsx } from 'clsx';
 import React, { useEffect, useRef } from 'react';
 import { resolveIcon } from './iconResolver';
 import { getClickableColumn, useActions, useTable, visitUrl } from './inertiauiTable';
+import TableToolbar from './TableToolbar';
 import { TableColumn, TableResource } from './types';
 import { useStickyColumns, useStickyHeader } from './useStickyTable';
 
 import { Badge } from '@shared/components/ui/badge';
 import { Checkbox } from '@shared/components/ui/checkbox';
-import { Input } from '@shared/components/ui/input';
 import { Table as ShadcnTable, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shared/components/ui/table';
-import ActionsDropdown from './ActionsDropdown';
-import AddFilterDropdown from './AddFilterDropdown';
 import DynamicIcon from './DynamicIcon';
 import EmptyState from './EmptyState';
-import Filter from './Filter';
 import LoadingSpinner from './LoadingSpinner';
 import Pagination from './Pagination';
 import RowActions from './RowActions';
+import SelectionActionBar from './SelectionActionBar';
 import TableCellImage from './TableCellImage';
 import TableHeaderDropdown from './TableHeaderDropdown';
-import ToggleColumnDropdown from './ToggleColumnDropdown';
 
 interface TableProps {
     resource: TableResource;
@@ -68,7 +67,6 @@ const Table: React.FC<TableProps> = ({
 
     const {
         addFilter,
-        hasFilters,
         hasSelectableRows,
         hasStickyColumns,
         isNavigating,
@@ -85,7 +83,8 @@ const Table: React.FC<TableProps> = ({
         visitPaginationUrl,
     } = tableInstance;
 
-    const actions = useActions();
+    const actions = useActions(resource);
+    const visibleFilters = resource.filters.filter((filter) => state.filters[filter.attribute]?.enabled);
     const { performAction, performAsyncExport, toggleItem, isPerformingAction, allItemsAreSelected, selectedItems } = actions;
 
     const tableWrapperRef = useRef<HTMLDivElement>(null);
@@ -158,7 +157,7 @@ const Table: React.FC<TableProps> = ({
         <div ref={tableWrapperRef} className="it-wrapper relative" {...(isPerformingAction ? { inert: true } : {})}>
             {isPerformingAction && (loading ? loading({ table: tableInstance, actions }) : <LoadingSpinner />)}
 
-            {resource.emptyState && (resource.emptyState !== true || emptyState) ? (
+            {!resource.hasFilters && resource.emptyState && (resource.emptyState !== true || emptyState) ? (
                 emptyState ? (
                     emptyState({ table: tableInstance })
                 ) : (
@@ -171,73 +170,17 @@ const Table: React.FC<TableProps> = ({
                         'opacity-75 blur-sm grayscale': isPerformingAction,
                     })}
                 >
-                    {/* Search and Actions */}
-                    {topbar
-                        ? topbar({ table: tableInstance, actions })
-                        : (resource.hasBulkActions ||
-                              resource.hasSearch ||
-                              resource.hasExports ||
-                              resource.hasFilters ||
-                              resource.hasToggleableColumns) && (
-                              <div className="it-topbar flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                                  {resource.hasSearch && (
-                                      <div className="flex-1 sm:max-w-sm lg:max-w-md">
-                                          <Input
-                                              value={state.search ?? ''}
-                                              onChange={(e) => setSearch(e.target.value)}
-                                              className="w-full"
-                                              autoFocus={resource.autofocus === 'search'}
-                                              placeholder={t('table::table.search_placeholder')}
-                                          />
-                                      </div>
-                                  )}
-
-                                  <div className="flex flex-shrink-0 gap-2">
-                                      {(resource.hasBulkActions || resource.hasExports) && (
-                                          <ActionsDropdown
-                                              actions={resource.actions || []}
-                                              exports={resource.exports || []}
-                                              selectedItems={selectedItems}
-                                              performAction={performAction}
-                                              performAsyncExport={performAsyncExport}
-                                              iconResolver={iconResolver ?? resolveIcon}
-                                              onSuccess={onActionSuccess}
-                                              onError={onActionError}
-                                              onHandle={onCustomAction}
-                                              visibleColumns={state.columns}
-                                          />
-                                      )}
-
-                                      {resource.hasFilters && (
-                                          <AddFilterDropdown state={state.filters} filters={resource.filters} onAdd={addFilter} />
-                                      )}
-
-                                      {resource.hasToggleableColumns && (
-                                          <ToggleColumnDropdown state={state.columns} columns={resource.columns} onToggle={toggleColumn} />
-                                      )}
-                                  </div>
-                              </div>
-                          )}
-
-                    {/* Filters */}
-                    {filters
-                        ? filters({ table: tableInstance, actions })
-                        : hasFilters && (
-                              <div className="it-filters flex flex-wrap items-center space-y-2 space-x-2 md:space-y-0 md:space-x-4 rtl:space-x-reverse">
-                                  {Object.entries(resource.filters).map(
-                                      ([key, filter]: [string, any]) =>
-                                          state.filters[filter.attribute].enabled && (
-                                              <Filter
-                                                  key={key}
-                                                  value={state.filters[filter.attribute]}
-                                                  onChange={(newState: any) => setFilter(filter, newState.clause, newState.value)}
-                                                  filter={filter}
-                                                  onRemove={() => removeFilter(filter)}
-                                              />
-                                          ),
-                                  )}
-                              </div>
-                          )}
+                    <TableToolbar
+                        resource={resource}
+                        table={tableInstance}
+                        actions={actions}
+                        topbar={topbar}
+                        filters={filters}
+                        iconResolver={iconResolver}
+                        onActionSuccess={onActionSuccess}
+                        onActionError={onActionError}
+                        onCustomAction={onCustomAction}
+                    />
 
                     {/* Table */}
                     {table ? (
@@ -283,7 +226,7 @@ const Table: React.FC<TableProps> = ({
                                                             key={column.attribute}
                                                             data-column={column.attribute}
                                                             className={clsx(
-                                                                'h-10 px-2 align-middle text-sm font-medium text-gray-500 group-hover:bg-gray-100/50 first:ps-4 dark:text-zinc-400 dark:group-hover:bg-zinc-900/50',
+                                                                'text-muted-foreground h-10 px-2 align-middle text-sm font-medium group-hover:bg-gray-100/50 first:ps-4 dark:group-hover:bg-zinc-900/50',
                                                                 {
                                                                     'last:pe-4': column.attribute != '_actions',
                                                                     'z-10 bg-white/90 group-data-[scroll-x]/table:sticky dark:bg-zinc-900/90':
@@ -309,7 +252,7 @@ const Table: React.FC<TableProps> = ({
                                                                 {header[column.attribute] ? (
                                                                     header[column.attribute]({ column, table: tableInstance, actions })
                                                                 ) : !column.sortable && !column.toggleable ? (
-                                                                    <span className={clsx('font-semibold', column.headerClass)}>{column.header}</span>
+                                                                    <span className={clsx('font-medium', column.headerClass)}>{column.header}</span>
                                                                 ) : (
                                                                     <div
                                                                         className={clsx({
@@ -341,7 +284,12 @@ const Table: React.FC<TableProps> = ({
                                         <TableBody className="it-table-body [&_tr:last-child]:border-0">
                                             {!resource.results.data.length ? (
                                                 <TableRow>
-                                                    <TableCell>
+                                                    <TableCell
+                                                        colSpan={
+                                                            resource.columns.filter((column) => state.columns[column.attribute]).length +
+                                                            (hasSelectableRows ? 1 : 0)
+                                                        }
+                                                    >
                                                         <p className="p-8 text-center font-medium text-gray-900 dark:text-zinc-200">
                                                             {t('table::table.no_results_found')}
                                                         </p>
@@ -407,12 +355,20 @@ const Table: React.FC<TableProps> = ({
                                                                           }
                                                                         : {}
                                                                 }
-                                                                onClick={() => {
+                                                                onClick={(event) => {
+                                                                    if (
+                                                                        (event.target as HTMLElement).closest(
+                                                                            'a, button, input, select, textarea, [role="button"], [role="checkbox"]',
+                                                                        )
+                                                                    )
+                                                                        return;
                                                                     if (column.attribute === '_actions') {
                                                                         return; // Don't handle click for actions column
                                                                     }
 
-                                                                    if (onRowClick) {
+                                                                    if (item._column_urls?.[column.attribute]) {
+                                                                        visitUrl(item._column_urls[column.attribute]);
+                                                                    } else if (onRowClick) {
                                                                         onRowClick(item, column);
                                                                     } else {
                                                                         const url = getClickableColumn(column, item);
@@ -485,17 +441,7 @@ const Table: React.FC<TableProps> = ({
                                                                                 />
                                                                             ) : column.type === 'badge' ? (
                                                                                 <Badge
-                                                                                    variant={
-                                                                                        item[column.attribute]?.variant === 'danger'
-                                                                                            ? 'destructive'
-                                                                                            : item[column.attribute]?.variant === 'info'
-                                                                                              ? 'default'
-                                                                                              : item[column.attribute]?.variant === 'success'
-                                                                                                ? 'secondary'
-                                                                                                : item[column.attribute]?.variant === 'warning'
-                                                                                                  ? 'outline'
-                                                                                                  : 'outline'
-                                                                                    }
+                                                                                    variant={badgeTone(item[column.attribute]?.variant)}
                                                                                     className="it-badge gap-1"
                                                                                     data-style={item[column.attribute]?.variant}
                                                                                     data-variant={item[column.attribute]?.variant}
@@ -539,6 +485,16 @@ const Table: React.FC<TableProps> = ({
                                                                                         <li key={index}>{value}</li>
                                                                                     ))}
                                                                                 </ul>
+                                                                            ) : item._column_urls?.[column.attribute] ? (
+                                                                                <Link
+                                                                                    href={item._column_urls[column.attribute]}
+                                                                                    className={clsx(
+                                                                                        'underline-offset-4 hover:underline focus-visible:underline',
+                                                                                        column.cellClass,
+                                                                                    )}
+                                                                                >
+                                                                                    {item[column.attribute]}
+                                                                                </Link>
                                                                             ) : (
                                                                                 <span
                                                                                     className={clsx({
@@ -609,6 +565,22 @@ const Table: React.FC<TableProps> = ({
                                   )}
                               </div>
                           )}
+                    <SelectionActionBar
+                        actions={resource.actions || []}
+                        exports={resource.exports || []}
+                        rows={resource.results?.data || []}
+                        total={resource.results?.total || 0}
+                        selectedItems={selectedItems}
+                        busy={isPerformingAction}
+                        onClear={actions.removeSelection}
+                        performAction={performAction}
+                        performAsyncExport={performAsyncExport}
+                        visibleColumns={state.columns}
+                        iconResolver={(icon) => (iconResolver || resolveIcon)(icon) ?? React.Fragment}
+                        onSuccess={onActionSuccess}
+                        onError={onActionError}
+                        onHandle={onCustomAction}
+                    />
                 </fieldset>
             )}
         </div>

@@ -69,6 +69,7 @@ export interface TableColumn {
 // This interface is moved to the bottom to avoid conflicts
 
 export interface TableConfig<T = any> extends TableResource {
+    hasRecords?: boolean;
     results?: {
         total: number;
         data: T[];
@@ -372,13 +373,26 @@ export interface TablePaginationProps {
 }
 
 // Table Hook Types
+export interface TableTab {
+    value: string;
+    label: string;
+    icon?: string | null;
+    tone?: string;
+    count?: number | null;
+    filters: Record<string, unknown | { value: unknown; clause?: string }>;
+}
+
 export interface TableResource {
+    tabs?: TableTab[];
+    quickFilters?: string[];
+    quickFilterLabels?: Record<string, string>;
     name: string;
     state: TableState;
     columns: TableColumn[];
     filters: FilterDefinition[];
     actions?: TableAction[];
     exports?: TableExport[];
+    hasRecords?: boolean;
     results?: {
         total: number;
         data: any[];
@@ -442,6 +456,8 @@ export interface UseTableReturn {
     setFilter: (filter: FilterDefinition, clause: string, value: any) => void;
     setPerPage: (perPage: number) => void;
     setSearch: (search: string) => void;
+    clearFilters: () => void;
+    setTab: (tab: TableTab) => void;
     setSort: (sort: string | null) => void;
     sortByColumn: (column: TableColumn) => void;
     state: TableState;
