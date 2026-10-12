@@ -340,6 +340,7 @@ export interface RowActionsProps {
     actions: TableAction[];
     performAction: (action: TableAction, keys?: (string | number)[] | null) => Promise<any>;
     iconResolver: ((icon: string) => React.ComponentType<any>) | null;
+    /** Legacy option. Row actions now automatically use a menu above three visible actions. */
     asDropdown?: boolean;
     onSuccess?: ((action: TableAction, keys: (string | number)[]) => void) | null;
     onError?: ((action: TableAction, keys: (string | number)[], error: any) => void) | null;

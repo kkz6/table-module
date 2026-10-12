@@ -4,6 +4,7 @@ import React, { useCallback, useMemo } from 'react';
 
 import { Button } from '@shared/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@shared/components/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@shared/components/ui/tooltip';
 import DynamicIcon from './DynamicIcon';
 import TableActions from './TableActions';
 import type { RowActionsProps, TableAction } from './types';
@@ -20,22 +21,44 @@ export default function RowActions({
     actions,
     performAction,
     iconResolver,
-    asDropdown = false,
     onSuccess = null,
     onError = null,
     onHandle = null,
-}: RowActionsProps): React.ReactElement {
+}: RowActionsProps): React.ReactElement | null {
+    const actionIsVisible = useCallback(
+        (action: TableAction, key: number): boolean => {
+            // Check if we have action data for this item
+            if (!item._actions || !item._actions[key]) {
+                return true; // Default to visible
+            }
+
+            return getActionForItem(item._actions[key], action)?.isVisible ?? true;
+        },
+        [item],
+    );
+
+    const visibleActions = useMemo(
+        () =>
+            actions.map((action, key) => ({ action, key })).filter(({ action, key }) => action.asRowAction !== false && actionIsVisible(action, key)),
+        [actions, actionIsVisible],
+    );
+    const asDropdown = visibleActions.length > 3;
+
     const componentType = useCallback(
         (action: TableAction, key: number): React.ComponentType<any> | string => {
             // Check if we have action data for this item
-            if (!item._actions || !item._actions[String(key)]) {
+            if (!item._actions || !item._actions[key]) {
                 // Fallback based on action type
                 return action.type === 'link' ? 'a' : Button;
             }
 
-            const actionItem = getActionForItem(item._actions[String(key)] as any, action);
+            const actionItem = getActionForItem(item._actions[key] as any, action);
 
-            if (actionItem?.componentType === 'button-component' || actionItem?.style === 'button' || actionItem?.type === 'button') {
+            if (
+                actionItem?.componentType === 'button-component' ||
+                (actionItem && 'style' in actionItem && actionItem.style === 'button') ||
+                actionItem?.type === 'button'
+            ) {
                 return asDropdown ? 'button' : Button;
             }
 
@@ -45,32 +68,17 @@ export default function RowActions({
         [item, asDropdown],
     );
 
-    const actionIsVisible = useCallback(
-        (action: TableAction, key: number): boolean => {
-            // Check if we have action data for this item
-            if (!item._actions || !item._actions[String(key)]) {
-                return true; // Default to visible
-            }
-
-            return getActionForItem(item._actions[String(key)], action)?.isVisible ?? true;
-        },
-        [item],
-    );
-
     const componentBindings = useCallback(
         (action: TableAction, key: number, handle: (action: TableAction) => void): Record<string, any> => {
             // Check if we have action data for this item
             if (!item._actions) {
-                console.log('⚠️ No item._actions found');
                 return {
                     onClick: () => handle(action),
                     disabled: !action.authorized,
                 };
             }
 
-            // Try to find the action data using string key (since backend uses string keys)
-            const stringKey = String(key);
-            const actionData = item._actions[stringKey];
+            const actionData = item._actions[key];
 
             if (!actionData) {
                 // Use the variant directly from the action since item._actions doesn't have the data
@@ -145,9 +153,8 @@ export default function RowActions({
         [item, asDropdown],
     );
 
-    const hasVisibleActionsWithIcons = useMemo((): boolean => {
-        return actions.some((action, key) => actionIsVisible(action, key) && action.icon);
-    }, [actions, actionIsVisible]);
+    const hasVisibleActionsWithIcons = visibleActions.some(({ action }) => action.icon);
+    if (visibleActions.length === 0) return null;
 
     return (
         <TableActions
@@ -163,18 +170,24 @@ export default function RowActions({
             {({ handle }: { handle: (action: TableAction) => void }) =>
                 asDropdown ? (
                     <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <button
-                                className={clsx(
-                                    'it-row-actions-dropdown text-muted-foreground hover:bg-accent hover:text-foreground data-[state=open]:bg-accent inline-flex size-8 cursor-pointer items-center justify-center rounded transition-colors',
-                                )}
-                                aria-label="Actions"
-                            >
-                                <MoreHorizontal className="size-4" />
-                            </button>
-                        </DropdownMenuTrigger>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <DropdownMenuTrigger asChild>
+                                    <button
+                                        type="button"
+                                        className={clsx(
+                                            'it-row-actions-dropdown text-muted-foreground hover:bg-accent hover:text-foreground data-[state=open]:bg-accent inline-flex size-8 cursor-pointer items-center justify-center rounded-md transition-colors',
+                                        )}
+                                        aria-label="More actions"
+                                    >
+                                        <MoreHorizontal className="size-4" />
+                                    </button>
+                                </DropdownMenuTrigger>
+                            </TooltipTrigger>
+                            <TooltipContent>More actions</TooltipContent>
+                        </Tooltip>
                         <DropdownMenuContent className="it-dropdown-items border-border bg-popover text-popover-foreground w-48">
-                            {actions.map((action, key) =>
+                            {visibleActions.map(({ action, key }) =>
                                 actionIsVisible(action, key) ? (
                                     <DropdownMenuItem
                                         key={key}
@@ -198,25 +211,40 @@ export default function RowActions({
                     </DropdownMenu>
                 ) : (
                     <div className="it-row-actions flex items-center space-x-2 text-sm font-medium rtl:space-x-reverse">
-                        {actions.map((action, key) => {
+                        {visibleActions.map(({ action, key }) => {
                             const Component = componentType(action, key);
                             const bindings = componentBindings(action, key, handle);
+                            delete bindings.title;
                             // Safety check to ensure Component is never undefined
                             if (!Component || action.asRowAction === false || !actionIsVisible(action, key)) {
                                 return null;
                             }
                             return (
-                                <Component key={key} title={action.label} {...bindings}>
-                                    {action.icon && (
-                                        <DynamicIcon
-                                            resolver={iconResolver as any}
-                                            icon={action.icon}
-                                            context={action}
-                                            className="it-row-actions-icon size-4"
-                                        />
-                                    )}
-                                    {action.showLabel && <span className={action.icon ? 'ms-1' : ''}>{action.label}</span>}
-                                </Component>
+                                <Tooltip key={key}>
+                                    <TooltipTrigger asChild>
+                                        <Component
+                                            {...bindings}
+                                            aria-label={action.label}
+                                            className={clsx(
+                                                bindings.className,
+                                                'it-row-action-icon-button inline-flex size-8 shrink-0 items-center justify-center rounded-md p-0',
+                                            )}
+                                        >
+                                            {action.icon ? (
+                                                <DynamicIcon
+                                                    resolver={iconResolver as any}
+                                                    icon={action.icon}
+                                                    context={action}
+                                                    className="it-row-actions-icon size-4"
+                                                />
+                                            ) : (
+                                                <MoreHorizontal className="size-4" aria-hidden="true" />
+                                            )}
+                                            <span className="sr-only">{action.label}</span>
+                                        </Component>
+                                    </TooltipTrigger>
+                                    <TooltipContent>{action.label}</TooltipContent>
+                                </Tooltip>
                             );
                         })}
                     </div>
