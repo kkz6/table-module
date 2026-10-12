@@ -213,8 +213,11 @@ export default function RowActions({
                     <div className="it-row-actions flex items-center space-x-2 text-sm font-medium rtl:space-x-reverse">
                         {visibleActions.map(({ action, key }) => {
                             const Component = componentType(action, key);
-                            const bindings = componentBindings(action, key, handle);
-                            delete bindings.title;
+                            const bindings = { ...componentBindings(action, key, handle) };
+                            const variant =
+                                bindings.variant === 'destructiveGhost' || bindings.variant === 'destructive' ? 'destructiveGhost' : 'ghost';
+                            const ActionComponent = Component === Button ? 'button' : Component;
+                            for (const key of ['title', 'variant', 'size', 'className', 'style', 'primary', 'danger']) delete bindings[key];
                             // Safety check to ensure Component is never undefined
                             if (!Component || action.asRowAction === false || !actionIsVisible(action, key)) {
                                 return null;
@@ -222,26 +225,25 @@ export default function RowActions({
                             return (
                                 <Tooltip key={key}>
                                     <TooltipTrigger asChild>
-                                        <Component
-                                            {...bindings}
-                                            aria-label={action.label}
-                                            className={clsx(
-                                                bindings.className,
-                                                'it-row-action-icon-button inline-flex size-8 shrink-0 items-center justify-center rounded-md p-0',
-                                            )}
-                                        >
-                                            {action.icon ? (
-                                                <DynamicIcon
-                                                    resolver={iconResolver as any}
-                                                    icon={action.icon}
-                                                    context={action}
-                                                    className="it-row-actions-icon size-4"
-                                                />
-                                            ) : (
-                                                <MoreHorizontal className="size-4" aria-hidden="true" />
-                                            )}
-                                            <span className="sr-only">{action.label}</span>
-                                        </Component>
+                                        <Button asChild variant={variant} size="icon" className="it-row-action-icon-button">
+                                            <ActionComponent
+                                                {...bindings}
+                                                type={ActionComponent === 'button' ? 'button' : undefined}
+                                                aria-label={action.label}
+                                            >
+                                                {action.icon ? (
+                                                    <DynamicIcon
+                                                        resolver={iconResolver as any}
+                                                        icon={action.icon}
+                                                        context={action}
+                                                        className="it-row-actions-icon size-4"
+                                                    />
+                                                ) : (
+                                                    <MoreHorizontal className="size-4" aria-hidden="true" />
+                                                )}
+                                                <span className="sr-only">{action.label}</span>
+                                            </ActionComponent>
+                                        </Button>
                                     </TooltipTrigger>
                                     <TooltipContent>{action.label}</TooltipContent>
                                 </Tooltip>
