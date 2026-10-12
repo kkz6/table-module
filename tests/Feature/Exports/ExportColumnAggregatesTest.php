@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use Modules\Table\Exports\ExportColumn;
-use Modules\User\Models\User;
+use Modules\Table\Tests\Support\User;
 use Spatie\Permission\Models\Role;
 
 it('applies withCount for counts columns', function () {
@@ -63,9 +63,9 @@ it('applies relationship aggregate', function (string $method, string $column, \
     expect($castActual($model->{$column}))->toBe($expected($role1->id, $role2->id));
 })->with([
     'avg' => ['avg', 'roles_avg_id', fn ($v) => (float) $v, fn ($r1, $r2) => (float) (($r1 + $r2) / 2)],
-    'min' => ['min', 'roles_min_id', fn ($v) => (int)   $v, fn ($r1, $r2) => min($r1, $r2)],
-    'max' => ['max', 'roles_max_id', fn ($v) => (int)   $v, fn ($r1, $r2) => max($r1, $r2)],
-    'sum' => ['sum', 'roles_sum_id', fn ($v) => (int)   $v, fn ($r1, $r2) => $r1 + $r2],
+    'min' => ['min', 'roles_min_id', fn ($v) => (int) $v, fn ($r1, $r2) => min($r1, $r2)],
+    'max' => ['max', 'roles_max_id', fn ($v) => (int) $v, fn ($r1, $r2) => max($r1, $r2)],
+    'sum' => ['sum', 'roles_sum_id', fn ($v) => (int) $v, fn ($r1, $r2) => $r1 + $r2],
 ]);
 
 it('does not eager load when aggregates are configured', function () {

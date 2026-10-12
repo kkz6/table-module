@@ -10,7 +10,7 @@ use Modules\Table\Tests\Support\AuthProbeUserExporter;
 use Modules\Table\Tests\Support\TestUserExporter;
 use Modules\Table\Tests\Support\TestUsersTable;
 use Modules\Table\Tests\Support\ThrowingUserExporter;
-use Modules\User\Models\User;
+use Modules\Table\Tests\Support\User;
 
 it('writes a csv part with mapped and formatted rows', function (): void {
     Storage::fake('local');

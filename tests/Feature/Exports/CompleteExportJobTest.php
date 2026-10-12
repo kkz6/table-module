@@ -8,7 +8,7 @@ use Modules\Table\Exports\ExportFormat;
 use Modules\Table\Exports\Jobs\CompleteExportJob;
 use Modules\Table\Models\TableExport;
 use Modules\Table\Tests\Support\TestUserExporter;
-use Modules\User\Models\User;
+use Modules\Table\Tests\Support\User;
 
 beforeEach(function (): void {
     $this->user = User::factory()->create();

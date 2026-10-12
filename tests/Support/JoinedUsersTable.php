@@ -8,7 +8,6 @@ use Illuminate\Contracts\Database\Eloquent\Builder;
 use Modules\Table\Columns\TextColumn;
 use Modules\Table\Export;
 use Modules\Table\Table;
-use Modules\User\Models\User;
 
 class JoinedUsersTable extends Table
 {
@@ -18,7 +17,7 @@ class JoinedUsersTable extends Table
      */
     public function resource(): Builder|string
     {
-        return User::query()->leftJoin('companies', 'users.company_id', '=', 'companies.id');
+        return User::query()->leftJoin('table_export_test_companies', 'users.id', '=', 'table_export_test_companies.id');
     }
 
     public function columns(): array

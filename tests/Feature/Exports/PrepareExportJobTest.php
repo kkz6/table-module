@@ -11,7 +11,7 @@ use Modules\Table\Tests\Support\JoinedUsersTable;
 use Modules\Table\Tests\Support\OrderedUsersTable;
 use Modules\Table\Tests\Support\TestUserExporter;
 use Modules\Table\Tests\Support\TestUsersTable;
-use Modules\User\Models\User;
+use Modules\Table\Tests\Support\User;
 
 it('writes the headers csv and fans out chunk jobs', function (): void {
     Storage::fake('local');
@@ -99,6 +99,8 @@ it('fans out all keys without duplicates even when resource has an orderBy', fun
 it('fans out without an ambiguous key when the resource joins another table', function (): void {
     Storage::fake('local');
     $users = User::factory()->count(5)->create();
+    \Illuminate\Support\Facades\Schema::create('table_export_test_companies', fn (\Illuminate\Database\Schema\Blueprint $table) => $table->unsignedBigInteger('id')->primary());
+    \Illuminate\Support\Facades\DB::table('table_export_test_companies')->insert(['id' => $users->first()->id]);
 
     $tableExport = TableExport::factory()->create([
         'exporter'   => TestUserExporter::class,

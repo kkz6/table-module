@@ -6,7 +6,7 @@ use Modules\Table\Exports\ExportFormat;
 use Modules\Table\Models\TableExport;
 use Modules\Table\Notifications\ExportReadyNotification;
 use Modules\Table\Tests\Support\TestUserExporter;
-use Modules\User\Models\User;
+use Modules\Table\Tests\Support\User;
 
 it('persists via the database channel only (realtime is a separate broadcast event)', function (): void {
     $user   = User::factory()->create();
