@@ -8,7 +8,8 @@ use Modules\Table\Http\ExportController;
 use Modules\Table\Http\StreamingExportController;
 use Modules\Table\Http\ViewController;
 
-Route::name('inertia-tables.')->middleware(['auth', 'web'])->prefix('/_inertia-tables/{table}/{name}')->group(function () {
+// Session and CSRF middleware must run before authentication.
+Route::middleware(['web', 'auth'])->name('inertia-tables.')->prefix('/_inertia-tables/{table}/{name}')->group(function () {
     Route::post('/action/{action}/{state?}', ActionController::class)
         ->middleware(ValidateSignature::absolute())
         ->name('action');

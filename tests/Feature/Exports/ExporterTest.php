@@ -5,7 +5,7 @@ declare(strict_types=1);
 use Modules\Table\Exports\ExportFormat;
 use Modules\Table\Models\TableExport;
 use Modules\Table\Tests\Support\TestUserExporter;
-use Modules\User\Models\User;
+use Modules\Table\Tests\Support\User;
 
 it('maps a record through the column map in order', function () {
     $user     = User::factory()->create(['name' => 'Aiko', 'email' => 'aiko@example.com']);

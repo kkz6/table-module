@@ -6,7 +6,6 @@ namespace Modules\Table\Tests\Support;
 
 use Modules\Table\Exports\ExportColumn;
 use Modules\Table\Exports\Exporter;
-use Modules\User\Models\User;
 
 class TestUserExporter extends Exporter
 {

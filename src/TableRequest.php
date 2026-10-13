@@ -27,6 +27,24 @@ class TableRequest implements Arrayable
         $queryKey = $this->table->getName() === 'default' ? null : $this->table->getName();
 
         $this->queryData = $this->request->query($queryKey, []);
+
+        // Expand known tab presets before normal filter validation. Older filter URLs remain valid.
+        $view = $this->queryData['view'] ?? null;
+        if (is_string($view)) {
+            foreach ($this->table->tabs() as $tab) {
+                if ($tab->value !== $view) {
+                    continue;
+                }
+                foreach ($tab->filters as $attribute => $preset) {
+                    $this->queryData['filters'][$attribute] = $preset === null
+                        ? ['enabled' => false]
+                        : (is_array($preset) && array_key_exists('value', $preset)
+                            ? array_merge(['clause' => 'equals'], $preset)
+                            : ['clause' => 'equals', 'value' => $preset]);
+                }
+                break;
+            }
+        }
     }
 
     /**

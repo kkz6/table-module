@@ -6,7 +6,6 @@ namespace Modules\Table\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Modules\Table\Models\TableExport;
-use Modules\User\Models\User;
 
 /**
  * @extends Factory<TableExport>
@@ -20,6 +19,8 @@ class TableExportFactory extends Factory
      */
     public function definition(): array
     {
+        $userModel = config('auth.providers.users.model');
+
         return [
             'file_disk'       => 'local',
             'file_name'       => 'export-test',
@@ -27,7 +28,7 @@ class TableExportFactory extends Factory
             'total_rows'      => 0,
             'successful_rows' => 0,
             'processed_rows'  => 0,
-            'user_id'         => User::factory()->admin(),
+            'user_id'         => $userModel::factory()->admin(),
         ];
     }
 

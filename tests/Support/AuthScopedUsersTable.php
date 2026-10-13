@@ -7,7 +7,6 @@ namespace Modules\Table\Tests\Support;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Modules\Table\Export;
 use Modules\Table\Table;
-use Modules\User\Models\User;
 
 /**
  * Test fixture: table that scopes resource() to the currently-authenticated user's id.

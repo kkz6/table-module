@@ -8,7 +8,6 @@ use Illuminate\Contracts\Database\Eloquent\Builder as EloquentBuilder;
 use Modules\Table\Columns\TextColumn;
 use Modules\Table\Export;
 use Modules\Table\Table;
-use Modules\User\Models\User;
 
 class SingleExportUsersTable extends Table
 {

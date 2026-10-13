@@ -65,7 +65,7 @@ class QueryBuilder
      */
     public function getResource(): Builder
     {
-        return $this->table->resourceBuilder();
+        return clone $this->table->resourceBuilder();
     }
 
     /**
@@ -177,10 +177,10 @@ class QueryBuilder
     /**
      * Apply the filters to the query.
      */
-    public function applyFilter(Builder $query): void
+    public function applyFilter(Builder $query, array $except = []): void
     {
         collect($this->tableRequest->filters())
-            ->filter(static fn (FilterRequest $filterRequest): bool => $filterRequest->enabled)
+            ->filter(static fn (FilterRequest $filterRequest): bool => $filterRequest->enabled && ! in_array($filterRequest->filter->getAttribute(), $except, true))
             ->whenNotEmpty(static function (Collection $filters) use ($query): void {
                 [$unwrapped, $wrapped] = $filters->partition(
                     static fn (FilterRequest $filterRequest): bool => $filterRequest->filter->shouldBeAppliedUnwrapped()

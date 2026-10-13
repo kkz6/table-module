@@ -1,11 +1,12 @@
 import { EmptyState } from '@shared/components/ui/empty-state';
 import { LucideIcon } from 'lucide-react';
-import React from 'react';
+import type { ReactNode } from 'react';
 import Table from '../../TableComponent';
 import type { Action, FilterState, TableConfig } from '../../types';
 
 interface InertiaTableWrapperProps<T = any> {
     resource: TableConfig<T>;
+    cell?: Record<string, (props: { item: T; value: any }) => ReactNode>;
     emptyState?: {
         title: string;
         description?: string;
@@ -20,29 +21,29 @@ interface InertiaTableWrapperProps<T = any> {
     onActionSuccess?: (action: Action, keys: (string | number)[]) => void;
     onActionError?: (action: Action, keys: (string | number)[], error: unknown) => void;
     onRowClick?: (item: T, column: any) => void;
-    cell?: Record<string, (props: any) => React.ReactNode>;
 }
 
 export function InertiaTableWrapper<T = any>({
     resource,
+    cell,
     emptyState,
     onCustomAction,
     onActionSuccess,
     onActionError,
     onRowClick,
-    cell,
 }: InertiaTableWrapperProps<T>) {
-    // Check if we should show the empty state
-    // Show empty state only when:
-    // 1. There are no total results
-    // 2. There's no active search
-    // 3. There are no active filters
+    // Available filter definitions are not the same as existing records.
     const shouldShowEmptyState =
-        resource.results?.total === 0 && !resource.state.search && !Object.values(resource.state.filters).some((f: FilterState) => f.enabled);
+        resource.results?.total === 0 &&
+        !resource.state.search &&
+        (resource.hasRecords === false ||
+            (resource.hasRecords === undefined &&
+                !resource.hasFilters &&
+                !Object.values(resource.state.filters).some((filter: FilterState) => filter.enabled)));
 
     if (shouldShowEmptyState && emptyState) {
         return (
-            <div className="flex h-[calc(100vh-250px)] items-center justify-center">
+            <div className="py-3">
                 <EmptyState title={emptyState.title} description={emptyState.description} icons={emptyState.icons} action={emptyState.action} />
             </div>
         );
@@ -51,11 +52,11 @@ export function InertiaTableWrapper<T = any>({
     return (
         <Table
             resource={resource}
+            cell={cell}
             onCustomAction={onCustomAction as any}
             onActionSuccess={onActionSuccess as any}
             onActionError={onActionError as any}
             onRowClick={onRowClick as any}
-            cell={cell}
         />
     );
 }

@@ -6,7 +6,6 @@ namespace Modules\Table\Tests\Support;
 
 use Modules\Table\Exports\ExportColumn;
 use Modules\Table\Exports\Exporter;
-use Modules\User\Models\User;
 
 /**
  * Test fixture: exporter whose column returns the currently-authenticated user ID.

@@ -4,40 +4,145 @@ declare(strict_types=1);
 
 namespace Modules\Table\Filters;
 
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Contracts\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Table\Exceptions\UnsupportedClauseException;
 
-class TrashedFilter extends SetFilter
+class TrashedFilter extends Filter
 {
-    public static function make(
-        string $attribute = 'trashed',
+    public function shouldBeAppliedUnwrapped(): bool
+    {
+        // Global scopes must be removed on the root builder, not a nested WHERE.
+        return true;
+    }
+
+    public function __construct(
+        string $attribute,
         ?string $label = null,
         bool $nullable = false,
         ?array $clauses = null,
-        \Closure|callable|null $applyUsing = null,
-        \Closure|callable|null $validateUsing = null,
+        ?\Closure $applyUsing = null,
+        ?\Closure $validateUsing = null,
         ?array $meta = null,
-        bool $applyUnwrapped = false,
+        bool $applyUnwrapped = true,
         mixed $hidden = false
-    ): static {
-        $filter = parent::make($attribute, $label ?? 'Trashed', true, $clauses, $applyUsing, $validateUsing, $meta, true);
+    ) {
+        parent::__construct(
+            attribute: $attribute,
+            label: $label,
+            nullable: $nullable,
+            clauses: $clauses,
+            applyUsing: $applyUsing,
+            validateUsing: $validateUsing,
+            meta: $meta,
+            applyUnwrapped: $applyUnwrapped,
+            hidden: $hidden,
+        );
+    }
 
-        // @phpstan-ignore return.type
-        return $filter
-            ->options([
-                'all'             => 'All Records',
-                'without_trashed' => 'Without Trashed',
-                'withTrashed'     => 'With Trashed',
-                'only_trashed'    => 'Only Trashed',
-            ])
-            ->withoutClause()
-            ->applyUsing(function (Builder $query, string $attribute, $clause, mixed $value) {
-                match ($value) {
-                    'all'             => $query->withTrashed(), // @phpstan-ignore method.notFound
-                    'withTrashed'     => $query->withTrashed(), // @phpstan-ignore method.notFound
-                    'only_trashed'    => $query->onlyTrashed(), // @phpstan-ignore method.notFound
-                    'without_trashed' => $query->withoutTrashed(), // @phpstan-ignore method.notFound
-                    default           => $query->withoutTrashed(), // @phpstan-ignore method.notFound
-                };
-            }, true);
+    /**
+     * {@inheritDoc}
+     */
+    public function apply(Builder $resource, string $attribute, Clause $clause, mixed $value): void
+    {
+        // Check if the model uses SoftDeletes trait
+        if (! $this->modelUsesSoftDeletes($resource)) {
+            return; // Silently ignore if model doesn't support soft deletes
+        }
+
+        match ($clause) {
+            Clause::WithTrashed    => $this->applyWithTrashed($resource),
+            Clause::OnlyTrashed    => $this->applyOnlyTrashed($resource),
+            Clause::WithoutTrashed => $this->applyWithoutTrashed($resource),
+            default                => throw UnsupportedClauseException::for($clause),
+        };
+    }
+
+    /**
+     * Check if the model uses the SoftDeletes trait.
+     */
+    protected function modelUsesSoftDeletes(Builder $resource): bool
+    {
+        // These scopes are builder macros, not concrete methods.
+        return in_array(SoftDeletes::class, class_uses_recursive($resource->getModel()), true);
+    }
+
+    /**
+     * Apply the withTrashed scope to include soft deleted records.
+     */
+    protected function applyWithTrashed(Builder $resource): void
+    {
+        $resource->withTrashed();
+    }
+
+    /**
+     * Apply the onlyTrashed scope to show only soft deleted records.
+     */
+    protected function applyOnlyTrashed(Builder $resource): void
+    {
+        $resource->onlyTrashed();
+    }
+
+    /**
+     * Apply the withoutTrashed scope to exclude soft deleted records.
+     */
+    protected function applyWithoutTrashed(Builder $resource): void
+    {
+        $resource->withoutTrashed();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function validate(mixed $value, Clause $clause, Builder $resource): mixed
+    {
+        return null; // No value validation needed for trashed filter
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public static function defaultClauses(): array
+    {
+        return [
+            Clause::WithoutTrashed,
+            Clause::WithTrashed,
+            Clause::OnlyTrashed,
+        ];
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function default(mixed $value, ?Clause $clause = null): static
+    {
+        $this->defaultValue  = null;
+        $this->defaultClause = $clause ?? Clause::WithoutTrashed;
+
+        return $this;
+    }
+
+    /**
+     * Set the filter to show only trashed records by default.
+     */
+    public function onlyTrashed(): static
+    {
+        return $this->default(null, Clause::OnlyTrashed);
+    }
+
+    /**
+     * Set the filter to show all records (including trashed) by default.
+     */
+    public function withTrashed(): static
+    {
+        return $this->default(null, Clause::WithTrashed);
+    }
+
+    /**
+     * Set the filter to show only non-trashed records by default.
+     */
+    public function withoutTrashed(): static
+    {
+        return $this->default(null, Clause::WithoutTrashed);
     }
 }

@@ -6,7 +6,7 @@ use Modules\Table\Exports\ExportColumn;
 use Modules\Table\Exports\Exporter;
 use Modules\Table\Exports\ExportFormat;
 use Modules\Table\Models\TableExport;
-use Modules\User\Models\User;
+use Modules\Table\Tests\Support\User;
 
 function makeExporterDouble(array $columnMap = []): Exporter
 {

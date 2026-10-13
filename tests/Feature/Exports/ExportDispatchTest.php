@@ -9,7 +9,7 @@ use Modules\Table\Exports\Jobs\CreateXlsxFileJob;
 use Modules\Table\Exports\Jobs\PrepareExportJob;
 use Modules\Table\Models\TableExport;
 use Modules\Table\Tests\Support\TestUsersTable;
-use Modules\User\Models\User;
+use Modules\Table\Tests\Support\User;
 
 beforeEach(function (): void {
     $this->actingAs(User::factory()->admin()->create());

@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Storage;
 use Modules\Table\Events\ExportReady;
 use Modules\Table\Models\TableExport;
 use Modules\Table\Tests\Support\TestUsersTable;
-use Modules\User\Models\User;
+use Modules\Table\Tests\Support\User;
 
 it('runs the full pipeline inline on the sync queue', function (): void {
     Storage::fake('local');

@@ -86,6 +86,7 @@ export interface TableResults<T = any> {
 }
 
 export interface TableConfig<T = any> extends TableResource {
+    hasRecords?: boolean;
     results?: TableResults<T>;
 }
 
@@ -341,6 +342,7 @@ export interface RowActionsProps {
     actions: TableAction[];
     performAction: (action: TableAction, keys?: (string | number)[] | null) => Promise<any>;
     iconResolver: IconResolver | null;
+    /** Legacy option. Row actions now automatically use a menu above three visible actions. */
     asDropdown?: boolean;
     onSuccess?: ((action: TableAction, keys: (string | number)[]) => void) | null;
     onError?: ((action: TableAction, keys: (string | number)[], error: any) => void) | null;
@@ -360,13 +362,26 @@ export interface TablePaginationProps {
 }
 
 // Table Hook Types
+export interface TableTab {
+    value: string;
+    label: string;
+    icon?: string | null;
+    tone?: string;
+    count?: number | null;
+    filters: Record<string, unknown | { value: unknown; clause?: string }>;
+}
+
 export interface TableResource {
+    tabs?: TableTab[];
+    quickFilters?: string[];
+    quickFilterLabels?: Record<string, string>;
     name: string;
     state: TableState;
     columns: TableColumn[];
     filters: FilterDefinition[];
     actions?: TableAction[];
     exports?: TableExport[];
+    hasRecords?: boolean;
     results?: TableResults;
     defaultSort: string;
     defaultPerPage: number;
@@ -415,6 +430,8 @@ export interface UseTableReturn {
     setFilter: (filter: FilterDefinition, clause: string, value: any) => void;
     setPerPage: (perPage: number) => void;
     setSearch: (search: string) => void;
+    clearFilters: () => void;
+    setTab: (tab: TableTab) => void;
     setSort: (sort: string | null) => void;
     sortByColumn: (column: TableColumn) => void;
     state: TableState;

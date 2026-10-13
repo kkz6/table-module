@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use Modules\Table\Exports\ExportColumn;
-use Modules\User\Models\User;
+use Modules\Table\Tests\Support\User;
 use Spatie\Permission\Models\Role;
 
 it('applies withCount for counts columns', function () {

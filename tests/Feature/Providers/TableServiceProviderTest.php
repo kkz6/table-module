@@ -2,4 +2,6 @@
 
 declare(strict_types=1);
 
-// TODO
+test('table service provider is registered', function () {
+    expect(app()->getProvider(\Modules\Table\Providers\TableServiceProvider::class))->not->toBeNull();
+});

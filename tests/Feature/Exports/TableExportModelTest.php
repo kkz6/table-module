@@ -5,7 +5,7 @@ declare(strict_types=1);
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Storage;
 use Modules\Table\Models\TableExport;
-use Modules\User\Models\User;
+use Modules\Table\Tests\Support\User;
 
 it('computes the failed rows count', function () {
     $export = TableExport::factory()->create(['total_rows' => 10, 'successful_rows' => 7]);

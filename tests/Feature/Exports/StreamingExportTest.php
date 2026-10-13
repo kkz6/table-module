@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use Modules\Table\Tests\Support\TestUsersTable;
-use Modules\User\Models\User;
+use Modules\Table\Tests\Support\User;
 
 beforeEach(function (): void {
     $this->actingAs(User::factory()->admin()->create(['name' => 'Owner']));

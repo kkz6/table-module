@@ -1,15 +1,8 @@
-import {
-    Pagination,
-    PaginationContent,
-    PaginationEllipsis,
-    PaginationItem,
-    PaginationLink,
-    PaginationNext,
-    PaginationPrevious,
-} from '@shared/components/ui/pagination';
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink } from '@shared/components/ui/pagination';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@shared/components/ui/select';
 import { useLang } from '@shared/hooks/use-lang';
 import { cn } from '@shared/lib/utils';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMemo } from 'react';
 import type { TablePaginationProps } from './types';
 
@@ -92,9 +85,9 @@ export default function TablePagination({ meta, options, perPage, type = 'full',
                         <PaginationContent>
                             {/* Previous button */}
                             <PaginationItem>
-                                <PaginationPrevious
+                                <PaginationLink
                                     href="#"
-                                    label={t('table::table.Previous')}
+                                    aria-label={t('table::table.Previous')}
                                     onClick={(e) => {
                                         e.preventDefault();
                                         if (meta.prev_page_url) {
@@ -102,7 +95,9 @@ export default function TablePagination({ meta, options, perPage, type = 'full',
                                         }
                                     }}
                                     className={cn(meta.on_first_page && 'pointer-events-none opacity-50')}
-                                />
+                                >
+                                    <ChevronLeft className="size-4" />
+                                </PaginationLink>
                             </PaginationItem>
 
                             {/* Page numbers - hidden on small screens */}
@@ -132,9 +127,9 @@ export default function TablePagination({ meta, options, perPage, type = 'full',
 
                             {/* Next button */}
                             <PaginationItem>
-                                <PaginationNext
+                                <PaginationLink
                                     href="#"
-                                    label={t('table::table.Next')}
+                                    aria-label={t('table::table.Next')}
                                     onClick={(e) => {
                                         e.preventDefault();
                                         if (meta.next_page_url) {
@@ -142,7 +137,9 @@ export default function TablePagination({ meta, options, perPage, type = 'full',
                                         }
                                     }}
                                     className={cn(meta.on_last_page && 'pointer-events-none opacity-50')}
-                                />
+                                >
+                                    <ChevronRight className="size-4" />
+                                </PaginationLink>
                             </PaginationItem>
                         </PaginationContent>
                     </Pagination>

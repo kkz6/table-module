@@ -4,41 +4,27 @@ import React, { useCallback, useMemo } from 'react';
 
 import { Button } from '@shared/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@shared/components/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@shared/components/ui/tooltip';
 import DynamicIcon from './DynamicIcon';
 import TableActions from './TableActions';
 import type { RowActionsProps, TableAction } from './types';
 import { getActionForItem } from './urlHelpers';
+
+// Inline row actions use the quieter destructive treatment; a solid red slab in
+// every row reads as an alarm rather than an action.
+function toRowVariant(variant?: string) {
+    return variant === 'destructive' ? 'destructiveGhost' : variant;
+}
 
 export default function RowActions({
     item,
     actions,
     performAction,
     iconResolver,
-    asDropdown = false,
     onSuccess = null,
     onError = null,
     onHandle = null,
-}: RowActionsProps): React.ReactElement {
-    const componentType = useCallback(
-        (action: TableAction, key: number): React.ComponentType<any> | string => {
-            // Check if we have action data for this item
-            if (!item._actions || !item._actions[key]) {
-                // Fallback based on action type
-                return action.type === 'link' ? 'a' : Button;
-            }
-
-            const actionItem = getActionForItem(item._actions[key], action);
-
-            if (actionItem?.componentType === 'button-component' || actionItem?.style === 'button' || actionItem?.type === 'button') {
-                return asDropdown ? 'button' : Button;
-            }
-
-            // Return the component type or default to 'a' for links, Button for others
-            return actionItem?.componentType || (action.type === 'link' ? 'a' : Button);
-        },
-        [item, asDropdown],
-    );
-
+}: RowActionsProps): React.ReactElement | null {
     const actionIsVisible = useCallback(
         (action: TableAction, key: number): boolean => {
             // Check if we have action data for this item
@@ -51,11 +37,41 @@ export default function RowActions({
         [item],
     );
 
+    const visibleActions = useMemo(
+        () =>
+            actions.map((action, key) => ({ action, key })).filter(({ action, key }) => action.asRowAction !== false && actionIsVisible(action, key)),
+        [actions, actionIsVisible],
+    );
+    const asDropdown = visibleActions.length > 3;
+
+    const componentType = useCallback(
+        (action: TableAction, key: number): React.ComponentType<any> | string => {
+            // Check if we have action data for this item
+            if (!item._actions || !item._actions[key]) {
+                // Fallback based on action type
+                return action.type === 'link' ? 'a' : Button;
+            }
+
+            const actionItem = getActionForItem(item._actions[key], action);
+
+            if (
+                actionItem?.componentType === 'button-component' ||
+                (actionItem && 'style' in actionItem && actionItem.style === 'button') ||
+                actionItem?.type === 'button'
+            ) {
+                return asDropdown ? 'button' : Button;
+            }
+
+            // Return the component type or default to 'a' for links, Button for others
+            return actionItem?.componentType || (action.type === 'link' ? 'a' : Button);
+        },
+        [item, asDropdown],
+    );
+
     const componentBindings = useCallback(
         (action: TableAction, key: number, handle: (action: TableAction) => void): Record<string, any> => {
             // Check if we have action data for this item
             if (!item._actions) {
-                console.log('⚠️ No item._actions found');
                 return {
                     onClick: () => handle(action),
                     disabled: !action.authorized,
@@ -69,7 +85,7 @@ export default function RowActions({
                 return {
                     onClick: () => handle(action),
                     disabled: !action.authorized,
-                    variant: action.variant || 'outline',
+                    variant: toRowVariant(action.variant) || 'outline',
                 };
             }
 
@@ -89,7 +105,7 @@ export default function RowActions({
 
             // Pass through the variant directly from the backend for all components
             if ('variant' in mutableActionItem && mutableActionItem.variant) {
-                mutableActionItem.bindings.variant = mutableActionItem.variant;
+                mutableActionItem.bindings.variant = toRowVariant(mutableActionItem.variant as string);
             }
 
             if (mutableActionItem.bindings?.class) {
@@ -137,9 +153,8 @@ export default function RowActions({
         [item, asDropdown],
     );
 
-    const hasVisibleActionsWithIcons = useMemo((): boolean => {
-        return actions.some((action, key) => actionIsVisible(action, key) && action.icon);
-    }, [actions, actionIsVisible]);
+    const hasVisibleActionsWithIcons = visibleActions.some(({ action }) => action.icon);
+    if (visibleActions.length === 0) return null;
 
     return (
         <TableActions
@@ -155,28 +170,34 @@ export default function RowActions({
             {({ handle }: { handle: (action: TableAction) => void }) =>
                 asDropdown ? (
                     <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <button
-                                className={clsx(
-                                    'it-row-actions-dropdown inline-flex size-8 cursor-pointer items-center justify-center rounded transition-colors hover:bg-gray-100 data-[state=open]:bg-gray-100 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:data-[state=open]:bg-zinc-800',
-                                )}
-                                aria-label="Actions"
-                            >
-                                <MoreHorizontal className="size-4" />
-                            </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="it-dropdown-items w-max min-w-24 border-zinc-800 bg-black text-white">
-                            {actions.map((action, key) =>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <DropdownMenuTrigger asChild>
+                                    <button
+                                        type="button"
+                                        className={clsx(
+                                            'it-row-actions-dropdown text-muted-foreground hover:bg-accent hover:text-foreground data-[state=open]:bg-accent inline-flex size-8 cursor-pointer items-center justify-center rounded-md transition-colors',
+                                        )}
+                                        aria-label="More actions"
+                                    >
+                                        <MoreHorizontal className="size-4" />
+                                    </button>
+                                </DropdownMenuTrigger>
+                            </TooltipTrigger>
+                            <TooltipContent>More actions</TooltipContent>
+                        </Tooltip>
+                        <DropdownMenuContent className="it-dropdown-items border-border bg-popover text-popover-foreground w-48">
+                            {visibleActions.map(({ action, key }) =>
                                 actionIsVisible(action, key) ? (
                                     <DropdownMenuItem
                                         key={key}
                                         disabled={!action.authorized}
                                         onClick={() => handle(action)}
-                                        className="it-dropdown-item text-white hover:bg-zinc-800 focus:bg-zinc-800 focus:text-white"
+                                        className="it-dropdown-item focus:bg-accent focus:text-accent-foreground"
                                     >
                                         {hasVisibleActionsWithIcons && action.icon && (
                                             <DynamicIcon
-                                                className="it-row-actions-dropdown-icon me-2 size-3.5 text-white"
+                                                className="it-row-actions-dropdown-icon text-muted-foreground me-2 size-3.5"
                                                 resolver={iconResolver as any}
                                                 icon={action.icon}
                                                 context={action}
@@ -190,25 +211,42 @@ export default function RowActions({
                     </DropdownMenu>
                 ) : (
                     <div className="it-row-actions flex items-center space-x-2 text-sm font-medium rtl:space-x-reverse">
-                        {actions.map((action, key) => {
+                        {visibleActions.map(({ action, key }) => {
                             const Component = componentType(action, key);
-                            const bindings = componentBindings(action, key, handle);
+                            const bindings = { ...componentBindings(action, key, handle) };
+                            const variant =
+                                bindings.variant === 'destructiveGhost' || bindings.variant === 'destructive' ? 'destructiveGhost' : 'ghost';
+                            const ActionComponent = Component === Button ? 'button' : Component;
+                            for (const key of ['title', 'variant', 'size', 'className', 'style', 'primary', 'danger']) delete bindings[key];
                             // Safety check to ensure Component is never undefined
                             if (!Component || action.asRowAction === false || !actionIsVisible(action, key)) {
                                 return null;
                             }
                             return (
-                                <Component key={key} title={action.label} {...bindings}>
-                                    {action.icon && (
-                                        <DynamicIcon
-                                            resolver={iconResolver as any}
-                                            icon={action.icon}
-                                            context={action}
-                                            className="it-row-actions-icon size-4"
-                                        />
-                                    )}
-                                    {action.showLabel && <span className={action.icon ? 'ms-1' : ''}>{action.label}</span>}
-                                </Component>
+                                <Tooltip key={key}>
+                                    <TooltipTrigger asChild>
+                                        <Button asChild variant={variant} size="icon" className="it-row-action-icon-button">
+                                            <ActionComponent
+                                                {...bindings}
+                                                type={ActionComponent === 'button' ? 'button' : undefined}
+                                                aria-label={action.label}
+                                            >
+                                                {action.icon ? (
+                                                    <DynamicIcon
+                                                        resolver={iconResolver as any}
+                                                        icon={action.icon}
+                                                        context={action}
+                                                        className="it-row-actions-icon size-4"
+                                                    />
+                                                ) : (
+                                                    <MoreHorizontal className="size-4" aria-hidden="true" />
+                                                )}
+                                                <span className="sr-only">{action.label}</span>
+                                            </ActionComponent>
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>{action.label}</TooltipContent>
+                                </Tooltip>
                             );
                         })}
                     </div>
