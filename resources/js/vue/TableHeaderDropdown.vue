@@ -11,7 +11,7 @@ const emit = defineEmits<{ sort: [value: string]; toggle: []; sticky: [] }>();
             <Button
                 variant="ghost"
                 size="sm"
-                class="it-table-column-dropdown ui-control text-muted-foreground hover:text-muted-foreground h-7 min-h-7 gap-1.5 border-0 bg-transparent px-0 font-medium shadow-none hover:bg-transparent data-[state=open]:bg-transparent"
+                class="it-table-column-dropdown text-foreground hover:text-foreground h-7 min-h-7 gap-1.5 border-0 bg-transparent px-0 font-medium shadow-none hover:bg-transparent data-[state=open]:bg-transparent"
                 :aria-label="`${column.header}${sort ? ', sorted ' + (sort === 'asc' ? 'ascending' : 'descending') : ', column options'}`"
             >
                 <Lock

@@ -1,8 +1,8 @@
 import { router } from '@inertiajs/vue3';
-import qs from 'qs';
 import { computed, onBeforeUnmount, ref, watch, type Ref } from 'vue';
 import { filterQuery } from '../filterQuery';
-import type { FilterDefinition, TableColumn, TableResource, TableState } from './types';
+import { queryFor } from './state';
+import type { FilterDefinition, TableColumn, TableResource, TableState, TableTab } from './types';
 
 /** Vue port of the module's URL/state controller; the PHP Table remains authoritative. */
 export function useTable<T extends object>(resource: Ref<TableResource<T>>) {
@@ -36,52 +36,37 @@ export function useTable<T extends object>(resource: Ref<TableResource<T>>) {
     }
     function navigate(): void {
         if (timer) clearTimeout(timer);
-        const current = state.value;
-        const filters = Object.fromEntries(
-            Object.entries(current.filters)
-                .filter(([, filter]) => filter.enabled)
-                .map(([key, filter]) => [key, filterQuery(filter)])
-                .filter(([, value]) => value !== null),
-        );
-        const enabled = resource.value.columns.filter((column) => current.columns[column.attribute]).map((column) => column.attribute);
-        const defaults = resource.value.columns.filter((column) => column.visibleByDefault !== false).map((column) => column.attribute);
-        const query: Record<string, unknown> = {
-            search: current.search || null,
-            sort: current.sort || null,
-            perPage: current.perPage,
-            page: current.page || 1,
-            filters,
-            columns: enabled.join(',') === defaults.join(',') ? [] : enabled,
-            sticky: current.sticky,
-        };
-        const existing = qs.parse(window.location.search, { ignoreQueryPrefix: true });
-        const params = resource.value.name === 'default' ? { ...existing, ...query } : { ...existing, [resource.value.name]: query };
-        visit(`${window.location.pathname}?${qs.stringify(params, { skipNulls: true })}`);
+        visit(`${window.location.pathname}?${queryFor(resource.value, state.value, window.location.search)}`);
     }
     function setSearch(value: string): void {
         state.value.search = value;
         state.value.page = 1;
+        state.value.cursor = null;
         if (timer) clearTimeout(timer);
         timer = setTimeout(navigate, resource.value.debounceTime ?? 300);
     }
     function setSort(value: string): void {
         state.value.sort = value;
         state.value.page = 1;
+        state.value.cursor = null;
         navigate();
     }
     function setPerPage(value: string): void {
         state.value.perPage = Number(value);
         state.value.page = 1;
+        state.value.cursor = null;
         navigate();
     }
     function setFilter(filter: FilterDefinition, clause: string, value: unknown): void {
         state.value.filters[filter.attribute] = { enabled: true, clause, value };
         state.value.page = 1;
+        state.value.cursor = null;
         if (filterQuery(state.value.filters[filter.attribute]) !== null) navigate();
     }
     function removeFilter(filter: FilterDefinition): void {
         state.value.filters[filter.attribute] = { enabled: false, value: null };
         state.value.page = 1;
+        state.value.cursor = null;
         navigate();
     }
     function toggleColumn(column: TableColumn): void {
@@ -101,16 +86,44 @@ export function useTable<T extends object>(resource: Ref<TableResource<T>>) {
         state.value.search = '';
         state.value.filters = Object.fromEntries(Object.keys(state.value.filters).map((key) => [key, { enabled: false, value: null }]));
         state.value.page = 1;
+        state.value.cursor = null;
         navigate();
     }
     onBeforeUnmount(() => {
         if (timer) clearTimeout(timer);
         cancel?.();
     });
+    function applyState(value: TableState): void {
+        state.value = JSON.parse(JSON.stringify(value));
+        state.value.page = 1;
+        state.value.cursor = null;
+        navigate();
+    }
+    function setTab(tab: TableTab): void {
+        for (const item of resource.value.tabs ?? [])
+            for (const key of Object.keys(item.filters)) state.value.filters[key] = { enabled: false, value: null };
+        for (const [key, preset] of Object.entries(tab.filters))
+            state.value.filters[key] =
+                preset === null
+                    ? { enabled: false, value: null }
+                    : {
+                          enabled: true,
+                          ...(typeof preset === 'object' && preset && 'value' in preset ? preset : { clause: 'equals', value: preset }),
+                      };
+        state.value.page = 1;
+        state.value.cursor = null;
+        navigate();
+    }
     return {
+        applyState,
+        setTab,
         state,
         isNavigating,
-        visibleColumns: computed(() => resource.value.columns.filter((column) => state.value.columns[column.attribute] !== false)),
+        visibleColumns: computed(() =>
+            resource.value.columns
+                .filter((column) => state.value.columns[column.attribute] !== false)
+                .sort((a, b) => Number(state.value.sticky.includes(b.attribute)) - Number(state.value.sticky.includes(a.attribute))),
+        ),
         setSearch,
         setSort,
         setPerPage,

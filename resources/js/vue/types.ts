@@ -11,6 +11,10 @@ export interface TableColumn {
     cellClass?: string;
     wrap?: boolean;
     type?: string;
+    asDropdown?: boolean;
+    trueIcon?: string;
+    falseIcon?: string;
+    exportable?: boolean;
 }
 export interface FilterState {
     enabled: boolean;
@@ -30,13 +34,18 @@ export interface TableState {
     sort?: string | null;
     perPage: number;
     page?: number;
+    view?: string | null;
+    cursor?: string | null;
     columns: Record<string, boolean>;
     filters: Record<string, FilterState>;
     sticky: string[];
 }
 export interface TableResults<T> {
     data: T[];
-    total: number;
+    total?: number;
+    on_first_page?: boolean;
+    on_last_page?: boolean;
+    first_page_url?: string;
     per_page?: number;
     current_page?: number;
     last_page?: number;
@@ -47,22 +56,86 @@ export interface TableResults<T> {
     last_page_url?: string;
     links?: Array<{ url: string | null; label: string; page: number | null; active: boolean }>;
 }
+export type Key = string | number;
+export interface TableUrl {
+    url: string;
+    hidden?: boolean;
+    disabled?: boolean;
+    openInNewTab?: boolean;
+    asDownload?: boolean;
+    preserveState?: boolean;
+    preserveScroll?: boolean;
+    modal?: boolean | object;
+}
+export interface TableRowData {
+    _primary_key?: Key;
+    id?: Key;
+    _is_selectable?: boolean;
+    _actions?: Record<string, string | TableUrl | null>;
+    [key: string]: unknown;
+}
 export interface TableAction {
-    id?: string | number;
+    id?: Key | null;
     label: string;
     icon?: string;
-    url?: string;
-    authorized?: boolean;
+    url?: string | null;
+    authorized: boolean;
     asBulkAction?: boolean;
     asRowAction?: boolean;
-    confirmationRequired?: boolean;
-    confirmationTitle?: string;
-    confirmationMessage?: string;
-    variant?: 'default' | 'destructive' | 'outline' | 'ghost';
     isCustom?: boolean;
     isLink?: boolean;
     isAction?: boolean;
+    asDownload?: boolean;
+    confirmationRequired?: boolean;
+    confirmationTitle?: string;
+    confirmationMessage?: string;
+    confirmationConfirmButton?: string;
+    confirmationCancelButton?: string;
     showLabel?: boolean;
+    variant?: 'default' | 'destructive' | 'outline' | 'ghost' | 'info' | 'warning' | 'success' | 'secondary' | 'link';
+    type?: string;
+    buttonClass?: string | null;
+    linkClass?: string | null;
+    meta?: Record<string, unknown> | null;
+    dataAttributes?: Record<string, string> | null;
+}
+export interface TableExport {
+    url: string;
+    label: string;
+    authorized?: boolean;
+    limitToSelectedRows?: boolean;
+    asDownload?: boolean;
+    hasExporter?: boolean;
+    resourceLabel?: string;
+    hasColumnMapping?: boolean;
+    enableVisibleTableColumnsByDefault?: boolean;
+    columns?: { name: string; label: string; enabledByDefault: boolean }[];
+    formats?: string[];
+    optionsForm?: { name: string; label: string; type: 'text' | 'select' | 'checkbox'; default?: unknown; options?: Record<string, string> }[];
+}
+export interface ExportPayload {
+    columnMap?: Record<string, { isEnabled: boolean; label: string }>;
+    formats: string[];
+    options: Record<string, unknown>;
+}
+export interface TableTab {
+    icon?: string | null;
+    tone?: string;
+    value: string;
+    label: string;
+    count?: number | null;
+    filters: Record<string, unknown>;
+}
+export interface SavedViews {
+    data: { id: Key; title: string; state: TableState; deleteUrl: string }[];
+    query: Record<string, unknown>;
+    storeUrl: string;
+}
+export interface EmptyState {
+    title?: string | null;
+    message?: string | null;
+    icon?: string | boolean | null;
+    actions?: ({ label: string; icon?: string; variant?: TableAction['variant'] } & TableUrl)[];
 }
 export interface TableResource<T extends object = Record<string, unknown>> {
     name: string;
@@ -84,13 +157,16 @@ export interface TableResource<T extends object = Record<string, unknown>> {
     hasExports?: boolean;
     hasExportsThatLimitsToSelectedRows?: boolean;
     actions?: TableAction[];
-    exports?: Array<{ url: string; label: string }>;
-    tabs?: Array<{ value: string; label: string; count?: number | null; filters: Record<string, unknown> }>;
+    exports?: TableExport[];
+    tabs?: TableTab[];
     quickFilters?: string[];
     quickFilterLabels?: Record<string, string>;
     stickyHeader?: boolean;
     autofocus?: string;
-    emptyState?: unknown;
+    emptyState?: EmptyState | boolean | null;
+    views?: SavedViews | null;
+    reloadProps?: string[];
+    scrollPositionAfterPageChange?: string;
 }
 export function staticTable<T extends object>(name: string, columns: TableColumn[], data: T[]): TableResource<T> {
     return {

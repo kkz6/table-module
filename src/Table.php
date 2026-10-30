@@ -762,6 +762,12 @@ abstract class Table implements Arrayable
         return $data;
     }
 
+    /** Resolve computed resource fields before the column's export formatter. */
+    public function transformExportValue(Column $column, Model $model, mixed $value): mixed
+    {
+        return $value;
+    }
+
     /**
      * Resolve the URL for the given model that is navigated to when clicking on a row.
      */
@@ -919,6 +925,12 @@ abstract class Table implements Arrayable
     /**
      * Get the array representation of the Table.
      */
+    /** Additional signed parameters supplied by the consuming application. */
+    public function endpointParameters(): array
+    {
+        return [];
+    }
+
     public function toArray(): array
     {
         $tableRequest   = $this->getTableRequest();
@@ -953,10 +965,10 @@ abstract class Table implements Arrayable
             'name'                               => $this->name,
             'results'                            => $results,
             'search'                             => $search   = $this->search(),
-            'columns'                            => $columns = collect($this->buildColumns())->toArray(),
-            'filters'                            => $filters = collect($this->buildFilters())->reject(fn (Filter $filter): bool => $filter->isHidden())->values()->toArray(),
-            'actions'                            => $actions = collect($this->buildActions())->map(fn (Action $action) => $action->toArray())->toArray(),
-            'exports'                            => $exports = $this->buildExports(),
+            'columns'                            => $columns  = collect($this->buildColumns())->toArray(),
+            'filters'                            => $filters  = collect($this->buildFilters())->reject(fn (Filter $filter): bool => $filter->isHidden())->values()->toArray(),
+            'actions'                            => $actions  = collect($this->buildActions())->map(fn (Action $action) => $action->toArray())->toArray(),
+            'exports'                            => $exports  = $this->buildExports(),
             'state'                              => $tableRequest->toArray(),
             'pagination'                         => $this->shouldPaginate(),
             'paginationType'                     => $paginationType?->value,

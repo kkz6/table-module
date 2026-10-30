@@ -40,7 +40,7 @@ class TableExportColumnResolver
         return ExportColumn::make($column->getAttribute())
             ->label($column->getHeader())
             ->enabledByDefault($column->isIncludedInExportByDefault())
-            ->state(fn (Model $record): mixed => $column->getDataFromItem($record))
+            ->state(fn (Model $record): mixed => $table->transformExportValue($column, $record, $column->getDataFromItem($record)))
             ->formatStateUsing(fn (mixed $state, Model $record): mixed => $column->mapForExport($state, $table, $record));
     }
 }
