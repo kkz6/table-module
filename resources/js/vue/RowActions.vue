@@ -14,7 +14,7 @@ const available = computed(() =>
 );
 </script>
 <template>
-    <DropdownMenu v-if="available.length > 3">
+    <DropdownMenu v-if="available.length > 1">
         <DropdownMenuTrigger as-child>
             <Button
                 variant="ghost"
