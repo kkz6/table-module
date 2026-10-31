@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Button, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger, Input, Select } from '@workspace/ui';
+import { Button, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger, Input, NumberInput, Select } from '@workspace/ui';
 import { ChevronDown } from 'lucide-vue-next';
 import { computed } from 'vue';
 import type { FilterDefinition, FilterState } from './types';
@@ -23,8 +23,8 @@ function toggle(value: string | number): void {
     if (next.length) emit('change', clause.value, next);
     else emit('remove');
 }
-function range(index: number, value: string): void {
-    const next = [values.value[0] ?? '', values.value[1] ?? ''];
+function range(index: number, value: string | number | null): void {
+    const next: unknown[] = [values.value[0] ?? '', values.value[1] ?? ''];
     next[index] = value;
     emit('change', clause.value, next);
 }
@@ -70,9 +70,11 @@ function range(index: number, value: string): void {
             @update:model-value="(value) => emit('change', clause, value)"
         />
         <template v-else-if="isRange(clause)">
-            <Input
+            <component
+                :is="filter.type === 'numeric' ? NumberInput : Input"
                 v-for="index in [0, 1]"
                 :key="index"
+                :allow-negative="filter.type === 'numeric'"
                 class="w-40"
                 :type="inputType"
                 :aria-label="`${filter.label} ${index ? 'end' : 'start'}`"
@@ -80,8 +82,10 @@ function range(index: number, value: string): void {
                 @change="(event: Event) => range(index, (event.target as HTMLInputElement).value)"
             />
         </template>
-        <Input
+        <component
+            :is="filter.type === 'numeric' ? NumberInput : Input"
             v-else
+            :allow-negative="filter.type === 'numeric'"
             class="w-40"
             :type="inputType"
             :aria-label="`Filter ${filter.label}`"

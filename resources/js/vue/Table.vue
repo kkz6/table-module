@@ -21,8 +21,9 @@ const props = withDefaults(
         emptyTitle?: string;
         emptyDescription?: string;
         iconResolver?: (name: string) => Component | undefined;
+        showToolbar?: boolean;
     }>(),
-    { emptyTitle: 'No results', emptyDescription: 'Try adjusting your search or filters.', iconResolver: undefined },
+    { emptyTitle: 'No results', emptyDescription: 'Try adjusting your search or filters.', iconResolver: undefined, showToolbar: true },
 );
 const emit = defineEmits<{
     rowClick: [item: T, column?: TableColumn];
@@ -53,7 +54,7 @@ const root = ref<HTMLElement>(),
     actionError = actions.error,
     actionMessage = actions.message;
 const busy = computed(() => table.isNavigating.value || actionBusy.value);
-const selectable = computed(() => !!(props.resource.hasBulkActions || props.resource.hasExportsThatLimitsToSelectedRows));
+const selectable = computed(() => !!(props.resource.hasBulkActions || (props.showToolbar && props.resource.hasExportsThatLimitsToSelectedRows)));
 const visible = table.visibleColumns;
 const pinned = computed(() => table.state.value.sticky);
 const sticky = useSticky(root, visible, pinned, selectable);
@@ -111,6 +112,7 @@ defineExpose({ table, actions });
         :aria-busy="busy"
     >
         <TableToolbar
+            v-if="showToolbar"
             :resource="resource"
             :state="table.state.value"
             :busy="busy"
@@ -152,8 +154,8 @@ defineExpose({ table, actions });
             {{ actionMessage }}
         </p>
         <div
-            class="it-table-frame relative mt-4 rounded-2xl px-2 pb-0"
-            :class="{ 'opacity-60': busy, 'pt-2': !resource.results.data.length, 'pb-2': !resource.pagination }"
+            class="it-table-frame relative rounded-2xl px-2 pb-0"
+            :class="{ 'mt-4': showToolbar, 'opacity-60': busy, 'pt-2': !resource.results.data.length, 'pb-2': !resource.pagination }"
         >
             <div
                 v-if="busy"
@@ -198,8 +200,8 @@ defineExpose({ table, actions });
                             :class="{ 'text-right': column.alignment === 'right', 'text-center': column.alignment === 'center' }"
                         >
                             <TableHeaderDropdown
-                                v-if="column.sortable || column.toggleable || column.stickable"
-                                :column="column"
+                                v-if="column.sortable || (showToolbar && (column.toggleable || column.stickable))"
+                                :column="showToolbar ? column : { ...column, toggleable: false, stickable: false }"
                                 :sort="sort(column)"
                                 :sticky="pinned.includes(column.attribute)"
                                 @sort="table.setSort"
@@ -459,14 +461,14 @@ defineExpose({ table, actions });
 
 <style>
 .it-table-frame {
-    --table-chrome: #f0f0f2;
-    --table-surface: #fff;
+    --table-chrome: var(--workspace-table-chrome, #f0f0f2);
+    --table-surface: var(--card);
     --table-divider: #e4e4e7;
     background: var(--table-chrome);
 }
 .dark .it-table-frame {
-    --table-chrome: #121214;
-    --table-surface: #202023;
+    --table-chrome: var(--workspace-table-chrome, #121214);
+    --table-surface: var(--card);
     --table-divider: #333337;
 }
 .it-table-frame [data-slot='table-container'] {
@@ -491,6 +493,14 @@ defineExpose({ table, actions });
 }
 .it-table-frame tbody tr {
     background: var(--table-surface);
+    outline: none;
+}
+/* A focused table row has no reliable native outline in Chromium. Keep a quiet
+ * keyboard indicator inside its cells, without drawing blue lines on mouse use. */
+.it-table-frame tbody tr:focus-visible > td {
+    box-shadow:
+        inset 0 2px 0 var(--ring),
+        inset 0 -2px 0 var(--ring);
 }
 .it-table-frame tbody tr:hover {
     background: color-mix(in oklab, var(--muted) 45%, var(--table-surface));
