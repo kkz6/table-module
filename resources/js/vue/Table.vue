@@ -51,8 +51,7 @@ const actions = useActions(toRef(props, 'resource'), {
 const root = ref<HTMLElement>(),
     selected = actions.selected,
     actionBusy = actions.busy,
-    actionError = actions.error,
-    actionMessage = actions.message;
+    actionError = actions.error;
 const busy = computed(() => table.isNavigating.value || actionBusy.value);
 const selectable = computed(() => !!(props.resource.hasBulkActions || (props.showToolbar && props.resource.hasExportsThatLimitsToSelectedRows)));
 const visible = table.visibleColumns;
@@ -131,28 +130,6 @@ defineExpose({ table, actions });
                 :actions="actions"
             />
         </TableToolbar>
-        <div
-            v-if="actionError"
-            role="alert"
-            class="text-destructive border-destructive/25 bg-destructive/5 my-3 flex items-center justify-between rounded-md border p-3 text-sm"
-        >
-            {{ actionError }}
-            <Button
-                variant="ghost"
-                size="icon"
-                aria-label="Dismiss error"
-                @click="actionError = ''"
-            >
-                <X class="size-4" />
-            </Button>
-        </div>
-        <p
-            v-if="actionMessage"
-            role="status"
-            class="bg-muted my-3 rounded-md p-3 text-sm"
-        >
-            {{ actionMessage }}
-        </p>
         <div
             class="it-table-frame relative rounded-2xl px-2 pb-0"
             :class="{ 'mt-4': showToolbar, 'opacity-60': busy, 'pt-2': !resource.results.data.length, 'pb-2': !resource.pagination }"

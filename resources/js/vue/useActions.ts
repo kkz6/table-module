@@ -1,6 +1,7 @@
 import { router } from '@inertiajs/vue3';
 import axios from 'axios';
 import { computed, ref, watch, type Ref } from 'vue';
+import { toast } from 'vue-sonner';
 import { downloadExportResponse } from '../download';
 import { actionState, rowKey, selectionActions } from './state';
 import type { ExportPayload, Key, TableAction, TableExport, TableResource, TableRowData, TableUrl } from './types';
@@ -133,10 +134,14 @@ export function useActions<T extends object>(
             selected.value = [];
             callbacks.success(context);
             if (response.data?.targetUrl) router.visit(safeUrl(response.data.targetUrl), { preserveState: true, preserveScroll: true });
-            else router.reload({ only: resource.value.reloadProps?.length ? resource.value.reloadProps : undefined });
+            else
+                router.reload({
+                    only: resource.value.reloadProps?.length ? [...new Set([...resource.value.reloadProps, 'flash', 'toast'])] : undefined,
+                });
         } catch (cause) {
             busy.value = false;
             error.value = await errorMessage(cause);
+            toast.error(error.value);
             callbacks.error(context, cause);
         } finally {
             if (!action.isCustom) busy.value = false;
@@ -166,14 +171,23 @@ export function useActions<T extends object>(
                 responseType: item.asDownload || item.hasExporter ? 'blob' : 'json',
                 headers: item.hasExporter ? { Accept: 'application/octet-stream' } : undefined,
             });
-            if (response.data instanceof Blob) downloadExportResponse(response, 'export');
+            if (response.data instanceof Blob && response.data.type.includes('json')) {
+                const payload = JSON.parse(await response.data.text());
+                message.value = payload.toastTitle ?? payload.dialogMessage ?? 'Your export is being prepared.';
+                toast.info(message.value, { description: payload.toastBody });
+            } else if (response.data instanceof Blob) downloadExportResponse(response, 'export');
             else if (response.data?.targetUrl) visit(response.data.targetUrl);
-            else message.value = response.data?.dialogMessage ?? response.data?.dialogTitle ?? 'Your export is being prepared.';
+            else {
+                message.value =
+                    response.data?.toastTitle ?? response.data?.dialogMessage ?? response.data?.dialogTitle ?? 'Your export is being prepared.';
+                toast.info(message.value, { description: response.data?.toastBody });
+            }
             selected.value = [];
             exportContext.value = undefined;
             return true;
         } catch (cause) {
             error.value = await errorMessage(cause);
+            toast.error(error.value);
             return false;
         } finally {
             busy.value = false;

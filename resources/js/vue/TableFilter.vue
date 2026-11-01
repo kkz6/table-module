@@ -1,5 +1,15 @@
 <script setup lang="ts">
-import { Button, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger, Input, NumberInput, Select } from '@workspace/ui';
+import {
+    Button,
+    DateTimePicker,
+    DropdownMenu,
+    DropdownMenuCheckboxItem,
+    DropdownMenuContent,
+    DropdownMenuTrigger,
+    Input,
+    NumberInput,
+    Select,
+} from '@workspace/ui';
 import { ChevronDown } from 'lucide-vue-next';
 import { computed } from 'vue';
 import type { FilterDefinition, FilterState } from './types';
@@ -12,7 +22,7 @@ const isSet = (value: string) => ['in', 'not_in'].includes(value) || !!props.fil
 const values = computed(() =>
     Array.isArray(props.state.value) ? props.state.value : props.state.value == null || props.state.value === '' ? [] : [props.state.value],
 );
-const inputType = computed(() => (props.filter.type === 'numeric' ? 'number' : props.filter.type === 'date' ? 'date' : 'text'));
+const inputType = computed(() => (props.filter.type === 'numeric' ? 'number' : 'text'));
 function changeClause(value: string): void {
     const next = noValue(value) ? null : isRange(value) ? ['', ''] : isSet(value) ? values.value : (values.value[0] ?? '');
     emit('change', value, next);
@@ -69,6 +79,29 @@ function range(index: number, value: string | number | null): void {
             :options="filter.options.map((option) => ({ value: String(option.value), label: option.label }))"
             @update:model-value="(value) => emit('change', clause, value)"
         />
+        <template v-else-if="filter.type === 'date'">
+            <template v-if="isRange(clause)">
+                <DateTimePicker
+                    v-for="index in [0, 1]"
+                    :key="index"
+                    class="w-40"
+                    date-only
+                    clearable
+                    :label="`${filter.label} ${index ? 'end' : 'start'}`"
+                    :model-value="String(values[index] ?? '')"
+                    @update:model-value="(value) => range(index, value)"
+                />
+            </template>
+            <DateTimePicker
+                v-else
+                class="w-40"
+                date-only
+                clearable
+                :label="`Filter ${filter.label}`"
+                :model-value="String(state.value ?? '')"
+                @update:model-value="(value) => emit('change', clause, value)"
+            />
+        </template>
         <template v-else-if="isRange(clause)">
             <component
                 :is="filter.type === 'numeric' ? NumberInput : Input"
