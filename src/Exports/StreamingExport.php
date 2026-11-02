@@ -15,6 +15,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 use ZipArchive;
 
+/** @phpstan-import-type ResolvedExportConfiguration from ExportConfiguration */
 class StreamingExport
 {
     public function __construct(
@@ -43,14 +44,7 @@ class StreamingExport
     }
 
     /**
-     * @param  array{
-     *     columnMap: array<string, string>,
-     *     formats: array<int, ExportFormat>,
-     *     options: array<string, mixed>,
-     *     query: Builder,
-     *     totalRows: int,
-     *     chunkSize: int,
-     * }  $configuration
+     * @param ResolvedExportConfiguration $configuration
      */
     private function streamCsv(string $fileName, array $configuration, Exporter $exporter): StreamedResponse
     {
@@ -62,13 +56,7 @@ class StreamingExport
             }
 
             try {
-                fwrite($output, "\xEF\xBB\xBF");
-                fputcsv($output, array_values($configuration['columnMap']), $exporter::getCsvDelimiter());
-
-                foreach ($this->rows($configuration['query'], $exporter, $configuration['totalRows'], $configuration['chunkSize']) as $row) {
-                    fputcsv($output, $row, $exporter::getCsvDelimiter());
-                    flush();
-                }
+                $this->writeCsvRows($output, $configuration, $exporter, flush: true);
             } finally {
                 fclose($output);
             }
@@ -76,14 +64,7 @@ class StreamingExport
     }
 
     /**
-     * @param  array{
-     *     columnMap: array<string, string>,
-     *     formats: array<int, ExportFormat>,
-     *     options: array<string, mixed>,
-     *     query: Builder,
-     *     totalRows: int,
-     *     chunkSize: int,
-     * }  $configuration
+     * @param ResolvedExportConfiguration $configuration
      */
     private function streamXlsx(string $fileName, array $configuration, Exporter $exporter): StreamedResponse
     {
@@ -101,15 +82,8 @@ class StreamingExport
     }
 
     /**
-     * @param array<int, ExportFormat> $formats
-     * @param  array{
-     *     columnMap: array<string, string>,
-     *     formats: array<int, ExportFormat>,
-     *     options: array<string, mixed>,
-     *     query: Builder,
-     *     totalRows: int,
-     *     chunkSize: int,
-     * }  $configuration
+     * @param array<int, ExportFormat>    $formats
+     * @param ResolvedExportConfiguration $configuration
      */
     private function streamArchive(string $fileName, array $formats, array $configuration, Exporter $exporter): StreamedResponse
     {
@@ -154,14 +128,7 @@ class StreamingExport
     }
 
     /**
-     * @param  array{
-     *     columnMap: array<string, string>,
-     *     formats: array<int, ExportFormat>,
-     *     options: array<string, mixed>,
-     *     query: Builder,
-     *     totalRows: int,
-     *     chunkSize: int,
-     * }  $configuration
+     * @param ResolvedExportConfiguration $configuration
      */
     private function writeCsv(array $configuration, Exporter $exporter): string
     {
@@ -173,12 +140,7 @@ class StreamingExport
         }
 
         try {
-            fwrite($output, "\xEF\xBB\xBF");
-            fputcsv($output, array_values($configuration['columnMap']), $exporter::getCsvDelimiter());
-
-            foreach ($this->rows($configuration['query'], $exporter, $configuration['totalRows'], $configuration['chunkSize']) as $row) {
-                fputcsv($output, $row, $exporter::getCsvDelimiter());
-            }
+            $this->writeCsvRows($output, $configuration, $exporter);
         } catch (Throwable $exception) {
             fclose($output);
             $this->deleteTemporaryFile($temporaryFile);
@@ -192,14 +154,7 @@ class StreamingExport
     }
 
     /**
-     * @param  array{
-     *     columnMap: array<string, string>,
-     *     formats: array<int, ExportFormat>,
-     *     options: array<string, mixed>,
-     *     query: Builder,
-     *     totalRows: int,
-     *     chunkSize: int,
-     * }  $configuration
+     * @param ResolvedExportConfiguration $configuration
      */
     private function writeXlsx(array $configuration, Exporter $exporter): string
     {
@@ -219,6 +174,23 @@ class StreamingExport
         }
 
         return $temporaryFile;
+    }
+
+    /**
+     * @param resource                    $output
+     * @param ResolvedExportConfiguration $configuration
+     */
+    private function writeCsvRows($output, array $configuration, Exporter $exporter, bool $flush = false): void
+    {
+        fwrite($output, "\xEF\xBB\xBF");
+        fputcsv($output, array_values($configuration['columnMap']), $exporter::getCsvDelimiter());
+
+        foreach ($this->rows($configuration['query'], $exporter, $configuration['totalRows'], $configuration['chunkSize']) as $row) {
+            fputcsv($output, $row, $exporter::getCsvDelimiter());
+            if ($flush) {
+                flush();
+            }
+        }
     }
 
     /**

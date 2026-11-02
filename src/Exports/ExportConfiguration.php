@@ -9,19 +9,22 @@ use Illuminate\Validation\ValidationException;
 use Modules\Table\Export;
 use Modules\Table\Http\ExportRequest;
 
+/**
+ * @phpstan-type ResolvedExportConfiguration array{
+ *     columnMap: array<string, string>,
+ *     formats: array<int, ExportFormat>,
+ *     options: array<string, mixed>,
+ *     query: Builder,
+ *     totalRows: int,
+ *     chunkSize: int,
+ * }
+ */
 class ExportConfiguration
 {
     /**
      * Resolve all request-dependent values needed by a table export.
      *
-     * @return array{
-     *     columnMap: array<string, string>,
-     *     formats: array<int, ExportFormat>,
-     *     options: array<string, mixed>,
-     *     query: Builder,
-     *     totalRows: int,
-     *     chunkSize: int,
-     * }
+     * @return ResolvedExportConfiguration
      */
     public function resolve(Export $export, ExportRequest $request): array
     {

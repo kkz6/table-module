@@ -48,3 +48,41 @@ it('streams multiple selected formats in one archive', function (): void {
 
     expect($response->streamedContent())->not->toBeEmpty();
 });
+
+it('writes identical csv content for direct downloads and archives', function (): void {
+    User::factory()->create(['name' => "Zoë, \"Finance\"\nTeam", 'email' => 'zoe@example.test']);
+    $payload = [
+        'columnMap' => [
+            'name'  => ['isEnabled' => true, 'label' => 'Full name'],
+            'email' => ['isEnabled' => true, 'label' => 'Email'],
+        ],
+    ];
+    $download = $this->withHeader('Accept', 'application/octet-stream')
+        ->post(TestUsersTable::exportUrl('Pipeline Export'), [...$payload, 'formats' => ['csv']]);
+    $download->assertSuccessful();
+    $csv     = $download->streamedContent();
+    $archive = $this->withHeader('Accept', 'application/octet-stream')
+        ->post(TestUsersTable::exportUrl('Pipeline Export'), [...$payload, 'formats' => ['csv', 'xlsx']]);
+    $archive->assertSuccessful();
+
+    $path = tempnam(sys_get_temp_dir(), 'export-parity-');
+    $zip  = new ZipArchive;
+    try {
+        file_put_contents($path, $archive->streamedContent());
+        expect($zip->open($path))->toBeTrue();
+        $csvEntry = null;
+        for ($index = 0; $index < $zip->numFiles; $index++) {
+            if (str_ends_with($zip->getNameIndex($index), '.csv')) {
+                $csvEntry = $zip->getFromIndex($index);
+            }
+        }
+        expect($csvEntry)->toBe($csv)
+            ->and($csv)->toStartWith("\xEF\xBB\xBF")
+            ->toContain("\"Zoë, \"\"Finance\"\"\nTeam\"");
+    } finally {
+        if ($zip->status === ZipArchive::ER_OK && $zip->numFiles > 0) {
+            $zip->close();
+        }
+        unlink($path);
+    }
+});
