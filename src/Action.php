@@ -7,7 +7,9 @@ namespace Modules\Table;
 use Closure;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Contracts\Support\Arrayable;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Traits\Conditionable;
@@ -629,14 +631,15 @@ class Action implements Arrayable
                 throw NoBulkActionException::new();
             }
 
-            /** @var Builder $query */
+            /** @var EloquentBuilder|Relation $query */
             $query = $allItemsAreSelected
                 ? $queryBuilder->getResourceWithRequestApplied(applySort: false)
                 : $queryBuilder->getResource()->tap(fn (Builder $query) => $this->table->scopePrimaryKey($query, $keys));
 
             // Wildcard selections must retain the current view's filters.
             if ($this->includeTrashed && ! $allItemsAreSelected) {
-                $query->withTrashed();
+                // Soft-delete scopes use the builder's macro dispatcher.
+                $query->__call('withTrashed', []);
             }
 
             $result = null;

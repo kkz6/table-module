@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Modules\Table\Filters;
 
 use Illuminate\Contracts\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Table\Exceptions\UnsupportedClauseException;
 
@@ -69,26 +71,33 @@ class TrashedFilter extends Filter
 
     /**
      * Apply the withTrashed scope to include soft deleted records.
+     * Soft-delete scopes use the builder's macro dispatcher.
+     *
+     * @param EloquentBuilder|Relation $resource
      */
     protected function applyWithTrashed(Builder $resource): void
     {
-        $resource->withTrashed();
+        $resource->__call('withTrashed', []);
     }
 
     /**
      * Apply the onlyTrashed scope to show only soft deleted records.
+     *
+     * @param EloquentBuilder|Relation $resource
      */
     protected function applyOnlyTrashed(Builder $resource): void
     {
-        $resource->onlyTrashed();
+        $resource->__call('onlyTrashed', []);
     }
 
     /**
      * Apply the withoutTrashed scope to exclude soft deleted records.
+     *
+     * @param EloquentBuilder|Relation $resource
      */
     protected function applyWithoutTrashed(Builder $resource): void
     {
-        $resource->withoutTrashed();
+        $resource->__call('withoutTrashed', []);
     }
 
     /**
