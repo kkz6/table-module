@@ -391,7 +391,7 @@ class Views implements Arrayable
             return $saved;
         }
 
-        $table = $this->getTable();
+        $table  = $this->getTable();
         $legacy = $this->query()->user($this->getUserKey())
             ->whereNull('tenant_id')->whereNull('state_payload')->where('table_class', $this->legacySource)
             ->tableName('default')->orderByTitle()->get()
@@ -405,11 +405,11 @@ class Views implements Arrayable
                 $query = $table->getName() === 'default' ? $payload : [$table->getName() => $payload];
 
                 return [
-                    'id' => 'legacy-'.$view->getKey(),
-                    'title' => $view->title,
-                    'state' => TableRequest::forQueryParams($table, $query)->toArray(),
+                    'id'        => 'legacy-'.$view->getKey(),
+                    'title'     => $view->title,
+                    'state'     => TableRequest::forQueryParams($table, $query)->toArray(),
                     'deleteUrl' => null,
-                    'legacy' => true,
+                    'legacy'    => true,
                 ];
             })->values()->all();
 
