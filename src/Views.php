@@ -24,6 +24,17 @@ class Views implements Arrayable
     use GeneratesSignedTableUrls;
     use Tappable;
 
+    /** @var class-string<Table>|null */
+    private ?string $legacySource = null;
+
+    /** @param class-string<Table>|null $source */
+    public function legacyFrom(?string $source): self
+    {
+        $this->legacySource = $source;
+
+        return $this;
+    }
+
     /**
      * The default attributes resolver for all Views instances.
      */
@@ -365,7 +376,7 @@ class Views implements Arrayable
             return [];
         }
 
-        return $this->scopedQuery()
+        $saved = $this->scopedQuery()
             ->orderByTitle()
             ->get()
             ->map(fn (Model $view): array => [
@@ -375,6 +386,34 @@ class Views implements Arrayable
                 'deleteUrl' => $this->getDeleteUrl($key),
             ])
             ->all();
+
+        if ($this->legacySource === null || $this->getUserKey() === null) {
+            return $saved;
+        }
+
+        $table = $this->getTable();
+        $legacy = $this->query()->user($this->getUserKey())
+            ->whereNull('tenant_id')->whereNull('state_payload')->where('table_class', $this->legacySource)
+            ->tableName('default')->orderByTitle()->get()
+            ->reject(fn (TableView $view) => in_array($view->title, array_column($saved, 'title'), true))
+            ->map(function (TableView $view) use ($table): array {
+                $payload = $view->request_payload;
+                $columns = array_map(fn ($column) => $column->getAttribute(), $table->buildColumns());
+                if (isset($payload['columns'])) {
+                    $payload['columns'] = array_values(array_intersect($payload['columns'], $columns));
+                }
+                $query = $table->getName() === 'default' ? $payload : [$table->getName() => $payload];
+
+                return [
+                    'id' => 'legacy-'.$view->getKey(),
+                    'title' => $view->title,
+                    'state' => TableRequest::forQueryParams($table, $query)->toArray(),
+                    'deleteUrl' => null,
+                    'legacy' => true,
+                ];
+            })->values()->all();
+
+        return [...$saved, ...$legacy];
     }
 
     /**

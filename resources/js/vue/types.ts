@@ -127,7 +127,7 @@ export interface TableTab {
     filters: Record<string, unknown>;
 }
 export interface SavedViews {
-    data: { id: Key; title: string; state: TableState; deleteUrl: string }[];
+    data: { id: Key; title: string; state: TableState; deleteUrl: string | null; legacy?: boolean }[];
     query: Record<string, unknown>;
     storeUrl: string;
 }

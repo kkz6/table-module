@@ -15,6 +15,8 @@ import type { Key, TableAction, TableColumn, TableResource, TableRowData, TableU
 import { useActions, type ActionContext } from './useActions';
 import { useSticky } from './useSticky';
 import { useTable } from './useTable';
+import { useWorkspaceLanguage } from '@workspace/useWorkspaceLanguage';
+const { t } = useWorkspaceLanguage();
 const props = withDefaults(
     defineProps<{
         resource: TableResource<T>;
@@ -211,8 +213,8 @@ defineExpose({ table, actions });
                                     v-else-if="empty?.icon !== false"
                                     class="text-muted-foreground mb-2 size-7"
                                 />
-                                <p class="font-medium">{{ empty?.title || emptyTitle }}</p>
-                                <p class="text-muted-foreground text-sm whitespace-normal">{{ empty?.message || emptyDescription }}</p>
+                                <p class="font-medium">{{ t(empty?.title || emptyTitle) }}</p>
+                                <p class="text-muted-foreground text-sm whitespace-normal">{{ t(empty?.message || emptyDescription) }}</p>
                                 <Button
                                     v-if="filtered"
                                     variant="outline"
@@ -235,7 +237,7 @@ defineExpose({ table, actions });
                                         :resolver="iconResolver"
                                         class="size-4"
                                     />
-                                    {{ action.label }}
+                                    {{ t(action.label) }}
                                 </Button>
                             </div>
                         </TableCell>
@@ -374,7 +376,7 @@ defineExpose({ table, actions });
                     :resolver="iconResolver"
                     class="size-4"
                 />
-                {{ entry.action.label }}
+                {{ t(entry.action.label) }}
                 <span v-if="entry.partial">({{ entry.keys.length }})</span>
             </Button>
             <Button

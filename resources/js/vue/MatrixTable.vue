@@ -3,6 +3,8 @@ import { Button, Table, TableBody, TableCell, TableHead, TableHeader, TableRow }
 import { useSortableRows } from '@workspace/useSortableRows';
 import { GripVertical } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
+import { useWorkspaceLanguage } from '@workspace/useWorkspaceLanguage';
+const { t } = useWorkspaceLanguage();
 const props = withDefaults(
     defineProps<{
         rows: T[];
@@ -43,7 +45,7 @@ const { message, keyboard } = useSortableRows(container, rows, { disabled: () =>
                         class="h-11 px-4 text-[13px] font-medium"
                         :class="column.class"
                     >
-                        {{ column.label }}
+                        {{ t(column.label) }}
                     </TableHead>
                 </TableRow>
             </TableHeader>
@@ -89,7 +91,7 @@ const { message, keyboard } = useSortableRows(container, rows, { disabled: () =>
                         :colspan="columns.length + (sortable ? 1 : 0)"
                         class="text-muted-foreground p-10 text-center text-sm"
                     >
-                        {{ empty }}
+                        {{ t(empty) }}
                     </TableCell>
                 </TableRow>
             </TableBody>
