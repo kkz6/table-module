@@ -2,6 +2,8 @@
 import { Button, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@workspace/ui';
 import { ArrowDown, ArrowUp, ChevronsUpDown, EyeOff, Lock, Unlock } from 'lucide-vue-next';
 import type { TableColumn } from './types';
+import { useWorkspaceLanguage } from '@workspace/useWorkspaceLanguage';
+const { t } = useWorkspaceLanguage();
 defineProps<{ column: TableColumn; sort?: string | null; sticky?: boolean }>();
 const emit = defineEmits<{ sort: [value: string]; toggle: []; sticky: [] }>();
 </script>
@@ -18,7 +20,7 @@ const emit = defineEmits<{ sort: [value: string]; toggle: []; sticky: [] }>();
                     v-if="sticky"
                     class="size-4"
                 />
-                <span :class="column.headerClass">{{ column.header }}</span>
+                <span :class="column.headerClass">{{ t(column.header) }}</span>
                 <ArrowUp
                     v-if="sort === 'asc'"
                     class="text-foreground size-3.5"

@@ -5,6 +5,8 @@ import axios from 'axios';
 import { Bookmark, BookmarkPlus, Trash2 } from 'lucide-vue-next';
 import { computed, ref, watch } from 'vue';
 import type { Key, SavedViews, TableState } from './types';
+import { useWorkspaceLanguage } from '@workspace/useWorkspaceLanguage';
+const { t } = useWorkspaceLanguage();
 const props = defineProps<{ resource: SavedViews; name: string; busy?: boolean }>();
 const emit = defineEmits<{ apply: [state: TableState] }>();
 const views = ref(props.resource),
@@ -47,7 +49,7 @@ async function save(): Promise<void> {
     }
 }
 async function remove(): Promise<void> {
-    if (!current.value) return;
+    if (!current.value?.deleteUrl) return;
     saving.value = true;
     error.value = '';
     try {
@@ -72,22 +74,22 @@ async function remove(): Promise<void> {
                 variant="outline"
                 size="icon"
                 aria-label="Saved table views"
-                title="Saved views"
+                :title="t('Saved views')"
                 :disabled="busy"
             >
                 <Bookmark class="size-4" />
             </Button>
         </template>
         <div class="space-y-3">
-            <p class="text-sm font-medium">Saved views</p>
+            <p class="text-sm font-medium">{{ t('Saved views') }}</p>
             <Select
                 class="w-full"
                 aria-label="Saved table view"
                 :model-value="selected"
                 :disabled="busy || saving"
                 :options="[
-                    { value: '__current', label: 'Current view' },
-                    ...views.data.map((view) => ({ value: String(view.id), label: view.title })),
+                    { value: '__current', label: t('Current view') },
+                    ...views.data.map((view) => ({ value: String(view.id), label: view.legacy ? `${view.title} (V1)` : view.title })),
                 ]"
                 @update:model-value="(value) => apply(String(value))"
             />
@@ -104,10 +106,10 @@ async function remove(): Promise<void> {
                     "
                 >
                     <BookmarkPlus class="size-4" />
-                    Save view
+                    {{ t('Save view') }}
                 </Button>
                 <Button
-                    v-if="current"
+                    v-if="current?.deleteUrl"
                     variant="ghost"
                     size="icon"
                     aria-label="Delete saved view"
@@ -150,7 +152,7 @@ async function remove(): Promise<void> {
                 type="submit"
                 :disabled="saving || !title.trim()"
             >
-                Save view
+                {{ t('Save view') }}
             </Button>
         </template>
     </FormDialog>

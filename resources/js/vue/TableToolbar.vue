@@ -17,6 +17,8 @@ import SavedViews from './SavedViews.vue';
 import { activeTab } from './state';
 import TableFilter from './TableFilter.vue';
 import type { FilterDefinition, TableExport, TableResource, TableState, TableTab } from './types';
+import { useWorkspaceLanguage } from '@workspace/useWorkspaceLanguage';
+const { t } = useWorkspaceLanguage();
 const props = defineProps<{ resource: TableResource<T>; state: TableState; busy?: boolean }>();
 const emit = defineEmits<{
     search: [value: string];
@@ -60,7 +62,7 @@ const exports = computed(() => (props.resource.exports ?? []).filter((item) => i
                     />
                     <Input
                         :model-value="state.search || ''"
-                        placeholder="Search…"
+                        :placeholder="t('Search…')"
                         aria-label="Search table"
                         class="w-full pl-9"
                         @update:model-value="(value) => emit('search', String(value ?? ''))"
@@ -88,7 +90,7 @@ const exports = computed(() => (props.resource.exports ?? []).filter((item) => i
                             :disabled="busy"
                         >
                             <Funnel class="size-4" />
-                            Filters
+                            {{ t('Filters') }}
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
@@ -122,8 +124,8 @@ const exports = computed(() => (props.resource.exports ?? []).filter((item) => i
                             variant="outline"
                             size="icon"
                             :disabled="busy"
-                            aria-label="Export"
-                            title="Export records"
+                            :aria-label="t('Export')"
+                            :title="t('Export records')"
                         >
                             <Download class="size-4" />
                         </Button>
@@ -144,11 +146,11 @@ const exports = computed(() => (props.resource.exports ?? []).filter((item) => i
                             variant="outline"
                             size="default"
                             :disabled="busy"
-                            aria-label="Columns"
+                            :aria-label="t('Columns')"
                             title="Column settings"
                         >
                             <Eye class="size-4" />
-                            Columns
+                            {{ t('Columns') }}
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
@@ -234,7 +236,7 @@ const exports = computed(() => (props.resource.exports ?? []).filter((item) => i
                         v-else-if="tab.label.toLowerCase() === 'all'"
                         class="size-4"
                     />
-                    {{ tab.label }}
+                    {{ t(tab.label) }}
                     <span
                         v-if="tab.count != null"
                         class="border-border bg-background rounded-full border px-1.5 py-0 text-[10px] leading-4 tabular-nums"

@@ -5,6 +5,8 @@ import { computed, type Component } from 'vue';
 import Icon from './Icon.vue';
 import { actionState } from './state';
 import type { TableAction, TableRowData } from './types';
+import { useWorkspaceLanguage } from '@workspace/useWorkspaceLanguage';
+const { t } = useWorkspaceLanguage();
 const props = defineProps<{ item: TableRowData; actions: TableAction[]; busy?: boolean; resolver?: (name: string) => Component | undefined }>();
 const emit = defineEmits<{ action: [action: TableAction, index: number, item: TableRowData] }>();
 const available = computed(() =>
@@ -20,7 +22,7 @@ const available = computed(() =>
                 variant="ghost"
                 size="icon"
                 class="it-row-actions-dropdown"
-                aria-label="Open row actions"
+                :aria-label="t('Open row actions')"
             >
                 <Icon
                     name="MoreHorizontal"
@@ -41,7 +43,7 @@ const available = computed(() =>
                     :resolver="resolver"
                     class="size-4"
                 />
-                {{ entry.action.label }}
+                {{ t(entry.action.label) }}
             </DropdownMenuItem>
         </DropdownMenuContent>
     </DropdownMenu>
@@ -52,13 +54,13 @@ const available = computed(() =>
         <Tooltip
             v-for="entry in available"
             :key="entry.index"
-            :label="entry.action.label"
+            :label="t(entry.action.label)"
         >
             <Button
                 :variant="entry.action.variant === 'destructive' ? 'destructiveGhost' : 'ghost'"
                 :size="entry.action.showLabel ? 'sm' : 'icon'"
                 :class="[!entry.action.showLabel && 'it-row-action-icon-button', entry.action.buttonClass]"
-                :aria-label="entry.action.label"
+                :aria-label="t(entry.action.label)"
                 :disabled="busy || entry.state?.disabled"
                 @click.stop="emit('action', entry.action, entry.index, item)"
             >
@@ -67,7 +69,7 @@ const available = computed(() =>
                     :resolver="resolver"
                     class="size-4"
                 />
-                <span v-if="entry.action.showLabel">{{ entry.action.label }}</span>
+                <span v-if="entry.action.showLabel">{{ t(entry.action.label) }}</span>
             </Button>
         </Tooltip>
     </div>
